@@ -1,0 +1,443 @@
+<?xml version='1.0' encoding='windows-1252' ?>
+
+<!--
+ Copyright (c) Citrix Systems Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, 
+ with or without modification, are permitted provided 
+ that the following conditions are met:
+
+ *   Redistributions of source code must retain the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer.
+ *   Redistributions in binary form must reproduce the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer in the documentation and/or other 
+     materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ SUCH DAMAGE.
+-->
+
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+    xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension"
+    >
+
+    <?include verinfo.wxi ?>
+    <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
+    <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
+    <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
+    <?define CurrentBuildVersion = '$(var.BRANDING_BUILD_NR_STR)' ?>
+
+    <?define VersionStr = '$(var.BRANDING_MAJOR_VERSION_STR).$(var.BRANDING_MINOR_VERSION_STR).$(var.BRANDING_MICRO_VERSION_STR).$(var.BRANDING_BUILD_NR_STR)' ?>
+
+      <?define UpgradeCode = '21ef141f-9126-42da-93cd-b50442047420' ?>
+      <?define ProductId = '*' ?>
+      <?define dn4id = 'a8adb29e-94ac-4653-9a7b-0a7c0d1608cc' ?>
+      <?define dn35id = '59866f88-697b-472c-8405-8aa0eb077a3b' ?>
+      <?define msiid = 'c08a0ff4-ae4a-4fa0-95b4-85a89e143ed5' ?>
+      <?define legacyid = 'c9f1b6d8-1772-4265-8a48-1db101f5ef55' ?>
+      <?define PassiveGuid = '4f2d23fe-13a4-4d83-a6ab-257d1eccfb5e' ?>
+      <?define ActiveGuid = 'dbda20f4-4287-4e9d-8a5f-96414742b9ae' ?>
+      <?define RebootGuid= '33afff10-c2d9-4236-bd42-0f516f5d24bd' ?>
+      <?define NoRebootGuid= '9700a3df-77a3-487f-b0ca-b4321665afc3' ?>
+      <?define certs= 'f056d833-6b1f-4c9d-9636-f26ff3a75292' ?>
+      <?define pf="ProgramFilesFolder" ?>
+
+  <Product Name='Citrix XenServer Tools Installer' Id='$(var.ProductId)'
+           Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='Citrix'
+           UpgradeCode='$(var.UpgradeCode)' >
+    <Package Id='*' Keywords='Citrix XenServer Windows Installer' Description='PV Tools Install Wizard'
+             Comments='Installs Citrix XenServer Tools' Manufacturer='Citrix'
+             InstallerVersion='200' Languages='1033' Compressed='yes'
+             InstallScope='perMachine'
+             SummaryCodepage='1252' />
+
+    <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />     
+    <Property Id="REINSTALLMODE"  Value="dmus" />
+    
+    <UI> 
+
+       <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+            <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+            <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+
+            <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+            <Property Id="WixUI_Mode" Value="InstallDir" />
+
+            <DialogRef Id="BrowseDlg" />
+            <DialogRef Id="DiskCostDlg" />
+            <DialogRef Id="ErrorDlg" />
+            <DialogRef Id="FatalError" />
+            <DialogRef Id="FilesInUse" />
+           <DialogRef Id="MsiRMFilesInUse" />
+            <DialogRef Id="PrepareDlg" />
+            <DialogRef Id="ProgressDlg" />
+            <DialogRef Id="ResumeDlg" />
+            <DialogRef Id="UserExit" />
+            
+            <Publish Dialog="BrowseDlg" Control="OK" Event="DoAction" Value="WixUIValidatePath" Order="3">1</Publish>
+            <Publish Dialog="BrowseDlg" Control="OK" Event="SpawnDialog" Value="InvalidDirDlg" Order="4"><![CDATA[WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+
+            <Publish Dialog="MyExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">NOT Installed</Publish>
+            <Publish Dialog="MyExitDialog" Control="AltFinish" Event="EndDialog" Value="Return" Order="999">Installed</Publish>
+
+            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="LicenseAgreementDlg">NOT Installed</Publish>
+            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">Installed AND PATCH</Publish>
+
+            <Publish Dialog="LicenseAgreementDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+            <Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">LicenseAccepted = "1"</Publish>
+
+            <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDlg">1</Publish>
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="DoAction" Value="WixUIValidatePath" Order="2">NOT WIXUI_DONTVALIDATEPATH</Publish>
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="4">WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID="1"</Publish>
+            <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+            <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+            
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1">NOT Installed</Publish>
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2">Installed AND NOT PATCH</Publish>
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">Installed AND PATCH</Publish>
+
+            <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
+
+            <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+            <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+            <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
+
+            <Property Id="ARPNOMODIFY" Value="1" /> 
+
+ <Dialog Id="MyExitDialog" Width="370" Height="270" Title="!(loc.ExitDialog_Title)">
+     <Control Id="Finish" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Cancel="yes" Text="&amp;Install Tools"> 
+         <Condition Action="show">NOT Installed</Condition>
+         <Condition Action="hide">Installed</Condition>
+     </Control>
+     <Control Id="AltFinish" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Cancel="yes" Text="&amp;Done"> 
+         <Condition Action="show">Installed</Condition>
+         <Condition Action="hide">NOT Installed</Condition>
+     </Control>
+                <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Disabled="yes" Text="!(loc.WixUICancel)" />
+                <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="234" TabSkip="no" Text="!(loc.ExitDialogBitmap)" />
+                <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Disabled="yes" Text="!(loc.WixUIBack)" />
+                <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+                <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Bigger}You have set up the Citrix XenServer Tools Installer">  
+                    <Condition Action="show">NOT Installed</Condition>
+                    <Condition Action="hide">Installed</Condition>
+                </Control>
+                <Control Id="AltTitle" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Bigger}You have removed the Citrix XenServer Tools Installer">  
+                    <Condition Action="hide">NOT Installed</Condition>
+                    <Condition Action="show">Installed</Condition>
+                </Control>
+                <Control Id="OptionalText" Type="Text" X="135" Y="70" Width="220" Height="80" Transparent="yes" NoPrefix="yes"  Text="Click 'Install Tools' to launch the Citrix Xenserver Tools Installer and begin installing the Citrix Xenserver Tools on ths VM">
+                    <Condition Action="show">NOT Installed</Condition>
+                    <Condition Action="hide">Installed</Condition>
+                </Control>
+            </Dialog>
+
+
+        <Publish Dialog="MyExitDialog" Control="Finish" Event="DoAction" Value="SetApplicationActive">UILevel = 5 and NOT Installed</Publish>
+        <Publish Dialog="MyExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">VersionNT>=600 and UILevel = 5 and NOT Installed</Publish>
+        <Publish Dialog="MyExitDialog" Control="Finish" Event="DoAction" Value="SetApplicationPassive">VersionNT>=600 and (UILevel = 4 or UILevel = 3) and NOT Installed</Publish>
+        <Publish Dialog="MyExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">VersionNT>=600 and (UILevel = 4 or UILevel = 3) and NOT Installed</Publish>
+
+
+
+
+
+        <InstallUISequence>
+            <Show Dialog="MyExitDialog" OnExit="success" />
+        </InstallUISequence>
+        <AdminUISequence>
+            <Show Dialog="MyExitDialog" OnExit="success" />
+        </AdminUISequence>
+
+    </UI>
+    <UIRef Id="WixUI_Common" />
+
+    <SetProperty Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Before="CostFinalize" Sequence="ui" Value="1">VersionNT>600</SetProperty>
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.Bitmaps)\BannrBmp.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.Bitmaps)\DlgBmp.bmp" />
+    <WixVariable Id="WixUIExclamationIco" Value="$(var.Bitmaps)\exclamic.ico" />
+    <WixVariable Id="WixUIInfoIco" Value="$(var.Bitmaps)\info.ico" />
+    <WixVariable Id="WixUINewIco" Value="$(var.Bitmaps)\New.ico" />
+    <WixVariable Id="WixUIUpIco" Value="$(var.Bitmaps)\Up.ico" />
+
+
+    <MajorUpgrade
+        AllowDowngrades="yes"
+        />
+    <!-- Note we don't actually allow downgrades, we just 
+          manage them ourselves -->
+    <Upgrade Id='$(var.UpgradeCode)' >
+        <UpgradeVersion Minimum='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)'
+                        IncludeMinimum='no'
+                        OnlyDetect='yes'
+                        Property='UPGRADINGNEWERVERSION' />
+    </Upgrade>
+
+    <Property Id='FORCEINSTALL' Value='0'/>
+
+    <Condition Message="A later version of [ProductName] is already installed.  Setup will now exit">
+        <![CDATA[((NOT UPGRADINGNEWERVERSION) OR (FORCEINSTALL="1"))]]>
+    </Condition>
+
+    <Property Id="NETFRAMEWORK4XFULL">
+        <RegistrySearch Id="NetFramework4xFull" Root="HKLM" 
+            Key="Software\Microsoft\NET Framework Setup\NDP\v4\Full"
+            Name="Install"
+            Type="raw" />
+    </Property>
+    <Property Id="NETFRAMEWORK4XCLIENT">
+        <RegistrySearch Id="NetFramework4xClient" Root="HKLM" 
+            Key="Software\Microsoft\NET Framework Setup\NDP\v4\Client"
+            Name="Install"
+            Type="raw" />
+    </Property>
+    <Property Id="NETFRAMEWORKX35">
+        <RegistrySearch Id="NetFrameworkX35" Root="HKLM" 
+            Key="Software\Microsoft\NET Framework Setup\NDP\v3.5"
+            Name="Install"
+            Type="raw" />
+    </Property>
+    <Property Id="DOTNETINSTALLEREXISTS">
+        <DirectorySearch Id="CheckDotNetInstallerDir" Path="[SourceDir]" Depth="0">
+            <FileSearch Id="CheckDotNetInstaller" Name="dotNetFx40_Full_x86_x64.exe" />
+        </DirectorySearch>
+    </Property>
+
+    <Condition Message="Microsoft .Net Framework Version 3.5 or 4 is required to run the Windows PV Tools.  Please install .Net 3.5 or 4.0 and try again.">
+        <![CDATA[Installed OR ((( NETFRAMEWORK4XFULL OR NETFRAMEWORK4XCLIENT) OR NETFRAMEWORKX35 ) OR DOTNETINSTALLEREXISTS)]]>
+    </Condition>
+    <Condition Message="Microsoft .Net Framework Version 3.5 or 4 is required to run the Windows PV Tools.  Please install .Net 3.5 or 4.0 and try again.  The Microsoft .Net Framework v4.0 can be installed by running [SourceDir]dotNetFx40_Full_x86_x64.exe or enabling the .Net role">
+        <![CDATA[Installed OR ((( NETFRAMEWORK4XFULL OR NETFRAMEWORK4XCLIENT) OR NETFRAMEWORKX35 ) OR NOT DOTNETINSTALLEREXISTS)]]>
+    </Condition>
+    
+    <Media Id='1' Cabinet='InstallWizard.cab' EmbedCab='yes' />
+    <Media Id='2' />
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='$(var.pf)'>
+        <Directory Id='CitrixDir' Name='Citrix'>
+            <Directory Id='INSTALLDIR' Name='XenTools'>
+                <Directory Id='INSTALLER' Name = 'Installer'>
+                    <Component Id="LegacyInstaller" Guid="$(var.legacyid)">
+                        <File Id="LegacyExe" Compressed="no" DiskId='2' Source="XenLegacy.Exe"/> 
+                    </Component>
+                    <Component Id="Msis" Guid="$(var.msiid)" >
+                        <File Id="Drivers32MSI" Compressed="no" DiskId="2" Source="CitrixXenDriversX86.msi" />
+                        <File Id="Drivers64MSI" Compressed="no" DiskId="2" Source="CitrixXenDriversX64.msi" />
+                        <File Id="Agent32MSI" Compressed="no" DiskId="2" Source="CitrixGuestAgentX86.msi" />
+                        <File Id="Agent64MSI" Compressed="no" DiskId="2" Source="CitrixGuestAgentX64.msi" />
+                        <File Id="VssProv32MSI" Compressed="no" DiskId="2" Source="CitrixVssX86.msi" />
+                        <File Id="VssProv4MSI" Compressed="no" DiskId="2" Source="CitrixVssX64.msi" />
+                    </Component>
+                    <?if $(var.usecerts)=yes ?>
+                    <Component Id="Certs" Guid="$(var.certs)">
+                        <File Id="EapCitrix" Name="EapCitrix.cer" Source="$(var.Bitmaps)\eapcitrix.cer" />
+                        <File Id="EapCodeSign" Name="EapCodeSign.cer" Source="$(var.Bitmaps)\eapcodesign.cer" />
+                        <File Id="EapRoot" Name="EapRoot.cer" Source="$(var.Bitmaps)\eaproot.cer" />
+                    </Component>
+                    <?endif?>
+                    <Component Id='dotnetthreefiveagent' Guid='$(var.dn35id)' >
+                       <Condition>
+                            <![CDATA[Installed OR ( NETFRAMEWORKX35 ) ]]>
+                       </Condition>
+                       <File Id='InstallConfig35' Name="InstallWizard.Exe.Config" Source='InstallWizard\installwizard\InstallWizard.Exe.3.5.Config' />
+                       <File Id='UIEventConfig35' Name="UIEvent.Exe.Config" Source='InstallWizard\UIEvent\UIEvent.Exe.3.5.Config' />
+                    </Component>
+                    <Component Id='dotnetfouragent' Guid='$(var.dn4id)' >
+                       <Condition>
+                            <![CDATA[Installed OR ( ( NETFRAMEWORK4XFULL OR NETFRAMEWORK4XCLIENT ) AND NOT NETFRAMEWORKX35 ) ]]>
+                       </Condition>
+                       <File Id='InstallConfig4' Name="InstallWizard.Exe.Config" Source='InstallWizard\installwizard\InstallWizard.Exe.4.Config' />
+                        <File Id='InstallGuiConfig' Name="InstallGui.Exe.Config" Source='InstallWizard\installgui\InstallGui.Exe.Config' />
+                        <File Id='UIEventConfig4' Name="UIEvent.Exe.Config" Source='InstallWizard\UIEvent\UIEvent.Exe.4.Config' />
+                    </Component>
+                    <Component Id='UIEvent' Guid='*'>
+                        <File Id="UIEventExe" Name="UIEvent.exe" Source="installWizard\UIEvent\UIEvent.exe" />
+                    </Component>
+                    <Component Id='InstallGui' Guid='*'>
+                        <File Id="InstallguiExe" Name="InstallGui.exe" Source="installWizard\installgui\InstallGui.exe" />
+                    </Component>
+                    <Component Id='InstallService' Guid="*">
+                        <File Id='InstallWizard.Exe' Name='InstallWizard.Exe' Source="InstallWizard\installwizard\InstallWizard.exe" />
+                        <ServiceInstall Id='XenInstallerInstaller'
+                            Type='ownProcess'
+                            Vital='yes'
+                            Name='XenPVInstall'
+                            DisplayName='Citrix XenServer Windows Installer'
+                            Description='Manages Citrix XenServer Tools Installation'
+                            Start='auto'
+                            Account='LocalSystem'
+                            ErrorControl='ignore'
+                            Interactive='no' >
+                            <ServiceDependency Id='Winmgmt' />
+                        </ServiceInstall>
+
+                        <ServiceControl Id='StartService' 
+                            Start='install' 
+                            Stop='both' 
+                            Remove='uninstall' 
+                            Name='XenPVInstall' 
+                            Wait='yes' />
+                    </Component>
+                </Directory>
+            </Directory>
+         </Directory>
+      </Directory>
+            <Component Id='RegEntry' Guid="*">
+                <RegistryKey Root='HKLM'
+                    Key='Software\Citrix\XenToolsInstaller'
+                    Action='createAndRemoveOnUninstall'>
+                    <RegistryValue Type='string' Name='Install_Dir' Value='[INSTALLDIR]' />
+                    <RegistryValue Type='integer' Name='Mode' Value='[UILevel]' />
+                    <RegistryValue Type='string' Name='MSISourceDir' Value='[INSTALLER]' />
+                </RegistryKey>
+            </Component>
+            <Component Id='InstallStatus' Guid="*" >
+                <RegistryKey Root='HKLM'
+                    Key='Software\Citrix\XenToolsInstaller'
+                    Action='createAndRemoveOnUninstall'>
+                    <RegistryValue Type='string' Name='InstallStatus' Value='Starting' />
+                </RegistryKey> 
+            </Component>
+            <Component Id='RebootCtrl' Guid="$(var.RebootGuid)" >
+                <RegistryKey Root='HKLM'
+                    Key='Software\Citrix\XenToolsInstaller'
+                    Action='createAndRemoveOnUninstall'>
+                    <RegistryValue Type='integer' Name='NoReboot' Value='1' />
+                </RegistryKey> 
+            </Component>
+            <Component Id='NoRebootCtrl' Guid="$(var.NoRebootGuid)" >
+                <RegistryKey Root='HKLM'
+                    Key='Software\Citrix\XenToolsInstaller'
+                    Action='createAndRemoveOnUninstall'>
+                    <RegistryValue Type='integer' Name='NoReboot' Value='0' />
+                </RegistryKey> 
+            </Component>
+            <Component Id='UserRegEntry' Guid="$(var.ActiveGuid)">
+                <RegistryKey Root='HKCU'
+                    Key='Software\Citrix\XenToolsInstaller'
+                    Action='createAndRemoveOnUninstall'>
+                    <RegistryValue Type='string' Name='UIMode' Value='Active' />
+                </RegistryKey> 
+            </Component>
+            <Component Id='NoUserRegEntry' Guid="$(var.PassiveGuid)">
+                <RegistryKey Root='HKCU'
+                    Key='Software\Citrix\XenToolsInstaller'
+                    Action='createAndRemoveOnUninstall'>
+                    <RegistryValue Type='string' Name='UIMode' Value='Passive' />
+                </RegistryKey> 
+            </Component>
+    </Directory>
+    <Feature Id='Complete' Level='1'>
+        <Condition Level='0'>
+          <![CDATA[(VersionNT<600)]]>
+        </Condition>
+        <?if $(var.usecerts)=yes ?>
+        <ComponentRef Id='Certs' />
+        <?endif?>
+        <ComponentRef Id='dotnetfouragent'/>
+        <ComponentRef Id='dotnetthreefiveagent'/>
+        <ComponentRef Id='InstallGui'/>
+        <ComponentRef Id='UIEvent'/>
+        <ComponentRef Id='RegEntry'/>
+        <ComponentRef Id='InstallService'/>
+        <ComponentRef Id='Msis' />
+        <ComponentRef Id='LegacyInstaller' />
+        <ComponentRef Id='InstallStatus' />
+    </Feature>
+    
+    <Feature Id="NoReboot" Level="0">
+        <Condition Level='1'>
+            <![CDATA[REBOOT="Suppress" or REBOOT="ReallySuppress"]]>
+        </Condition>
+        <ComponentRef Id='RebootCtrl'/>
+    </Feature>
+    <Feature Id="Reboot" Level="0">
+        <Condition Level='1'>
+            <![CDATA[not (REBOOT="Suppress" or REBOOT="ReallySuppress") ]]>
+        </Condition>
+        <ComponentRef Id='NoRebootCtrl'/>
+    </Feature>
+
+    <Feature Id="Active" Level="1" >
+        <Condition Level='0'>
+            <![CDATA[(UILevel<5)]]>
+        </Condition>
+        <ComponentRef Id='UserRegEntry'/>
+    </Feature>
+    <Feature Id="NotActive" Level="1" >
+        <Condition Level='0'>
+            <![CDATA[not (UILevel<5)]]>
+        </Condition>
+        <ComponentRef Id='NoUserRegEntry'/>
+    </Feature>
+
+    <Feature Id="Legacy" Level='0'>
+        <Condition Level='1'>
+            <![CDATA[(VersionNT<600)]]>
+        </Condition>
+        <ComponentRef Id='LegacyInstaller' />
+        <ComponentRef Id='InstallGui'/>
+        <ComponentRef Id='InstallStatus' />
+    </Feature>
+
+    <CustomAction Id="InstallGui" FileKey="InstallguiExe" Impersonate="no" ExeCommand="/i" Return="asyncWait" Execute="deferred" />
+
+    <CustomAction Id="SetApplicationActive" Property="LaunchApplication" Value="/Active" Execute="immediate"/>
+    <CustomAction Id="SetApplicationPassive" Property="LaunchApplication" Value="/Passive" Execute="immediate"/>
+    <CustomAction Id="LaunchApplication" FileKey="InstallguiExe" Impersonate="yes" ExeCommand="[LaunchApplication]" Return="asyncNoWait" />
+
+
+    <CustomAction Id='SetLegacy' Property="LegacyExeProp" Value="[INSTALLER]\XenLegacy.exe" Execute="immediate" />
+    <CustomAction Id='LegacySilent' Property="LaunchLegacy" Value="/norestart /AllowLegacyInstall /S /D=[INSTALLDIR]" Execute="immediate" />
+
+
+    <CustomAction Id='LaunchLegacy' FileKey="LegacyExe" Impersonate='yes' ExeCommand='[LaunchLegacy]' Return="asyncWait" Execute="deferred" />
+
+    <InstallExecuteSequence>
+        <Custom Action='InstallGui' Before="LegacySilent" >
+            <![CDATA[NOT Installed]]>
+        </Custom>
+        <Custom Action='SetLegacy' Before='LegacySilent'>
+            <![CDATA[NOT Installed]]>
+        </Custom>
+        <Custom Action='LegacySilent' Before='LaunchLegacy'>
+            <![CDATA[NOT Installed]]>
+        </Custom>
+        <Custom Action='LaunchLegacy' Before='InstallFinalize'>
+            <![CDATA[NOT Installed and VersionNT<600]]>
+        </Custom>
+        <ScheduleReboot After='InstallFinalize' Overridable='yes' >
+            <![CDATA[NOT Installed and VersionNT<600]]>
+        </ScheduleReboot>
+    </InstallExecuteSequence>
+
+    <CustomAction Id='CA_Set_ExitText' Property='WIXUI_EXITDIALOGOPTIONALTEXT' Value="When the Setup Wizard exits, the install wizard will begin and install the XenServer Windows PV Tools" />
+    <CustomAction Id='CA_Set_ExitTextLegacy' Property='WIXUI_EXITDIALOGOPTIONALTEXT' Value="" />
+
+    <InstallUISequence>
+        <Custom Action="CA_Set_ExitText" After="FindRelatedProducts"><![CDATA[NOT Installed and VersionNT>=600]]></Custom>
+        <Custom Action="CA_Set_ExitTextLegacy" After="CA_Set_ExitText"><![CDATA[NOT Installed and VersionNT<600]]></Custom>
+    </InstallUISequence>
+  </Product>
+
+
+</Wix>

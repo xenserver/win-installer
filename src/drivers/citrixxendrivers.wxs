@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='windows-1252' ?>
+
+<!--
+ Copyright (c) Citrix Systems Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, 
+ with or without modification, are permitted provided 
+ that the following conditions are met:
+
+ *   Redistributions of source code must retain the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer.
+ *   Redistributions in binary form must reproduce the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer in the documentation and/or other 
+     materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ SUCH DAMAGE.
+-->
+
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+    xmlns:difx='http://schemas.microsoft.com/wix/DifxAppExtension'>
+
+  <?if $(var.arch) = x86 ?>
+      <?define build='i386' ?>
+      <?define w64='no' ?>
+    <?elseif $(var.arch) = x64 ?>
+      <?define build='amd64' ?>
+      <?define w64='yes' ?>
+      <?define build32='i386' ?>
+    <?endif?>
+
+    <?if $(var.arch)=x64 ?>
+      <?define UpgradeCode = '53858014-F814-49A1-9D63-CA2578432E73' ?>
+      <?define ProductId = '*' ?>
+    <?else?>
+      <?define UpgradeCode = 'BF521C04-45C1-442B-B9F0-432654E2F189' ?>
+      <?define ProductId = '*' ?>
+    <?endif?>
+
+    <?include verinfo.wxi ?>
+    <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
+    <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
+    <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
+    <?define CurrentBuildVersion = '$(var.BRANDING_BUILD_NR_STR)' ?>
+
+  <Product Name='Citrix Xen Windows $(var.arch) PV Drivers' Id='$(var.ProductId)'
+      Language='1033' Codepage='1252' 
+      Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' 
+      Manufacturer='Citrix'
+      UpgradeCode='$(var.UpgradeCode)' >
+    <Package Id='*' Keywords='Citrix Xen Drivers' Description='Citrix Xen Windows Drivers'
+             Comments='Paravitualized Windows Drivers For Citrix XenServer' Manufacturer='Citrix'
+             InstallerVersion='200' Languages='1033' Compressed='yes'
+
+             Platform='$(var.arch)'
+             InstallScope='perMachine'
+
+             SummaryCodepage='1252' />
+
+    <Upgrade Id='$(var.UpgradeCode)'>
+         <UpgradeVersion Minimum='0.0.0'
+                        IncludeMinimum='yes'
+                        Maximum='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)'
+                        IncludeMaximum='yes'
+                        Property='UPGRADINGSAMEOROLDER' />
+    </Upgrade>
+    
+    <Upgrade Id='$(var.UpgradeCode)'>
+        <UpgradeVersion Minimum='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)'
+                        IncludeMinimum='no'
+                        OnlyDetect='yes'
+                        Property='UPGRADINGNEWERVERSION' />
+    </Upgrade>
+    <Property Id='FORCEINSTALL' Value='0'/>
+    <Property Id='ARPSYSTEMCOMPONENT' Value='0'/>
+    <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+    <InstallExecuteSequence>
+        <RemoveExistingProducts After="InstallValidate"/>
+    </InstallExecuteSequence>
+        
+
+    <Condition Message="A later version of [ProductName] is already installed.  Setup will now exit">
+        <![CDATA[(NOT UPGRADINGNEWERVERSION) OR (FORCEINSTALL="1")]]>
+    </Condition>
+   
+
+    <Condition Message="These Citrix Xen PV Drivers for Windows require Windows Vista, Windows Server 2008 or Later">
+        <![CDATA[Installed OR (VersionNT>=600)]]>
+    </Condition>
+    <Media Id='1' Cabinet='XenDriversInstaller.cab' EmbedCab='yes' />
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+        <?if $(var.arch)=x86?>
+            <Directory Id='ProgramFilesFolder'>
+                <Directory Id='Citrix' Name='Citrix'>
+                    <Directory Id='INSTALLDIR' Name='XenTools'>
+                        <Merge Id='Drivers' Language='1033' SourceFile='drivers$(var.arch).msm' DiskId='1' />
+                    </Directory>
+                </Directory>
+            </Directory>
+        <?else?>
+            <Directory Id='ProgramFiles64Folder'>
+                <Directory Id='Citrix' Name='Citrix'>
+                    <Directory Id='INSTALLDIR' Name='XenTools'>
+                        <Merge Id='Drivers' Language='1033' SourceFile='drivers$(var.arch).msm' DiskId='1' />
+                    </Directory>
+                </Directory>
+            </Directory>
+        <?endif?>
+    </Directory>
+    <Feature Id='Complete' Level='1'>
+      <MergeRef Id='Drivers' />
+    </Feature>
+  </Product>
+
+
+</Wix>

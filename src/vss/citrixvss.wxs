@@ -1,0 +1,105 @@
+<?xml version='1.0' encoding='windows-1252' ?>
+
+<!--
+ Copyright (c) Citrix Systems Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, 
+ with or without modification, are permitted provided 
+ that the following conditions are met:
+
+ *   Redistributions of source code must retain the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer.
+ *   Redistributions in binary form must reproduce the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer in the documentation and/or other 
+     materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ SUCH DAMAGE.
+-->
+
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+    >
+
+    <?include verinfo.wxi ?>
+    <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
+    <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
+    <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
+    <?define CurrentBuildVersion = '$(var.BRANDING_BUILD_NR_STR)' ?>
+
+    <?define UpgradeCode = 'd8709720-65b7-4cd9-9f51-68db592b604d' ?>
+    <?define ProductId = '*' ?>
+    <?define XenVssComponentGUID = 'bb4ad259-a748-4a92-b265-5635cae68e42' ?>
+
+  <Product Name='Citrix XenServer VSS Provider' Id='$(var.ProductId)'
+           Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='Citrix'
+           UpgradeCode='$(var.UpgradeCode)' >
+    <Package Id='*' Keywords='Citrix XenServer VSS Provider' Description='VSS Provider'
+             Comments='Installs Citrix XenServer VSS Provider' Manufacturer='Citrix'
+             InstallerVersion='200' Languages='1033' Compressed='yes'
+             InstallScope='perMachine'
+             Platform='$(var.arch)'
+             SummaryCodepage='1252' />
+    <Upgrade Id='$(var.UpgradeCode)'>
+         <UpgradeVersion Minimum='0.0.0'
+                        IncludeMinimum='yes'
+                        Maximum='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)'
+                        IncludeMaximum='yes'
+                        Property='UPGRADINGSAMEOROLDER' />
+    </Upgrade>
+    
+    <Upgrade Id='$(var.UpgradeCode)'>
+        <UpgradeVersion Minimum='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)'
+                        IncludeMinimum='no'
+                        OnlyDetect='yes'
+                        Property='UPGRADINGNEWERVERSION' />
+    </Upgrade>
+   <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
+   <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+   <Property Id='ARPSYSTEMCOMPONENT' Value='0'/>
+   <Property Id='FORCEINSTALL' Value='0'/>
+   <InstallExecuteSequence>
+        <RemoveExistingProducts After="InstallValidate"/>
+   </InstallExecuteSequence> 
+
+    <Condition Message="A later version of [ProductName] is already installed.  Setup will now exit">
+        <![CDATA[((NOT UPGRADINGNEWERVERSION) OR (FORCEINSTALL="1"))]]>
+    </Condition>
+	
+    <Media Id='1' Cabinet='XenVssInstaller.cab' EmbedCab='yes' />
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='ProgramFilesFolder'>
+        <Directory Id='Citrix' Name='Citrix'>
+          <Directory Id='INSTALLDIR' Name='XenTools'>
+				<Component Id='XenVssComponent' Guid='$(var.XenVssComponentGUID)'>
+				    <File Id='xenvss_dll' Name="XenVss.dll" DiskId='1' Source='xenvss\$(var.arch)\xenvss.dll' KeyPath='yes' />
+				    <File Id='vssclient_dll' Name="VssClient.dll" Source='xenvss\$(var.arch)\vssclient.dll' />
+				    <File Id='install_cmd' Name="install-XenProvider.cmd" Source='xenvss\install-XenProvider.cmd' />
+				    <File Id='uninstall_cmd' Name="uninstall-XenProvider.cmd" Source='xenvss\uninstall-XenProvider.cmd' />
+				    <File Id='regvss_vbs' Name="regvss.vbs" Source='xenvss\regvss.vbs' />
+				</Component>
+			</Directory>
+			</Directory>
+		</Directory>
+    </Directory>
+    <Feature Id='Complete' Level='1'>
+        <ComponentRef Id='XenVssComponent'/>
+    </Feature>
+  </Product>
+
+
+</Wix>

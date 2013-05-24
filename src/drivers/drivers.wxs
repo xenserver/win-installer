@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='windows-1252' ?>
+<!--
+ Copyright (c) Citrix Systems Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, 
+ with or without modification, are permitted provided 
+ that the following conditions are met:
+
+ *   Redistributions of source code must retain the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer.
+ *   Redistributions in binary form must reproduce the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer in the documentation and/or other 
+     materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ SUCH DAMAGE.
+-->
+
+
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+     xmlns:difx='http://schemas.microsoft.com/wix/DifxAppExtension'>
+
+    <?if $(var.arch) = x86 ?>
+      <?define build='x86' ?>
+      <?define w64='no' ?>
+    <?elseif $(var.arch) = x64 ?>
+      <?define build='x64' ?>
+      <?define w64='yes' ?>
+      <?define build32='x86' ?>
+    <?endif?>
+
+    <?if $(var.arch)=x64 ?>
+      <?define XenIfaceDriverGUID = 'C8490FBB-0578-43a7-8C1A-8AE85D3F5828' ?>
+      <?define XenVifDriverGUID = 'A61D7235-B64D-4a6a-893F-C6931D6A19E0' ?>
+      <?define XenVbdDriverGUID = 'FF1FBC65-784F-4c69-BD4E-656AC5B9BDE4' ?>
+      <?define XenNetDriverGUID = '23ADA04F-E332-4919-8B33-1343F23726AF' ?>
+      <?define XenBusDriverGUID = 'E758A393-4C2A-4514-B752-C4C643473F35' ?>
+    <?else?>
+      <?define XenIfaceDriverGUID = '0015EBE7-54B7-4e3c-8A57-7A27C18C9B34' ?>
+      <?define XenVifDriverGUID = '059914AF-D2A5-476e-9015-69A9FD216865' ?>
+      <?define XenVbdDriverGUID = '1B2BF4D8-DEDB-484e-8495-C7C359207DA9' ?>
+      <?define XenNetDriverGUID = '08B4AC6E-1B49-4a72-A94E-1C89A7734191' ?>
+      <?define XenBusDriverGUID = '92EBFF13-EBAB-40c2-BC5E-40AE5BF2FC93' ?>
+
+    <?endif?>
+
+  <Module Id='XenifaceModule' Language='1033' Version='1.0.0.0'>
+    <Package Id='6F544704-0FDA-49fd-98B0-DD388944F3DA' Keywords='XenIface' Description='XenIface Installer'
+     Comments='Installs Xen WMI Interface Driver' Manufacturer='Citrix'
+     InstallerVersion='200' Languages='1033' 
+     SummaryCodepage='1252' />
+
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+        <Directory Id='XenIfaceDir' Name='XenIface'>
+            
+          <Component Id='XenIfaceDriver' Guid='$(var.XenIfaceDriverGUID)' >    
+	      <File Id='XenIfaceSys' Name='XenIface.sys' DiskId='1' Source='xeniface\$(var.build)\xeniface.sys' KeyPath='yes' />
+          <File Id='XenIfaceInf' Name='XenIface.inf' DiskId='1' Source='xeniface\$(var.build)\xeniface.inf' />
+          <File Id='XenIfaceCat' Name='XenIface.cat' DiskId='1' Source='xeniface\$(var.build)\xeniface.cat' />
+          <difx:Driver PlugAndPlayPrompt='no' DeleteFiles='no' ForceInstall='no' Sequence='2' Legacy="yes"/>
+        </Component>
+      </Directory>
+
+      <Directory Id='XenVifDir' Name='XenVif'>
+        <Component Id='XenVifDriver' Guid='$(var.XenVifDriverGUID)'>
+            <File Id='XenVifSys' Name='XenVif.sys' DiskId='1' Source='xenvif\$(var.build)\xenvif.sys' KeyPath='yes' />
+            <File Id='XenVifConinst' Name='xenvif_coinst.dll' DiskId='1' Source='xenvif\$(var.build)\xenvif_coinst.dll' />
+            <File Id='XenVifCat' Name='XenVif.cat' DiskId='1' Source='xenvif\$(var.build)\xenvif.cat' />
+            <File Id='XenVifInf' Name='XenVif.inf' DiskId='1' Source='xenvif\$(var.build)\xenvif.inf' />
+            <difx:Driver PlugAndPlayPrompt='no' DeleteFiles='no' ForceInstall='no' Sequence='4' Legacy="yes" />
+        </Component>
+      </Directory> 
+      
+      <Directory Id='XenVbdDir' Name='XenVbd'>
+        <Component Id='XenVbdDriver' Guid='$(var.XenVbdDriverGUID)'>
+            <File Id='XenVbdSys' Name='XenVbd.sys' DiskId='1' Source='xenvbd\$(var.build)\xenvbd.sys' KeyPath='yes' />
+            <File Id='XenVbdCat' Name='XenVbd.cat' DiskId='1' Source='xenvbd\$(var.build)\xenvbd.cat' />
+            <File Id='XenCrshSys' Name='XenCrsh.sys' DiskId='1' Source='xenvbd\$(var.build)\xencrsh.sys' />
+            <File Id='XenVbdCoInstDll' Name='XenVbd_coinst.dll' DiskId='1' Source='xenvbd\$(var.build)\xenvbd_coinst.dll' />
+            <File Id='XenVbdInf' Name='XenVbd.inf' DiskId='1' Source='xenvbd\$(var.build)\xenvbd.inf' />
+            <difx:Driver PlugAndPlayPrompt='no' DeleteFiles='no' ForceInstall='no' Sequence='3' Legacy="yes"/>
+        </Component>
+      </Directory>
+
+      <Directory Id='XenNetDir' Name='XenNet'>
+        <Component Id='XenNetDriver' Guid='$(var.XenNetDriverGUID)'>
+            <File Id='XenNetSys' Name='XenNet.sys' DiskId='1' Source='xennet\$(var.build)\xennet.sys' KeyPath='yes' />
+            <File Id='XenNetCat' Name='XenNet.cat' DiskId='1' Source='xennet\$(var.build)\xennet.cat' />
+            <File Id='XenNetInf' Name='XenNet.inf' DiskId='1' Source='xennet\$(var.build)\xennet.inf' />
+            <File Id='XenNetCoInstDll' Name='XenNet_coinst.dll' DiskId='1' Source='xennet\$(var.build)\xennet_coinst.dll' />
+
+            <difx:Driver PlugAndPlayPrompt='no' DeleteFiles='no' ForceInstall='no' Sequence='3' Legacy="yes"/>
+        </Component>
+      </Directory>
+      <Directory Id='XenBusDir' Name='XenBus'>
+          <Component Id='XenBusDriver' Guid='$(var.XenBusDriverGUID)' >
+          <File Id='XenBusSys' Name='XenBus.sys' DiskId='1' Source='xenbus\$(var.build)\xenbus.sys' KeyPath='yes' />
+          <File Id='XenSys' Name='Xen.sys' DiskId='1' Source='xenbus\$(var.build)\xen.sys' />
+          <File Id='BusFiltSys' Name='XenFilt.sys' DiskId='1' Source='xenbus\$(var.build)\XenFilt.sys' />
+          <File Id='XenbusCoinsttdll' Name='xenbus_coinst.dll' DiskId='1' Source='xenbus\$(var.build)\xenbus_coinst.dll' />
+          <File Id='XenBusInf' Name='XenBus.inf' DiskId='1' Source='xenbus\$(var.build)\xenbus.inf' />
+          <File Id='XenBusCat' Name='XenBus.cat' DiskId='1' Source='xenbus\$(var.build)\xenbus.cat' />
+          <difx:Driver PlugAndPlayPrompt='no' DeleteFiles='no' ForceInstall='no' Sequence='1' Legacy="yes"/>
+
+          <RegistryKey Root='HKLM'
+                       Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\Sysprep\Settings\sppnp'>
+                <RegistryValue Type='integer' Name='PersistAllDeviceInstalls' 
+                               Value='1' />
+          </RegistryKey>
+
+        </Component>
+      </Directory> 
+  </Directory>
+  <InstallExecuteSequence>
+  </InstallExecuteSequence> 
+  </Module>
+</Wix>
