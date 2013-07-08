@@ -755,7 +755,7 @@ namespace InstallWizard
             NsisUninstalling = 1 << 05, // I have initiated the uninstall of an old NSIS-installed - it will be finished post-reboot
             HWIDCorrect = 1 << 06, // The HWID is the one the new drivers expect
             GotAgent = 1 << 07, // I have determined that the correct MSI installed guest agent is present
-            NeedReboot = 1 << 08, // When I'm no longer able to make any state transitions, I should reboot
+            RebootNow = 1 << 08, // When I'm no longer able to make any state transitions, I should reboot
             NeedShutdown = 1 << 09, // When I'm ready to reboot, I should shutdown and await a restart (not reboot)
             Polling = 1 << 10, // I should wait for a few minutes - if no state transitions occur, I should reboot
             PollTimedOut = 1 << 11, // We have been in the polling state for too long
@@ -774,6 +774,7 @@ namespace InstallWizard
             AutoShutdown = 1<< 24, // We want all future shutdowns to happen without user intervention
             GotVssProvider = 1 << 25, // I have determined that the correct MSI installed vss provider is present
             OneFinalReboot = 1 << 26, // We have been restored after one extra reboot has been scheduled.  Don't schedule another reboot.
+            NeedsReboot = 1 << 27, // We will have to reboot before we have finished, but should continue to poll for now
         }
         public bool Unchanged = true;
         
@@ -1063,35 +1064,54 @@ namespace InstallWizard
             return false;
         }
         int longpolltimeout = 5 * 60 * 1000;
-        int shortpolltimeout = 30 * 1000;
+        int shortpolltimeout = 10 * 1000;
         int polltimeout = 0;
         int pollcount = 0;
+        object polllock = new object();
+        public void PollingReset() {
+            lock(polllock) {
+                Trace.WriteLine("Reset polling");
+                // Start counting again from the beginning
+                pollcount = 0;
+                // If the timeout is non-zero then
+                // a) we have already started polling
+                // b) after we started polling, something has caused us to reset
+                // since this implies 'something is happening' reset to a short timeout
+                if (polltimeout != 0)
+                {
+                    polltimeout = shortpolltimeout;
+                }
+            }
+        }
+
         public void Sleep(int ms)
         {
-            if (polltimeout == 0)
-            {
-                Trace.WriteLine("Setting 30 second pollout");
-                polltimeout = (int)Application.UserAppDataRegistry.GetValue("PollingTimeout", shortpolltimeout);
-            }
-            else
-            {
-                Trace.WriteLine("Setting long pollout");
-            }
-            if (Polling && (pollcount > polltimeout))
-            {
-                if (polltimeout == longpolltimeout)
+            lock (polllock) {
+                if (polltimeout == 0)
                 {
-                    // FIXME This is a fail
+                    Trace.WriteLine("Setting new poll timeout");
+                    polltimeout = (int)Application.UserAppDataRegistry.GetValue("PollingTimeout", shortpolltimeout);
                 }
                 else
                 {
-                    Application.UserAppDataRegistry.SetValue("PollingTimeout", longpolltimeout);
+                    Trace.WriteLine("Using existing timeout");
                 }
-                PollTimedOut = true;
-                return;
+                if (Polling && (pollcount > polltimeout))
+                {
+                    // If we have timed out, we want to ensure we use longer timoouts by default
+                    // on future reboots.
+                    if (polltimeout != longpolltimeout)
+                    {
+                        Application.UserAppDataRegistry.SetValue("PollingTimeout", longpolltimeout);
+                    }
+                    PollTimedOut = true;
+                    return;
+                }
             }
             WaitHandle.WaitAny(new WaitHandle[]{shutdownevent, stateevent}, ms);
-            pollcount += ms;
+            lock(polllock) {
+                pollcount += ms;
+            }
         }
 
         private States currentstate = 0; // States.PauseOnStart; // (should be 0)
@@ -1184,7 +1204,8 @@ namespace InstallWizard
         public bool NsisUninstalling { set { setstate(States.NsisUninstalling, value); } get { return getstate(States.NsisUninstalling); } }
         public bool HWIDCorrect { set { setstate(States.HWIDCorrect, value); } get { return getstate(States.HWIDCorrect); } }
         public bool GotAgent { set { setstate(States.GotAgent, value); } get { return getstate(States.GotAgent); } }
-        public bool NeedReboot { set { setstate(States.NeedReboot, value); } get { return getstate(States.NeedReboot); } }
+        public bool RebootNow { set { setstate(States.RebootNow, value); } get { return getstate(States.RebootNow); } }
+        public bool NeedsReboot { set { setstate(States.NeedsReboot, value); } get { return getstate(States.NeedsReboot); } }
         public bool Polling { set { setstate(States.Polling, value); } get { return getstate(States.Polling); } }
         public bool PollTimedOut { set { setstate(States.PollTimedOut, value); } get { return getstate(States.PollTimedOut); } }
         public bool RebootReady { set { setstate(States.RebootReady, value); } get { return getstate(States.RebootReady); } }
@@ -1689,13 +1710,6 @@ namespace InstallWizard
                     return false;
                 }
                 textout = textout+"  XenServer Interface Device Installed\n";
-                if (!checkservicerunning("xenfilt"))
-                {
-                    Trace.WriteLine("Device filter not ready");
-                    textout = textout + "  Device Filter Initializing\n";
-                    return false;
-                }
-                textout = textout + "  Device Filter Installed\n";
 
                 Trace.WriteLine("Which emulated devices are available");
                 if (!checkemulated("VIF"))
@@ -1713,6 +1727,14 @@ namespace InstallWizard
                     return false;
                 }
                 textout = textout + "  Virtual Block Device Support Installed\n";
+                
+                if (!checkservicerunning("xenfilt"))
+                {
+                    Trace.WriteLine("Device filter not ready");
+                    textout = textout + "  Device Filter Initializing\n";
+                    return false;
+                }
+                textout = textout + "  Device Filter Installed\n";
 
                 return true;
             }

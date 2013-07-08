@@ -208,8 +208,9 @@ namespace InstallWizard
                     if (InstallState.GotAgent &&
                          ((InstallWizard.InstallerState.WinVersion.isServerSKU() && InstallState.GotVssProvider) || !InstallWizard.InstallerState.WinVersion.isServerSKU()) && 
                          InstallState.GotDrivers &&
-                         !InstallState.NeedReboot &&
-                         InstallState.NsisFree)
+                         !InstallState.RebootNow &&
+                         InstallState.NsisFree &&
+                         !InstallState.NeedsReboot)
                     {
                         Trace.WriteLine("Everything is installed");
                         InstallState.Installed = true;
@@ -233,6 +234,9 @@ namespace InstallWizard
                     if ((!InstallState.GotDrivers) && (InstallState.NsisFree) && (!HWID.needsupdate()))
                     {
                         Trace.WriteLine("Check if drivers are functioning");
+
+                        string oldtext = InstallState.DriverText;
+
                         if ((DriversMsi.installed() && (!DriversMsi.olderinstalled())) && DriversMsi.functioning(ref InstallState.DriverText))
                         {
                             Trace.WriteLine("Drivers functioning");
@@ -240,6 +244,10 @@ namespace InstallWizard
                         }
                         else
                         {
+                            if (InstallState.DriverText != oldtext)
+                            {
+                                InstallState.PollingReset();
+                            }
                             if ((!InstallState.DriversPlaced) && ((!DriversMsi.installed()) || DriversMsi.olderinstalled()))
                             {
                                 Trace.WriteLine("Driver install package not found");
@@ -255,8 +263,10 @@ namespace InstallWizard
                                 {
                                     DriversMsi.install("INSTALLDIR=" + installdir, "driversmsi", InstallState);
                                     InstallState.DriversPlaced = true;
-                                    InstallState.NeedReboot = true;
+                                    InstallState.NeedsReboot = true;
+                                    InstallState.Polling = true;
                                     Trace.WriteLine("Install success");
+                                    continue;
                                 }
                                 catch (InstallerException e)
                                 {
@@ -272,8 +282,10 @@ namespace InstallWizard
                                 {
                                     DriversMsi.repair();
                                     Trace.WriteLine("Repair done");
-                                    InstallState.NeedReboot = true;
                                     InstallState.DriversPlaced = true;
+                                    InstallState.NeedsReboot = true;
+                                    InstallState.Polling = true;
+                                    continue;
                                 }
                                 else
                                 {
@@ -281,7 +293,7 @@ namespace InstallWizard
                                 }
 
                             }
-                            if (!InstallState.NeedReboot)
+                            if (!InstallState.RebootNow)
                             {
                                 Trace.WriteLine("Wait to see if drivers initialize");
                                 int noneedtoreboot = (int)Application.CommonAppDataRegistry.GetValue("DriverFinalReboot", 0);
@@ -293,7 +305,7 @@ namespace InstallWizard
                                 else
                                 {
                                     Trace.WriteLine("Don't poll, I have to reboot");
-                                    InstallState.NeedReboot = true;
+                                    InstallState.RebootNow = true;
                                 }
                             }
                         }
@@ -316,12 +328,12 @@ namespace InstallWizard
                                 Vif.CopyPV();
                                 Trace.WriteLine("Attempting NSIS Uninstall");
                                 InstallState.NsisUninstalling = true;
-                                InstallState.NeedReboot = true;
+                                InstallState.RebootNow = true;
                             }
                             else
                             {
                                 Trace.WriteLine("We'll remove NSIS next reboot");
-                                InstallState.NeedReboot = true;
+                                InstallState.RebootNow = true;
                             }
                         }
                         else
@@ -392,7 +404,7 @@ namespace InstallWizard
                                 }
                                 
                                 InstallState.NsisUninstalling = true;
-                                InstallState.NeedReboot = true;
+                                InstallState.RebootNow = true;
                             }
                             InstallState.NsisFree = true;
                         }
@@ -499,7 +511,8 @@ namespace InstallWizard
                         if (InstallState.PollTimedOut)
                         {
                             Trace.WriteLine("Polling timed out");
-                            InstallState.NeedReboot = true;
+                            InstallState.RebootNow = true;
+                            InstallState.NeedsReboot = false;
                             InstallState.Polling = false;
                         }
                         else
@@ -507,6 +520,7 @@ namespace InstallWizard
                             prog["tempscore"][1] += 1;
                             prog["tempscore"][0] += 1;
                             InstallState.Sleep(5000);
+
                         }
                     }
                     else
@@ -514,7 +528,7 @@ namespace InstallWizard
                         Trace.WriteLine("No Polling Work");
                     }
 
-                    if ((!InstallState.RebootReady) && InstallState.NeedReboot && InstallState.Unchanged)
+                    if ((!InstallState.RebootReady) && InstallState.RebootNow && InstallState.Unchanged)
                     {
                         // We are ready to reboot
                         Trace.WriteLine("Ready to reboot");
@@ -532,7 +546,7 @@ namespace InstallWizard
                         Trace.WriteLine("No rebootready work");
                     }
 
-                    if (InstallState.RebootReady && InstallState.NeedReboot && InstallState.Unchanged)
+                    if (InstallState.RebootReady && InstallState.RebootNow && InstallState.Unchanged)
                     {
                         Trace.WriteLine("Expecting Reboot /  Shutdown");
                         InstallState.Rebooting = true;
@@ -588,13 +602,13 @@ namespace InstallWizard
                                 // 'needs a reboot to install'.  So we have to presume the install
                                 // was a success.
                             }
-                            InstallState.NeedReboot = false;
+                            InstallState.RebootNow = false;
                             InstallState.Done = true;
                         }
                         else
                         {
                             InstallState.Done = true;
-                            InstallState.NeedReboot = false;
+                            InstallState.RebootNow = false;
                             InstallState.DoShutdown();
                         }
 
@@ -605,7 +619,7 @@ namespace InstallWizard
                     }
                 }
 
-                Trace.WriteLine("Exited install cycle");
+                Trace.WriteLine("Exited install cycle "+InstallState.Failed+" "+InstallState.RebootCount+" "+InstallState.Done);
 
                 if (!InstallState.Passive)
                 {

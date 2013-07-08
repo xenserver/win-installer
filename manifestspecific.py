@@ -30,13 +30,13 @@
 # SUCH DAMAGE.
 
 build_tar_source_files = {
-        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS/227/artifact/xenbus.tar",
-        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF/163/artifact/xenvif.tar",
-        "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET/87/artifact/xennet.tar",
-        "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/xeniface/37/artifact/xeniface.tar",
-        "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD/125/artifact/xenvbd.tar",
-        "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/guest%20agent/26/artifact/xenguestagent.tar",
-        "xenvss" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVSS/36/artifact/xenvss.tar",
+        "xenbus" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-clearwater-rtm-signed/xenbus-226-signed.tar",
+        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF.git/4/artifact/xenvif.tar",
+        "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET.git/4/artifact/xennet.tar",
+        "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/Xeniface.git/3/artifact/xeniface.tar",
+        "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD.git/5/artifact/xenvbd.tar",
+        "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/guest%20agent.git/29/artifact/xenguestagent.tar",
+        "xenvss" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVSS.git/6/artifact/xenvss.tar",
         } 
 
 all_drivers_signed = False

@@ -42,8 +42,8 @@ import manifestspecific
 import re
 
 def unpack_from_jenkins(filelist, packdir):
-    if ('MERCURIAL_REVISION' in os.environ):
-        print ("Installer Build ",os.environ["MERCURIAL_REVISION"])
+    if ('GIT_REVISION' in os.environ):
+        print ("Installer Build ",os.environ["GIT_REVISION"])
     for urlkey in filelist:
         url = filelist[urlkey]
         print(url)
@@ -59,7 +59,7 @@ signtool=os.environ['KIT']+"\\bin\\x86\\signtool.exe"
 timestamp="http://timestamp.verisign.com/scripts/timestamp.dll"
 
 def sign(filename):
-    callfn([signtool, "sign", "/a", "/s", "my", "/n", "Citrix Systems, Inc", "/t", timestamp, "/ac", "sign\\MSCV-VSClass3.cer", filename])
+    callfn([signtool, "sign", "/a", "/s", "my", "/n", "Citrix Systems, Inc", "/t", timestamp, filename])
 
 def make_header():
     now = datetime.datetime.now()
@@ -273,7 +273,7 @@ if __name__ == '__main__':
         os.environ['MICRO_VERSION'] = m.group(1)
         rtf = open('src\\bitmaps\\EULA_DRIVERS.rtf', "w")
         print(r"{\rtf1\ansi{\fonttbl\f0\fmodern Courier;}\f0\fs10\pard", file=rtf)
-        txt = urllib.request.urlopen('http://www.uk.xensource.com/carbon/'+reference+'/xe-phase-1-latest/xe-phase-1/eulas/EULA_DRIVERS')
+        txt = urllib.request.urlopen('http://www.uk.xensource.com/carbon/'+reference+'/xe-phase-1-latest/xe-phase-1/eulas/EULA_DRIVERS_OPEN')
         while (1):
             line = txt.readline()
             if not line:
@@ -281,12 +281,6 @@ if __name__ == '__main__':
             print(str(line, encoding='utf-8')+"\\par", file=rtf)
         print(r"}",file=rtf);
         txt.close()
-        rtf.close()
-    else:
-        rtf = open('src\\bitmaps\\EULA_DRIVERS.rtf', "w")
-        print(r"{\rtf1\ansi{\fonttbl\f0\fmodern Courier;}\f0\fs10\pard", file=rtf)
-        print(r"This is not a license\par", file=rtf)
-        print(r"}",file=rtf);
         rtf.close()
 
 
@@ -327,14 +321,14 @@ if __name__ == '__main__':
     copyfiles('installwizard', 'UIEvent', location, False)
     make_installers(location)
 
-    if 'MERCURIAL_REVISION' in os.environ.keys():
+    if 'GIT_REVISION' in os.environ.keys():
         f = open(os.sep.join(['installer','revision']),"w")
-        f.write(os.environ['MERCURIAL_REVISION'])
-        print("Revision : "+os.environ['MERCURIAL_REVISION'])
+        f.write(os.environ['GIT_REVISION'])
+        print("Revision : "+os.environ['GIT_REVISION'])
         f.close()
 
 
-    listfile = callfnout(['hg','manifest'])
+    listfile = callfnout(['git','ls-tree','-r','--name-only','HEAD'])
     archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
     archive('installer.tar', ['installer'])
 
@@ -350,7 +344,7 @@ if __name__ == '__main__':
             insturl.close()
             pwd = os.getcwd()
             os.chdir(os.sep.join([location, 'guest-packages.hg']))
-            callfn(['hg','commit','-m','Auto-update installer to '+os.environ['BUILD_URL']+' '+os.environ['MERCURIAL_REVISION'],'-u','jenkins@xeniface-build'])
+            callfn(['hg','commit','-m','Auto-update installer to '+os.environ['BUILD_URL']+' '+os.environ['GIT_REVISION'],'-u','jenkins@xeniface-build'])
             callfn(['hg','push'])
             os.chdir(pwd)
             shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
