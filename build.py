@@ -42,8 +42,8 @@ import manifestspecific
 import re
 
 def unpack_from_jenkins(filelist, packdir):
-    if ('GIT_REVISION' in os.environ):
-        print ("Installer Build ",os.environ["GIT_REVISION"])
+    if ('GIT_COMMIT' in os.environ):
+        print ("Installer Build ",os.environ["GIT_COMMIT"])
     for urlkey in filelist:
         url = filelist[urlkey]
         print(url)
@@ -321,10 +321,10 @@ if __name__ == '__main__':
     copyfiles('installwizard', 'UIEvent', location, False)
     make_installers(location)
 
-    if 'GIT_REVISION' in os.environ.keys():
+    if 'GIT_COMMIT' in os.environ.keys():
         f = open(os.sep.join(['installer','revision']),"w")
-        f.write(os.environ['GIT_REVISION'])
-        print("Revision : "+os.environ['GIT_REVISION'])
+        f.write(os.environ['GIT_COMMIT'])
+        print("Revision : "+os.environ['GIT_COMMIT'])
         f.close()
 
 
@@ -344,7 +344,7 @@ if __name__ == '__main__':
             insturl.close()
             pwd = os.getcwd()
             os.chdir(os.sep.join([location, 'guest-packages.hg']))
-            callfn(['hg','commit','-m','Auto-update installer to '+os.environ['BUILD_URL']+' '+os.environ['GIT_REVISION'],'-u','jenkins@xeniface-build'])
+            callfn(['hg','commit','-m','Auto-update installer to '+os.environ['BUILD_URL']+' '+os.environ['GIT_COMMIT'],'-u','jenkins@xeniface-build'])
             callfn(['hg','push'])
             os.chdir(pwd)
             shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
