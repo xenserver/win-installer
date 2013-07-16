@@ -192,6 +192,13 @@ namespace InstallWizard
                 prog["installscore"] = new int[]{300,0};
                 prog["tempscore"] = new int[] { 0, 0 };
                 InstallState.MaxProgress = prog["installscore"][0];
+
+                if (InstallService.isWOW64())
+                {
+                    Trace.WriteLine("Install failed");
+                    InstallState.Fail("PV Tools cannot be installed on systems where .Net applications are forced to run under WoW64\n\nSet HKEY_LOCAL_MACHINE\\Software\\Microsoft\\.NetFramework\\Enable64Bit to 1 and attempt the install again.");
+                }
+
                 while ((!InstallState.Failed) && (InstallState.RebootCount > 0) && (!InstallState.Done))
                 {
                     InstallState.Unchanged = true;
