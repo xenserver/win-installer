@@ -30,7 +30,7 @@
 # SUCH DAMAGE.
 
 build_tar_source_files = {
-        "xenbus" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-clearwater-rtm-signed/xenbus-226-signed.tar",
+        "xenbus" : "http://xenvif-build.uk.xensource.com:8080/job/XENBUS.git/7/artifact/xenbus.tar",
         "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF.git/5/artifact/xenvif.tar",
         "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET.git/4/artifact/xennet.tar",
         "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/Xeniface.git/3/artifact/xeniface.tar",
