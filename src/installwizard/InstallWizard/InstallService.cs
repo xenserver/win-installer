@@ -113,17 +113,48 @@ namespace InstallWizard
                 Trace.WriteLine("Thread");
                 Assembly curAssm;
                 curAssm = Assembly.GetAssembly(this.GetType());
-                if (System.Management.Instrumentation.Instrumentation.
-                IsAssemblyRegistered(curAssm))
+                int registertimeout = 0;
+                bool wmiregistered = false;
+                while (registertimeout < 30 * 1000)
                 {
-                    //Cool; it's already registered in WMI
+                    Trace.WriteLine("Try to register WMI");
+                    try
+                    {
+                        if (System.Management.Instrumentation.Instrumentation.IsAssemblyRegistered(curAssm))
+                        {
+                            //Cool; it's already registered in WMI
+                            Trace.WriteLine("Already registered");
+                            wmiregistered = true;
+                            break;
+                        }
+                        else //Well then, register it
+                        {
+                            Trace.WriteLine("Ensure we are registered with WMI");
+
+                            System.Management.Instrumentation.Instrumentation.RegisterAssembly(curAssm);
+                            wmiregistered = true;
+                            break;
+                        }
+                    }
+                    catch (ManagementException)
+                    {
+                        Trace.WriteLine("Waiting for WMI to initialise");
+                        Thread.Sleep(500);
+                        registertimeout += 500; ;
+                    }
+                    catch (Exception e)
+                    {
+                        Trace.WriteLine("WMI initialisation not finished ("+e.ToString()+")");
+                        Thread.Sleep(500);
+                        registertimeout+=500;
+                    }
                 }
-                else //Well then, register it
+                if (!wmiregistered)
                 {
-                    Trace.WriteLine("Ensure we are registered with WMI");
-                    System.Management.Instrumentation.Instrumentation.
-                    RegisterAssembly(curAssm);
+                    Trace.WriteLine("Unable to contact WMI");
+                    InstallState.Fail("Unable to contact WMI");
                 }
+                Trace.WriteLine("Got WMI connection");
                 CitrixXenServerInstallStatus installstatusclass = new CitrixXenServerInstallStatus(InstallState);
                 Trace.WriteLine("got status");
                 try
