@@ -140,13 +140,13 @@ namespace InstallWizard
                     {
                         Trace.WriteLine("Waiting for WMI to initialise");
                         Thread.Sleep(500);
-                        registertimeout += 500; ;
+                        registertimeout += 500;
                     }
                     catch (Exception e)
                     {
                         Trace.WriteLine("WMI initialisation not finished ("+e.ToString()+")");
                         Thread.Sleep(500);
-                        registertimeout+=500;
+                        registertimeout += 500;
                     }
                 }
                 if (!wmiregistered)
