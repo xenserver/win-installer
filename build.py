@@ -40,6 +40,7 @@ import tarfile
 import manifestlatest
 import manifestspecific
 import re
+import errno
 
 def unpack_from_jenkins(filelist, packdir):
     if ('GIT_COMMIT' in os.environ):
@@ -98,6 +99,16 @@ def callfn(cmd):
     if ret != 0:
         raise(Exception("Error %d in : %s" % (ret, cmd)))
     print("------------------------------------------------------------")
+
+def make_pe(pack):
+        if os.path.exists('installer\\pe'):
+                shutil.rmtree('installer\\pe')
+        os.makedirs('installer\\pe')
+        shutil.copytree(pack+"\\xenvif", "installer\\pe\\xenvif")
+        shutil.copytree(pack+"\\xenvbd", "installer\\pe\\xenvbd")
+        shutil.copytree(pack+"\\xennet", "installer\\pe\\xennet")
+        shutil.copytree(pack+"\\xenbus", "installer\\pe\\xenbus")
+        shutil.copytree("src\\pescripts", "installer\\pe\\scripts")
 
 def make_installers(pack):
     src = ".\\src\\drivers"
@@ -320,6 +331,8 @@ if __name__ == '__main__':
     copyfiles('installwizard', 'installgui', location, False)
     copyfiles('installwizard', 'UIEvent', location, False)
     make_installers(location)
+
+    make_pe(location)
 
     if 'GIT_COMMIT' in os.environ.keys():
         f = open(os.sep.join(['installer','revision']),"w")
