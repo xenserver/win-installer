@@ -647,30 +647,47 @@ namespace InstallWizard
 
         }
 
-        void copynic_toservice(string uuid, string device)
+
+        void copynic_toservice(string uuid, string device, uint luidindex, uint iftype)
         {
             RegistryKey serviceskey = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Services");
             RegistryKey nics = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Citrix\\XenToolsNetSettings");
             RegistryKey devicekey = nics.CreateSubKey(device);
+            RegistryKey nsikey = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Control\\Nsi");
             copyregkey(serviceskey.OpenSubKey("NETBT\\Parameters\\Interfaces\\Tcpip_" + uuid), devicekey.CreateSubKey("nbt"));
             copyregkey(serviceskey.OpenSubKey("Tcpip\\Parameters\\Interfaces\\" + uuid), devicekey.CreateSubKey("tcpip"));
             copyregkey(serviceskey.OpenSubKey("Tcpip6\\Parameters\\Interfaces\\" + uuid), devicekey.CreateSubKey("tcpip6"));
+
+            copyipv6address(nsikey.OpenSubKey("{eb004a01-9b1a-11d4-9123-0050047759bc}\\10"), luidindex, iftype, devicekey);
+           
         }
 
-  
-  
-        public void DeleteData()
+        void copyipv6address(RegistryKey source, uint luidindex, uint iftype, RegistryKey dest)
         {
-            Trace.WriteLine("Delete migrated network details");
-            Application.CommonAppDataRegistry.DeleteSubKeyTree("nics");
+            //Construct a NET_LUID & convert to a hex string
+            ulong prefixval = iftype << 48 | luidindex << 24;
+            string prefixstr = prefixval.ToString("x64");
+
+            Trace.WriteLine("Looking for prefix "+prefixstr);
+            string[] keys = source.GetValueNames();
+            foreach (string key in keys) {
+                Trace.WriteLine("Testing "+key);
+                if (key.StartsWith(prefixstr)) {
+                    Trace.WriteLine("Found "+key);
+
+                    //Replace prefix with IPv6_Address____ before saving
+                    string newstring="IPv6_Address____"+key.Substring(16);
+                    Trace.WriteLine("Writing to " + dest.ToString()+" "+newstring);
+                    dest.SetValue(newstring, source.GetValue(key));
+                }
+            }
+            Trace.WriteLine("Copying addresses with prefix "+prefixstr+" done");
         }
-
-
 
         void copynic_byuuid(uuiddevice uuid)
         {
  
-            copynic_toservice(uuid.uuid, uuid.device);
+            copynic_toservice(uuid.uuid, uuid.device, uuid.luidindex, uuid.iftype);
 
             Copied = true;
 
@@ -680,6 +697,8 @@ namespace InstallWizard
         {
             public string uuid;
             public string device;
+            public uint luidindex;
+            public uint iftype;
         }
         List<uuiddevice> get_uuids(string service)
         {
@@ -700,8 +719,10 @@ namespace InstallWizard
                         string pci_device_id = (string)Registry.GetValue(SERVICES_KEY + service + "\\enum", x.ToString(), "");
                         string driver_id = (string)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Enum\\" + pci_device_id, "driver", null);
                         string[] linkage = (string[])Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id + "\\Linkage", "RootDevice", null);
+                        uint luidindex = (uint)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id, "NetLuidIndex", null);
+                        uint iftype = (uint)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id, "*IfType", null);
                         string uuid = linkage[0];
-                        uuids.Add(new uuiddevice() { uuid = uuid, device = pci_device_id });
+                        uuids.Add(new uuiddevice() { uuid = uuid, device = pci_device_id, luidindex = luidindex, iftype = iftype });
                     }
                     catch (Exception e)
                     {
@@ -730,7 +751,6 @@ namespace InstallWizard
 
         public void CopyNewPVWorkaround()
         {
-
             copynics_byservice("xennet", "XENVIF\\DEVICE&REV_02", "XEN\\VIF");
         }
 
