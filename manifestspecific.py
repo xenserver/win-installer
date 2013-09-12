@@ -35,7 +35,7 @@ build_tar_source_files = {
         "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET.git/4/artifact/xennet.tar",
         "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/Xeniface.git/3/artifact/xeniface.tar",
         "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD.git/6/artifact/xenvbd.tar",
-        "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/guest%20agent.git/29/artifact/xenguestagent.tar",
+        "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/guest%20agent.git/30/artifact/xenguestagent.tar",
         "xenvss" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVSS.git/6/artifact/xenvss.tar",
         } 
 
