@@ -30,7 +30,7 @@
 # SUCH DAMAGE.
 
 build_tar_source_files = {
-        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS.git/8/artifact/xenbus.tar",
+        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS.git/9/artifact/xenbus.tar",
         "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF.git/8/artifact/xenvif.tar",
         "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET.git/4/artifact/xennet.tar",
         "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/Xeniface.git/3/artifact/xeniface.tar",
