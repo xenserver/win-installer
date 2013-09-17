@@ -664,9 +664,17 @@ namespace InstallWizard
 
         void copyipv6address(RegistryKey source, uint luidindex, uint iftype, RegistryKey dest)
         {
+            if (source == null)
+            {
+                Trace.WriteLine("No IPv6 Config found");
+                return;
+            }
             //Construct a NET_LUID & convert to a hex string
-            ulong prefixval = iftype << 48 | luidindex << 24;
-            string prefixstr = prefixval.ToString("x64");
+            ulong prefixval = (((ulong)iftype) << 48) | (((ulong)luidindex) << 24);
+            // Fix endianness to match registry entry & convert to string
+            byte[] prefixbytes = BitConverter.GetBytes(prefixval);
+            Array.Reverse(prefixbytes);
+            string prefixstr = BitConverter.ToInt64(prefixbytes,0).ToString("x16");
 
             Trace.WriteLine("Looking for prefix "+prefixstr);
             string[] keys = source.GetValueNames();
@@ -719,14 +727,13 @@ namespace InstallWizard
                         string pci_device_id = (string)Registry.GetValue(SERVICES_KEY + service + "\\enum", x.ToString(), "");
                         string driver_id = (string)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Enum\\" + pci_device_id, "driver", null);
                         string[] linkage = (string[])Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id + "\\Linkage", "RootDevice", null);
-                        uint luidindex = (uint)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id, "NetLuidIndex", null);
-                        uint iftype = (uint)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id, "*IfType", null);
+                        uint luidindex = (UInt32)((Int32)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id, "NetLuidIndex", null));
+                        uint iftype = (UInt32)((Int32)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id, "*IfType", null));
                         string uuid = linkage[0];
                         uuids.Add(new uuiddevice() { uuid = uuid, device = pci_device_id, luidindex = luidindex, iftype = iftype });
                     }
                     catch (Exception e)
                     {
-                        //FIXME Log this failure
                         Trace.WriteLine("Unable to find card " + x.ToString() + " : " + e.ToString());
                     }
                 }
