@@ -57,4 +57,13 @@ Then use the following commands
     cd win-installer
     .\build.py --local <build output directory>
 
+To sign the drivers with a certificate installed on the build machine, the 
+following additional arguments can be placed after the build output directory 
+in the .\build.py command
+
+    --sign <certificate name> 
+        Sign with the best certificate matching <certificate name>
+    
+    --addcert <certificate file> 
+        Add an aditional <certificate file> to the signature block
 

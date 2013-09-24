@@ -59,8 +59,50 @@ include ="include"
 signtool=os.environ['KIT']+"\\bin\\x86\\signtool.exe"
 timestamp="http://timestamp.verisign.com/scripts/timestamp.dll"
 
-def sign(filename):
-    callfn([signtool, "sign", "/a", "/s", "my", "/n", "Citrix Systems, Inc", "/t", timestamp, filename])
+#remembersignname = "Citrix Systems, Inc"
+
+def sign(filename, signname, additionalcert=None):
+    if additionalcert == None:
+        callfn([signtool, "sign", "/a", "/s", "my", "/n", signname, "/t", timestamp, filename])
+    else:
+        callfn([signtool, "sign", "/a", "/s", "my", "/n", signname, "/t", timestamp, "/ac", "c:\\MSCV-VSClass3.cer", filename])
+
+
+def signdrivers(pack, signname, arch, additionalcert):
+    
+    sign(pack+"\\xenvif\\"+arch+"\\xenvif.sys", signname, additionalcert)
+    sign(pack+"\\xenvif\\"+arch+"\\xenvif_coinst.dll", signname)
+    
+    sign(pack+"\\xenvss\\"+arch+"\\vssclient.dll", signname)
+    sign(pack+"\\xenvss\\"+arch+"\\vsstest.exe", signname)
+    sign(pack+"\\xenvss\\"+arch+"\\xenvss.dll", signname)
+
+    sign(pack+"\\xenvbd\\"+arch+"\\xenvbd_coinst.dll", signname)
+    sign(pack+"\\xenvbd\\"+arch+"\\xenvbd.sys", signname, additionalcert)
+    sign(pack+"\\xenvbd\\"+arch+"\\xencrsh.sys", signname, additionalcert)
+
+    sign(pack+"\\xennet\\"+arch+"\\xennet_coinst.dll", signname)
+    sign(pack+"\\xennet\\"+arch+"\\xennet.sys", signname, additionalcert)
+
+    sign(pack+"\\xeniface\\"+arch+"\\xeniface.sys", signname, additionalcert)
+
+    sign(pack+"\\xenbus\\"+arch+"\\xenbus.sys", signname, additionalcert)
+    sign(pack+"\\xenbus\\"+arch+"\\xen.sys", signname, additionalcert)
+    sign(pack+"\\xenbus\\"+arch+"\\xenfilt.sys", signname, additionalcert)
+    sign(pack+"\\xenbus\\"+arch+"\\xenbus_coinst.dll", signname)
+
+    sign(pack+"\\xenguestagent\\xenguestagent\\xenguestagent.exe", signname)
+    sign(pack+"\\xenguestagent\\xenguestagent\\xenguestlib.dll", signname)
+    sign(pack+"\\xenguestagent\\xendpriv\\xendpriv.exe", signname)
+
+
+def signcatfiles(pack, signname, arch, additionalcert):
+    sign(pack+"\\xenvif\\"+arch+"\\xenvif.cat", signname, additionalcert)
+    sign(pack+"\\xenvbd\\"+arch+"\\xenvbd.cat", signname, additionalcert)
+    sign(pack+"\\xennet\\"+arch+"\\xennet.cat", signname, additionalcert)
+    sign(pack+"\\xeniface\\"+arch+"\\xeniface.cat", signname, additionalcert)
+    sign(pack+"\\xenbus\\"+arch+"\\xenbus.cat", signname, additionalcert)
+
 
 def make_header():
     now = datetime.datetime.now()
@@ -124,21 +166,25 @@ def make_installers(pack):
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x64","-b", ".\\installer", "-o", "installer\\citrixxendriversx64.msi", "-sw1076"])
-    sign("installer\\citrixxendriversx64.msi")
+    if signfiles:
+        sign("installer\\citrixxendriversx64.msi", signname)
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-darch=x86", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x86","-b", ".\\installer", "-o", "installer\\citrixxendriversx86.msi", "-sw1076"])
-    sign("installer\\citrixxendriversx86.msi")
+    if signfiles:
+        sign("installer\\citrixxendriversx86.msi", signname)
 #
     src = ".\\src\\vss"
 #    
     callfn([wix("candle.exe"), src+"\\citrixvss.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixvssx86.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixvssx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\citrixvssx86.msi", "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
-    sign("installer\\citrixvssx86.msi")
+    if signfiles:
+        sign("installer\\citrixvssx86.msi", signname)
 #
     callfn([wix("candle.exe"), src+"\\citrixvss.wxs", "-arch","x86", "-darch=x64", "-o", "installer\\citrixvssx64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixvssx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\citrixvssx64.msi", "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
-    sign("installer\\citrixvssx64.msi")
+    if signfiles:
+        sign("installer\\citrixvssx64.msi", signname)
 #
     src = ".\\src\\agent"
 #
@@ -146,13 +192,15 @@ def make_installers(pack):
     
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixguestagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixguestagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\citrixguestagentx86.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
-    sign("installer\\citrixguestagentx86.msi")
+    if signfiles:
+        sign("installer\\citrixguestagentx86.msi", signname)
 #
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixguestagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
 
 
     callfn([wix("light.exe"), "installer\\citrixguestagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\citrixguestagentx64.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
-    sign("installer\\citrixguestagentx64.msi")
+    if signfiles:
+        sign("installer\\citrixguestagentx64.msi", signname)
     src = ".\\src\\installwizard"
     bitmaps = ".\\src\\bitmaps"
     
@@ -173,7 +221,8 @@ def make_installers(pack):
     
     callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
 
-    sign("installer\\installwizard.msi")
+    if signfiles:
+        sign("installer\\installwizard.msi", signname)
 
     # Remove XenLegacy.Exe so that we don't archive the dummy file
     os.remove("installer\\XenLegacy.Exe")    
@@ -248,7 +297,7 @@ def shell(command):
 
 if __name__ == '__main__':
 
-
+    print (sys.argv)
     
     os.environ['MAJOR_VERSION'] = '6'
     os.environ['MINOR_VERSION'] = '2'
@@ -264,7 +313,7 @@ if __name__ == '__main__':
 
 
     if (len(sys.argv) < 3):
-        print('.\\build.py <--local|--specific|--latest> <sourcedir> [<referencebranch>]')
+        print('.\\build.py <--local|--specific|--latest> <sourcedir> [--branch <referencebranch>] [--sign <cert name>]')
         sys.exit(1)
 
     command = sys.argv[1]
@@ -272,38 +321,48 @@ if __name__ == '__main__':
 
     autocommit = False
 
-    if (len(sys.argv) >= 4):
-        reference = sys.argv[3]
-        fo = urllib.request.urlopen('http://www.uk.xensource.com/carbon/'+reference+'/xe-phase-1-latest/xe-phase-1/globals')
-        text=str(fo.read())
-        m = re.search('PRODUCT_MAJOR_VERSION="(.*?)"',text)
-        os.environ['MAJOR_VERSION'] = m.group(1)
-        m = re.search('PRODUCT_MINOR_VERSION="(.*?)"',text)
-        os.environ['MINOR_VERSION'] = m.group(1)
-        m = re.search('PRODUCT_MICRO_VERSION="(.*?)"',text)
-        os.environ['MICRO_VERSION'] = m.group(1)
-        rtf = open('src\\bitmaps\\EULA_DRIVERS.rtf', "w")
-        print(r"{\rtf1\ansi{\fonttbl\f0\fmodern Courier;}\f0\fs10\pard", file=rtf)
-        txt = urllib.request.urlopen('http://www.uk.xensource.com/carbon/'+reference+'/xe-phase-1-latest/xe-phase-1/eulas/EULA_DRIVERS_OPEN')
-        while (1):
-            line = txt.readline()
-            if not line:
-                break
-            print(str(line, encoding='utf-8')+"\\par", file=rtf)
-        print(r"}",file=rtf);
-        txt.close()
-        rtf.close()
+    signfiles = False
+ 
+    argptr = 3
 
+    additionalcert = None
 
+    while (len(sys.argv) > argptr):
+        if (sys.argv[argptr] == "--branch"):
 
-        
+            reference = sys.argv[argptr+1]
+            fo = urllib.request.urlopen('http://www.uk.xensource.com/carbon/'+reference+'/xe-phase-1-latest/xe-phase-1/globals')
+            text=str(fo.read())
+            m = re.search('PRODUCT_MAJOR_VERSION="(.*?)"',text)
+            os.environ['MAJOR_VERSION'] = m.group(1)
+            m = re.search('PRODUCT_MINOR_VERSION="(.*?)"',text)
+            os.environ['MINOR_VERSION'] = m.group(1)
+            m = re.search('PRODUCT_MICRO_VERSION="(.*?)"',text)
+            os.environ['MICRO_VERSION'] = m.group(1)
+            rtf = open('src\\bitmaps\\EULA_DRIVERS.rtf', "w")
+            print(r"{\rtf1\ansi{\fonttbl\f0\fmodern Courier;}\f0\fs10\pard", file=rtf)
+            txt = urllib.request.urlopen('http://www.uk.xensource.com/carbon/'+reference+'/xe-phase-1-latest/xe-phase-1/eulas/EULA_DRIVERS_OPEN')
+            while (1):
+                line = txt.readline()
+                if not line:
+                    break
+                print(str(line, encoding='utf-8')+"\\par", file=rtf)
+            print(r"}",file=rtf);
+            txt.close()
+            rtf.close()
+            argptr += 2
+            continue
 
+        if (sys.argv[argptr] == "--sign"):
+            signfiles = True
+            signname = sys.argv[argptr+1]
+            argptr += 2
 
+        if (sys.argv[argptr] == "--addcert"):
+            additionalcert = sys.argv[argptr+1]
+            argptr += 2
 
     make_header()
-
-
-        
 
     if (command == '--local'):
         print( "Local Build")
@@ -320,13 +379,19 @@ if __name__ == '__main__':
         print("Unknown command: "+command)
         sys.exit(1)
 
+    if (signfiles):
+        signdrivers(location, signname, 'x86', additionalcert)
+        signdrivers(location, signname, 'x64', additionalcert)
+        if not all_drivers_signed:
+            signcatfiles(location, signname, 'x86', additionalcert)
+            signcatfiles(location, signname, 'x64', additionalcert)
+
     msbuild('installwizard', False )
 
-
-
-    sign(os.sep.join([getsrcpath('installwizard', False),"InstallWizard.exe"]))
-    sign(os.sep.join([getsrcpath('installgui', False),"InstallGui.exe"]))
-    sign(os.sep.join([getsrcpath('UIEvent', False),"UIEvent.exe"]))
+    if (signfiles):
+        sign(os.sep.join([getsrcpath('installwizard', False),"InstallWizard.exe"]), signname)
+        sign(os.sep.join([getsrcpath('installgui', False),"InstallGui.exe"]), signname)
+        sign(os.sep.join([getsrcpath('UIEvent', False),"UIEvent.exe"]), signname)
     copyfiles('installwizard', 'installwizard', location, False)
     copyfiles('installwizard', 'installgui', location, False)
     copyfiles('installwizard', 'UIEvent', location, False)
