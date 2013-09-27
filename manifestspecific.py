@@ -29,11 +29,11 @@
 # SUCH DAMAGE.
 
 build_tar_source_files = {
-        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS.git/9/artifact/xenbus.tar",
-        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF.git/9/artifact/xenvif.tar",
-        "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET.git/4/artifact/xennet.tar",
-        "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/Xeniface.git/3/artifact/xeniface.tar",
-        "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD.git/6/artifact/xenvbd.tar",
+        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS-upstream.git/2/artifact/xenbus.tar",
+        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF-upstream.git/1/artifact/xenvif.tar",
+        "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET-upstream.git/1/artifact/xennet.tar",
+        "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/XENIFACE-upstream.git/1/artifact/xeniface.tar",
+        "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD-upstream.git/1/artifact/xenvbd.tar",
         "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/guest%20agent.git/30/artifact/xenguestagent.tar",
         "xenvss" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVSS.git/6/artifact/xenvss.tar",
         } 

@@ -32,11 +32,11 @@
 
 
 latest_tar_source_files = {
-        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS.git/lastSuccessfulBuild/artifact/xenbus.tar",
-        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF.git/lastSuccessfulBuild/artifact/xenvif.tar",
-        "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET.git/lastSuccessfulBuild/artifact/xennet.tar",
-        "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/Xeniface.git/lastSuccessfulBuild/artifact/xeniface.tar",
-        "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD.git/lastSuccessfulBuild/artifact/xenvbd.tar",
+        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS-upstream.git/lastSuccessfulBuild/artifact/xenbus.tar",
+        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF-upstream.git/lastSuccessfulBuild/artifact/xenvif.tar",
+        "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET-upstream.git/lastSuccessfulBuild/artifact/xennet.tar",
+        "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/XENIFACE-upstream.git/lastSuccessfulBuild/artifact/xeniface.tar",
+        "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD-upstream.git/lastSuccessfulBuild/artifact/xenvbd.tar",
         "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/guest%20agent.git/lastSuccessfulBuild/artifact/xenguestagent.tar",
         "xenvss" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVSS.git/lastSuccessfulBuild/artifact/xenvss.tar",
         }
