@@ -1739,7 +1739,7 @@ namespace InstallWizard
                 textout = textout+"  XenServer Interface Device Installed\n";
 
                 Trace.WriteLine("Which emulated devices are available");
-                if (!checkemulated("VIF"))
+                if ((!checkservicerunning("xenvif")) || (!checkemulated("xenvif")))
                 {
                     Trace.WriteLine("VIF not ready");
                     textout = textout + "  Virtual Network Interface Support Initializing\n";
@@ -1747,7 +1747,7 @@ namespace InstallWizard
                 }
                 
                 textout = textout+"  Virtual Network Interface Support Installed\n";
-                if (!checkemulated("VBD"))
+                if ((!checkservicerunning("xenvbd"))|| (!checkemulated("xenvbd")))
                 {
                     Trace.WriteLine("VBD not ready");
                     textout = textout + "  Virtual Block Device Support Initializing\n";
@@ -1778,10 +1778,10 @@ namespace InstallWizard
             try
             {
                 Trace.WriteLine("Checking emulated " + emulateddevice);
-                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\xenfilt\Status");
+                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\"+emulateddevice);
                 string[] values = key.GetValueNames();
 
-                if (values.Contains(emulateddevice))
+                if (values.Contains("NeedReboot"))
                 {
                     key.Close();
                     return false;
@@ -1853,14 +1853,6 @@ namespace InstallWizard
                     Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\xenvif", true).SetValue("BootFlags", 0x00000001);
                 }
 
-
-                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\xenfilt\Status");
-                foreach (string subkeyname in key.GetValueNames()) {
-                    Trace.WriteLine("Wait for key " + subkeyname);
-                    textout = textout + "  Network Adapters Initializing\n";
-                    return false;
-                }
-                textout = textout + "  Network Adapters Installed\n";
                 return true;
 
             }
