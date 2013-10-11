@@ -37,7 +37,7 @@ latest_tar_source_files = {
         "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET-upstream.git/lastSuccessfulBuild/artifact/xennet.tar",
         "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/XENIFACE-upstream.git/lastSuccessfulBuild/artifact/xeniface.tar",
         "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD-upstream.git/lastSuccessfulBuild/artifact/xenvbd.tar",
-        "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/guest%20agent.git/lastSuccessfulBuild/artifact/xenguestagent.tar",
+        "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/GUEST%20AGENT-upstream.git/lastSuccessfulBuild/artifact/xenguestagent.tar",
         "xenvss" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVSS.git/lastSuccessfulBuild/artifact/xenvss.tar",
         }
 
