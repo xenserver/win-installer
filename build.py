@@ -85,6 +85,7 @@ def signdrivers(pack, signname, arch, additionalcert):
     sign(pack+"\\xennet\\"+arch+"\\xennet.sys", signname, additionalcert)
 
     sign(pack+"\\xeniface\\"+arch+"\\xeniface.sys", signname, additionalcert)
+    sign(pack+"\\xeniface\\"+arch+"\\liteagent.exe", signname, additionalcert)
 
     sign(pack+"\\xenbus\\"+arch+"\\xenbus.sys", signname, additionalcert)
     sign(pack+"\\xenbus\\"+arch+"\\xen.sys", signname, additionalcert)

@@ -72,6 +72,7 @@
 	      <File Id='XenIfaceSys' Name='XenIface.sys' DiskId='1' Source='xeniface\$(var.build)\xeniface.sys' KeyPath='yes' />
           <File Id='XenIfaceInf' Name='XenIface.inf' DiskId='1' Source='xeniface\$(var.build)\xeniface.inf' />
           <File Id='XenIfaceCat' Name='XenIface.cat' DiskId='1' Source='xeniface\$(var.build)\xeniface.cat' />
+          <File Id='LiteAgentExe' Name='LiteAgent.exe' DiskId='1' Source='xeniface\$(var.build)\LiteAgent.exe' />
           <difx:Driver PlugAndPlayPrompt='no' DeleteFiles='no' ForceInstall='no' Sequence='2' Legacy="yes"/>
         </Component>
       </Directory>
