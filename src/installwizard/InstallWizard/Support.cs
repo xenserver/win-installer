@@ -1772,15 +1772,54 @@ namespace InstallWizard
             }
         }
 
+        enum CR {
+            SUCCESS = 0,
+        }
+
+        enum CM_REENUMERATE {
+            SYNCHRONOUS = 1,
+        }
+
+        enum CM_LOCATE_DEVNODE {
+            NORMAL = 0,
+        }
+
+        [DllImport("setupapi.dll", SetLastError=true)]
+        static extern CR CM_Locate_DevNodeA(ref int pdnDevInst, string pDeviceID, CM_LOCATE_DEVNODE ulFlags);
+
+        [DllImport("setupapi.dll", SetLastError=true)]
+        static extern CR CM_Reenumerate_DevNode(int pdnDevInst, CM_REENUMERATE ulFlags);
 
         public bool checkemulated(string emulateddevice)
         {
             try
             {
+                int rootnode=0;
                 Trace.WriteLine("Checking emulated " + emulateddevice);
                 RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\"+emulateddevice);
                 string[] values = key.GetValueNames();
 
+                if (values.Contains("NeedReboot"))
+                {
+                    key.Close();
+                    return false;
+                }
+                key.Close();
+
+                //There is a race where we may not have set up the NeedReboot flag yet, we need to reenumerate the bus to be sure
+
+                if (CM_Locate_DevNodeA(ref rootnode, null, CM_LOCATE_DEVNODE.NORMAL ) != CR.SUCCESS)
+                {
+                    Trace.WriteLine("Unable to find bus to reenumerate");
+                    return false;
+                }
+
+                CM_Reenumerate_DevNode(rootnode, CM_REENUMERATE.SYNCHRONOUS);
+
+                // Check the NeedRebootflag again, in case the reenumeration has caused it to be set
+
+                key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\" + emulateddevice);
+                values = key.GetValueNames();
                 if (values.Contains("NeedReboot"))
                 {
                     key.Close();
