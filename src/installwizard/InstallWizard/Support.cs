@@ -626,25 +626,27 @@ namespace InstallWizard
 
         void copyregkey(RegistryKey src, RegistryKey dest)
         {
-            RegistrySecurity srcac = src.GetAccessControl();
-            RegistrySecurity destac = new RegistrySecurity();
-            string descriptor = srcac.GetSecurityDescriptorSddlForm(AccessControlSections.Access);
-            destac.SetSecurityDescriptorSddlForm(descriptor);
-            dest.SetAccessControl(destac);
-
-            string[] valuenames = src.GetValueNames();
-            foreach (string valuename in valuenames)
+            if (src != null)
             {
-                Trace.WriteLine("Copy " + src.Name + " " + valuename + " : " + dest.Name);
-                dest.SetValue(valuename, src.GetValue(valuename));
-            }
-            string[] subkeynames = src.GetSubKeyNames();
-            foreach (string subkeyname in subkeynames)
-            {
-                Trace.WriteLine("DeepCopy " + src.Name + " " + subkeyname + " : " + dest.Name);
-                copyregkey(src.OpenSubKey(subkeyname), dest.CreateSubKey(subkeyname));
-            }
+                RegistrySecurity srcac = src.GetAccessControl();
+                RegistrySecurity destac = new RegistrySecurity();
+                string descriptor = srcac.GetSecurityDescriptorSddlForm(AccessControlSections.Access);
+                destac.SetSecurityDescriptorSddlForm(descriptor);
+                dest.SetAccessControl(destac);
 
+                string[] valuenames = src.GetValueNames();
+                foreach (string valuename in valuenames)
+                {
+                    Trace.WriteLine("Copy " + src.Name + " " + valuename + " : " + dest.Name);
+                    dest.SetValue(valuename, src.GetValue(valuename));
+                }
+                string[] subkeynames = src.GetSubKeyNames();
+                foreach (string subkeyname in subkeynames)
+                {
+                    Trace.WriteLine("DeepCopy " + src.Name + " " + subkeyname + " : " + dest.Name);
+                    copyregkey(src.OpenSubKey(subkeyname), dest.CreateSubKey(subkeyname));
+                }
+            }
         }
 
 
