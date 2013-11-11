@@ -1711,13 +1711,21 @@ namespace InstallWizard
         bool checkservicerunning(string name)
         {
             Trace.WriteLine("Checking service " + name);
-            ServiceController sc = new ServiceController(name);
-            ServiceControllerStatus status = sc.Status;
-            if (sc.Status != ServiceControllerStatus.Running)
+            try
             {
+                ServiceController sc = new ServiceController(name);
+                ServiceControllerStatus status = sc.Status;
+                if (sc.Status != ServiceControllerStatus.Running)
+                {
+                    return false;
+                }
+                return true;
+            }
+            catch
+            {
+                Trace.WriteLine("Service "+name+"not found");
                 return false;
             }
-            return true;
         }
 
         public bool servicesrunning(ref string textout)
@@ -1741,7 +1749,7 @@ namespace InstallWizard
                 textout = textout+"  XenServer Interface Device Installed\n";
 
                 Trace.WriteLine("Which emulated devices are available");
-                if ((!checkservicerunning("xenvif")) || (!checkemulated("xenvif")))
+                if (checkserviceneeded("VIF") && ((!checkservicerunning("xenvif")) || (!checkemulated("xenvif"))))
                 {
                     Trace.WriteLine("VIF not ready");
                     textout = textout + "  Virtual Network Interface Support Initializing\n";
@@ -1792,36 +1800,113 @@ namespace InstallWizard
         [DllImport("setupapi.dll", SetLastError=true)]
         static extern CR CM_Reenumerate_DevNode(int pdnDevInst, CM_REENUMERATE ulFlags);
 
+        public bool checkserviceneeded(string device)
+        {
+            Trace.WriteLine("Is "+device+" needed?");
+            RegistryKey enumkey= Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\enum\xenbus");
+            string[] subkeynames = enumkey.GetSubKeyNames();
+            foreach (string name in subkeynames)
+            {
+                // We only care about new-style VEN_XS devices
+                if (name.StartsWith("VEN_XS"))
+                {
+                    RegistryKey subkeydetailskey = enumkey.OpenSubKey(name + @"\_");
+                    string subkeydevice = (string)subkeydetailskey.GetValue("LocationInformation");
+                    if (subkeydevice.Equals(device))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public bool checkserviceandchildrenenumerated(string checkservicename)
+        {
+            RegistryKey enumkey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\enum\xenbus");
+            string[] subkeynames = enumkey.GetSubKeyNames();
+            foreach (string name in subkeynames)
+            {
+                if (name.StartsWith("VEN_XS"))
+                {
+                    RegistryKey subkeydetailskey = enumkey.OpenSubKey(name + @"\_");
+                    string[] detailsvalues = subkeydetailskey.GetValueNames();
+
+                    if (detailsvalues.Contains("Service"))
+                    {
+                        string servicename = (string)subkeydetailskey.GetValue("Service");
+                        if (servicename.Equals(checkservicename, StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (!detailsvalues.Contains("Driver"))
+                            {
+                                Trace.WriteLine(checkservicename + " : No class driver found");
+                                return false;
+                            }
+                            RegistryKey servicekey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\enum\" + servicename);
+                            if (servicekey != null)
+                            {
+                                // This should be the case if the emulated device has child devices
+                                foreach (string servicekeysubkeyname in servicekey.GetSubKeyNames())
+                                {
+                                    RegistryKey servicekeysubkey = servicekey.OpenSubKey(servicekeysubkeyname);
+                                    foreach (string devicename in servicekeysubkey.GetSubKeyNames())
+                                    {
+                                        RegistryKey devicekey = servicekeysubkey.OpenSubKey(devicename);
+                                        string[] devicekeyvalues = devicekey.GetValueNames();
+                                        if (!devicekeyvalues.Contains("Driver"))
+                                        {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                return true;
+
+                            }
+                            else
+                            {
+                                Trace.WriteLine(servicename + " : no service key enumeration");
+                                // This is acceptable - XenVBD doesn't have child devices
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+
+        }
+
         public bool checkemulated(string emulateddevice)
         {
             try
             {
                 int rootnode=0;
                 Trace.WriteLine("Checking emulated " + emulateddevice);
+
+                // First check to see if a driver exists
+
+                if (!checkserviceandchildrenenumerated(emulateddevice))
+                {
+                    if (CM_Locate_DevNodeA(ref rootnode, null, CM_LOCATE_DEVNODE.NORMAL) != CR.SUCCESS)
+                    {
+                        Trace.WriteLine("Unable to find bus to reenumerate");
+                        return false;
+                    }
+
+                    CM_Reenumerate_DevNode(rootnode, CM_REENUMERATE.SYNCHRONOUS);
+                }
+
+                if (!checkserviceandchildrenenumerated(emulateddevice))
+                    return false;
+
+                // Having determined that all class drivers for the device have drivers, and that all child devices have drivers,
+                // we must no determine if those drivers need reboots prior to being ready
+
+                Trace.WriteLine(emulateddevice + " : drivers ready, checking if reboot needed");
+
                 RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\"+emulateddevice);
                 string[] values = key.GetValueNames();
 
-                if (values.Contains("NeedReboot"))
-                {
-                    key.Close();
-                    return false;
-                }
-                key.Close();
-
-                //There is a race where we may not have set up the NeedReboot flag yet, we need to reenumerate the bus to be sure
-
-                if (CM_Locate_DevNodeA(ref rootnode, null, CM_LOCATE_DEVNODE.NORMAL ) != CR.SUCCESS)
-                {
-                    Trace.WriteLine("Unable to find bus to reenumerate");
-                    return false;
-                }
-
-                CM_Reenumerate_DevNode(rootnode, CM_REENUMERATE.SYNCHRONOUS);
-
-                // Check the NeedRebootflag again, in case the reenumeration has caused it to be set
-
-                key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\" + emulateddevice);
-                values = key.GetValueNames();
                 if (values.Contains("NeedReboot"))
                 {
                     key.Close();

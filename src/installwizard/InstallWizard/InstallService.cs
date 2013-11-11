@@ -253,21 +253,9 @@ namespace InstallWizard
                         Trace.WriteLine("Everything is installed");
                         InstallState.Installed = true;
                         InstallState.Done = true;
-                       /* try
-                        {
-                           // Registry.LocalMachine.OpenSubKey(@"Software").OpenSubKey("Microsoft").OpenSubKey("Windows").OpenSubKey("CurrentVersion").OpenSubKey("Run",true).DeleteValue("CitrixXenAgentInstaller");
-                        }
-                        catch (Exception e){
-                            Trace.WriteLine("Failed to remove install agent run subkey: " + e.ToString());
-                            InstallState.Fail("Failed to remove install agent run subkey: " + e.ToString());
-                            continue;
-                        }*/
                         continue;
                        
                     }
-
-
-
 
                     if ((!InstallState.GotDrivers) && (InstallState.NsisFree) && (!HWID.needsupdate()))
                     {
