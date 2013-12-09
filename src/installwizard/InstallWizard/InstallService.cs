@@ -342,7 +342,7 @@ namespace InstallWizard
                     }
 
 
-                    if ((!InstallState.NsisFree) && (!InstallState.NsisUninstalling))
+                    if ((!InstallState.NsisFree) && (!InstallState.NsisHandlingRequired))
                     {
                         Trace.WriteLine("Checking NSIS");
                         if (InstallerNSIS.installed())
@@ -353,7 +353,7 @@ namespace InstallWizard
                                 Trace.WriteLine("Removing NSIS");
                                 Vif.CopyPV();
                                 Trace.WriteLine("Attempting NSIS Uninstall");
-                                InstallState.NsisUninstalling = true;
+                                InstallState.NsisHandlingRequired = true;
                                 InstallState.RebootNow = true;
                             }
                             else
@@ -429,7 +429,7 @@ namespace InstallWizard
                                     AgentMsi.uninstall();
                                 }
                                 
-                                InstallState.NsisUninstalling = true;
+                                InstallState.NsisHandlingRequired = true;
                                 InstallState.RebootNow = true;
                             }
                             InstallState.NsisFree = true;
@@ -442,7 +442,7 @@ namespace InstallWizard
 
                     if (InstallWizard.InstallerState.WinVersion.isServerSKU())
                     {
-                        if ((!InstallState.GotVssProvider) && (InstallState.NsisFree) && (!InstallState.NsisUninstalling))
+                        if ((!InstallState.GotVssProvider) && (InstallState.NsisFree) && (!InstallState.NsisHandlingRequired))
                         {
                             Trace.WriteLine("Checking Vss Provider");
                             if (!VssProvMsi.installed())
@@ -489,7 +489,7 @@ namespace InstallWizard
                         Trace.WriteLine("No ServerSKU Work");
                     }
 
-                    if ((!InstallState.GotAgent) && (InstallState.NsisFree) && (!InstallState.NsisUninstalling))
+                    if ((!InstallState.GotAgent) && (InstallState.NsisFree) && (!InstallState.NsisHandlingRequired))
                     {
                         Trace.WriteLine("Checking Agent");
                         if (!AgentMsi.installed())
@@ -576,14 +576,14 @@ namespace InstallWizard
                     {
                         Trace.WriteLine("Expecting Reboot /  Shutdown");
                         InstallState.Rebooting = true;
-                        if (InstallState.NsisUninstalling)
+                        if (InstallState.NsisHandlingRequired)
                         {
                             // We have to do the HWID check before NSIS is uninstalled, but
                             // when we know NSIS is about to be uninstalled.
                             //
                             // NSIS leads to a blue screen if it doesn't have the right HWID at start of day
                             //
-                            if ((!InstallState.GotDrivers) && (!InstallState.HWIDCorrect))
+                            if ((InstallerNSIS.installed()) && (!InstallState.GotDrivers) && (!InstallState.HWIDCorrect))
                             {
                                 Trace.WriteLine("Checking HWID");
                                 if (HWID.needsupdate())
@@ -600,7 +600,7 @@ namespace InstallWizard
                                     catch (ManagementException)
                                     {
                                         //This suggests we don't have a WMI interface.  update nsis and try again
-                                        InstallState.NsisUninstalling = false;
+                                        InstallState.NsisHandlingRequired = false;
                                     }
 
 
@@ -615,13 +615,15 @@ namespace InstallWizard
                             // lifetime of the uninstall.exe process.  Since we don't want to reboot
                             // while it (or its unattached children) are still running, we rely on
                             // the NSIS uninstaller to perform its own reboot, when it is done.
-                            if (InstallState.NsisUninstalling)
+                            if (InstallerNSIS.installed() && InstallState.NsisHandlingRequired)
                             {
                                 InstallerNSIS.uninstall();
                             }
                             else
                             {
-                                //DriverPackage.addcerts(InstallerNSIS.path);
+                                // NSIS is not installed
+                                // The version of NSIS installed does not support WMI
+                                // or NSIS is installed, but the install is corrupt and the uninstaller can't be located
                                 InstallerNSIS.update();
 
                                 //NSIS returns the same errorlevel for 'failure to install' and for 
