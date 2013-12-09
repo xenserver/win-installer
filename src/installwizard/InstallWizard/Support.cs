@@ -781,7 +781,7 @@ namespace InstallWizard
             GotOldDrivers = 1 << 02, // I have determined that an out of date (MSI) set of drivers are installed
             DriversUpdating = 1 << 03, // I have attempted to update drivers with a more recent version.  This will complete following a reboot
             NsisFree = 1 << 04, // I have determined that an old NSIS-installer of drivers and guest agent is not installed
-            NsisUninstalling = 1 << 05, // I have initiated the uninstall of an old NSIS-installed - it will be finished post-reboot
+            NsisHandlingRequired = 1 << 05, // I have initiated the uninstall of an old NSIS-installed - it will be finished post-reboot
             HWIDCorrect = 1 << 06, // The HWID is the one the new drivers expect
             GotAgent = 1 << 07, // I have determined that the correct MSI installed guest agent is present
             RebootNow = 1 << 08, // When I'm no longer able to make any state transitions, I should reboot
@@ -1183,7 +1183,7 @@ namespace InstallWizard
             {
                 if (DriversPlaced || DriversUpdating || Polling)
                 {
-                    if (!(NsisUninstalling || DriversUpdating))
+                    if (!(NsisHandlingRequired || DriversUpdating))
                     {
                         text += "Drivers : Initializing\n";
                         text += DriverText;
@@ -1230,7 +1230,7 @@ namespace InstallWizard
         public bool GotOldDrivers { set { setstate(States.GotOldDrivers, value); } get { return getstate(States.GotOldDrivers); } }
         public bool DriversUpdating { set { setstate(States.DriversUpdating, value); } get { return getstate(States.DriversUpdating); } }
         public bool NsisFree { set { setstate(States.NsisFree, value); } get { return getstate(States.NsisFree); } }
-        public bool NsisUninstalling { set { setstate(States.NsisUninstalling, value); } get { return getstate(States.NsisUninstalling); } }
+        public bool NsisHandlingRequired { set { setstate(States.NsisHandlingRequired, value); } get { return getstate(States.NsisHandlingRequired); } }
         public bool HWIDCorrect { set { setstate(States.HWIDCorrect, value); } get { return getstate(States.HWIDCorrect); } }
         public bool GotAgent { set { setstate(States.GotAgent, value); } get { return getstate(States.GotAgent); } }
         public bool RebootNow { set { setstate(States.RebootNow, value); } get { return getstate(States.RebootNow); } }
