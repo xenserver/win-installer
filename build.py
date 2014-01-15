@@ -330,7 +330,10 @@ if __name__ == '__main__':
 
 
     if (len(sys.argv) < 3):
-        print('.\\build.py <--local|--specific|--latest> <sourcedir> [--branch <referencebranch>] [--sign <cert name>]')
+        print('.\\build.py <--local|--specific|--latest> <sourcedir> \\')
+        print('  [--branch <referencebranch>] \\') 
+        print('     [--sign <cert name> [ --addcert <additional certificate>]]')
+        print('   | [--signcmd <full command line for signing tool>]')
         sys.exit(1)
 
     command = sys.argv[1]
