@@ -376,10 +376,12 @@ if __name__ == '__main__':
             signfiles = True
             signname = sys.argv[argptr+1]
             argptr += 2
+            continue
 
         if (sys.argv[argptr] == "--addcert"):
             additionalcert = sys.argv[argptr+1]
             argptr += 2
+            continue
 
         if (sys.argv[argptr] == "--signcmd"):
             signcmd = True
@@ -387,6 +389,7 @@ if __name__ == '__main__':
             signstr = sys.argv[argptr+1]
             additionalcert = ""
             argptr += 2
+            continue
 
     make_header()
 
