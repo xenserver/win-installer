@@ -162,6 +162,10 @@
 
 
         <InstallUISequence>
+            <Custom Action="SaveCmdLineHosttime" Before="AppSearch" />
+            <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
+                CMDLINE_HOSTTIME
+            </Custom>            
             <Show Dialog="MyExitDialog" OnExit="success" />
         </InstallUISequence>
         <AdminUISequence>
@@ -191,6 +195,25 @@
                         OnlyDetect='yes'
                         Property='UPGRADINGNEWERVERSION' />
     </Upgrade>
+
+    <Property Id='HOSTTIME'>
+        <RegistrySearch Id='RememberHostTime'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='HostTime'
+                        Type='raw' />
+    </Property>
+
+    <CustomAction Id="SaveCmdLineHosttime"
+                  Property="CMDLINE_HOSTTIME"
+                  Value="[HOSTTIME]"
+                  Execute="firstSequence" />
+    <CustomAction Id="SetFromCmdLineHosttime"
+                  Property="HOSTTIME"
+                  Value="[CMDLINE_HOSTTIME]"
+                  Execute="firstSequence" />
+
+
 
     <Property Id='FORCEINSTALL' Value='0'/>
 
@@ -345,6 +368,13 @@
                     <RegistryValue Type='string' Name='UIMode' Value='Passive' />
                 </RegistryKey> 
             </Component>
+            <Component Id="HostTime" Guid='*'>
+                <RegistryValue Root='HKLM'
+                    Key='Software\Citrix\XenTools'
+                    Name='HostTime'
+                    Value='[HOSTTIME]'
+                    Type='string'/>
+            </Component>
     </Directory>
     <Feature Id='Complete' Level='1'>
         <Condition Level='0'>
@@ -362,6 +392,7 @@
         <ComponentRef Id='Msis' />
         <ComponentRef Id='LegacyInstaller' />
         <ComponentRef Id='InstallStatus' />
+        <ComponentRef Id='HostTime' />
     </Feature>
     
     <Feature Id="NoReboot" Level="0">
@@ -394,6 +425,7 @@
         <Condition Level='1'>
             <![CDATA[(VersionNT<600)]]>
         </Condition>
+        <ComponentRef Id='HostTime' />
         <ComponentRef Id='LegacyInstaller' />
         <ComponentRef Id='InstallGui'/>
         <ComponentRef Id='InstallStatus' />
@@ -413,6 +445,10 @@
     <CustomAction Id='LaunchLegacy' FileKey="LegacyExe" Impersonate='yes' ExeCommand='[LaunchLegacy]' Return="asyncWait" Execute="deferred" />
 
     <InstallExecuteSequence>
+        <Custom Action="SaveCmdLineHosttime" Before="AppSearch" />
+        <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
+            CMDLINE_HOSTTIME
+        </Custom>
         <Custom Action='InstallGui' Before="LegacySilent" >
             <![CDATA[NOT Installed]]>
         </Custom>

@@ -88,9 +88,48 @@
     </Upgrade>
     <Property Id='FORCEINSTALL' Value='0'/>
     <Property Id='ARPSYSTEMCOMPONENT' Value='0'/>
+
+    <Property Id='HOSTTIME'>
+        <RegistrySearch Id='RememberHostTime'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='HostTime'
+                        Type='raw' 
+                        Win64='no'/>
+    </Property>
+    <Property Id='HOSTTIME64'>
+        <RegistrySearch Id='RememberHostTime64'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='HostTime'
+                        Type='raw' 
+                        Win64='yes'/>
+    </Property>
+
+    <CustomAction Id="SaveCmdLineHosttime"
+                  Property="CMDLINE_HOSTTIME"
+                  Value="[HOSTTIME]"
+                  Execute="firstSequence" />
+    <CustomAction Id="SetFromCmdLineHosttime"
+                  Property="HOSTTIME"
+                  Value="[CMDLINE_HOSTTIME]"
+                  Execute="firstSequence" />
+    <CustomAction Id="SetFromHosttime64"
+                  Property="HOSTTIME"
+                  Value="[HOSTTIME64]"
+                  Execute="firstSequence" />
+
+
     <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
     <InstallExecuteSequence>
+        <Custom Action="SaveCmdLineHosttime" Before="AppSearch"/>
+        <Custom Action="SetFromHosttime64" After="AppSearch">
+            ((NOT HOSTTIME64="") AND (NOT CMDLINE_HOSTTIME))
+        </Custom>
+        <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
+            CMDLINE_HOSTTIME
+        </Custom>
         <RemoveExistingProducts After="InstallValidate"/>
     </InstallExecuteSequence>
         
@@ -121,11 +160,34 @@
                     </Directory>
                 </Directory>
             </Directory>
-        <?endif?>
+            <?endif?>
+            <Component Id='RegEntry' Guid='*'>
+                <RegistryKey Root='HKLM'
+                    Key='Software\Citrix\XenTools'
+                    Action='createAndRemoveOnUninstall'>
+                    <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
+                </RegistryKey>
+            </Component>
+            <Component Id='RegEntry32' Guid='3a428079-00d8-4c55-b314-321e757ff988' Win64='no'>
+                <RegistryKey Root='HKLM'
+                    Key='Software\Citrix\XenTools'
+                    Action='createAndRemoveOnUninstall'>
+                    <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
+                </RegistryKey>
+            </Component>
     </Directory>
     <Feature Id='Complete' Level='1'>
-      <MergeRef Id='Drivers' />
+        <MergeRef Id='Drivers' />
+        <ComponentRef Id='RegEntry'/>
+        <?if $(sys.BUILDARCH)=x64 ?>
+            <ComponentRef Id='RegEntry32'/>
+        <?endif ?>
     </Feature>
+    <?if $(sys.BUILDARCH)=x86 ?>
+        <Feature Id="NotUsed" Level='0'>
+            <ComponentRef Id='RegEntry32'/>
+        </Feature>
+    <?endif ?>
   </Product>
 
 
