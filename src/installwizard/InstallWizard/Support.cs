@@ -542,82 +542,6 @@ namespace InstallWizard
         int build;
     }
 
-    public class HwidState
-    {
-        string requiredhwid;
-        public HwidState(string required)
-        {
-            requiredhwid = required;
-        }
-        public bool update()
-        {
-            ManagementObject session = XenIface.GetSession();
-            long starttime = DateTime.Now.ToFileTime();
-            while (true)
-            {
-                try
-                {
-                    string version;
-                    if ((version = XenIface.Read(session, "attr/PVAddons/MajorVersion")) != "")
-                    {
-                        Trace.WriteLine("Guest agent major version is " + version);
-                        break;
-                    }
-                }
-                catch (Exception e) {
-                    if ((DateTime.Now.ToFileTime() - starttime) > ((long)300 * 10000000))
-                    {
-                        Trace.WriteLine(e.ToString());
-                    }
-                }
-                if ((DateTime.Now.ToFileTime() - starttime) > ((long)300 * 10000000))
-                {
-                    Trace.WriteLine("Unable to read guest agent version");
-                    return false;
-                }
-                Trace.WriteLine("Waiting for Legacy Guest Agent");
-                Thread.Sleep(5000);
-               
-            }
-            XenIface.Write(session, "data/device_id", "0002");
-            XenIface.Write(session, "data/updated", DateTime.Now.ToFileTime().ToString());
-
-            session.InvokeMethod("EndSession", null, null);
-            return true;
-        }
-        bool find(string required)
-        {
-
-            ManagementClass mc = new ManagementClass("Win32_PnpEntity");
-
-            ManagementObjectCollection entities = mc.GetInstances();
-            foreach (ManagementObject entity in entities)
-            {
-
-                object idobj = entity["CompatibleId"];
-                if (idobj != null)
-                {
-                    String[] ids = (String[])idobj;
-                    foreach (String id in ids)
-                    {
-                        if (id.Equals(required))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        public bool needsupdate()
-        {
-            if (!find(requiredhwid))
-                return true;
-            return false;
-        }
-
-    }
 
     public class VifConfig
     {
@@ -1231,7 +1155,6 @@ namespace InstallWizard
         public bool DriversUpdating { set { setstate(States.DriversUpdating, value); } get { return getstate(States.DriversUpdating); } }
         public bool NsisFree { set { setstate(States.NsisFree, value); } get { return getstate(States.NsisFree); } }
         public bool NsisHandlingRequired { set { setstate(States.NsisHandlingRequired, value); } get { return getstate(States.NsisHandlingRequired); } }
-        public bool HWIDCorrect { set { setstate(States.HWIDCorrect, value); } get { return getstate(States.HWIDCorrect); } }
         public bool GotAgent { set { setstate(States.GotAgent, value); } get { return getstate(States.GotAgent); } }
         public bool RebootNow { set { setstate(States.RebootNow, value); } get { return getstate(States.RebootNow); } }
         public bool NeedsReboot { set { setstate(States.NeedsReboot, value); } get { return getstate(States.NeedsReboot); } }
@@ -1500,6 +1423,25 @@ namespace InstallWizard
             return res;
 
         }
+   
+        public bool nsisPartiallyInstalled()
+        {
+            try
+            {
+                if (DriverPackage.GetPciDeviceName() == "Citrix PV SCSI Host Adapter")
+                {
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+
+
         public bool installed()
         {
             try
@@ -1578,7 +1520,7 @@ namespace InstallWizard
         {
             // Some old uninstallers were particularly poor at removing drivers from driverstore (on vista and later platforms)
             // we therefore do this prior to uninstall - it doesn't hurt and it might save some users from problems later on.
-            Trace.WriteLine("Remvoing drivers");
+            Trace.WriteLine("Removing drivers");
             /*pnpremove("XEN\\VIF");
             pnpremove("PCI\\VEN_5853&DEV_0001&SUBSYS_00015853");
             pnpremove("PCI\\VEN_5853&DEV_0001");
@@ -1590,7 +1532,7 @@ namespace InstallWizard
             }
             catch
             {
-                return true;  // We have nothing to uninstall, and we knwo the drivers are gone
+                return true;  // We have nothing to uninstall, and we know the drivers are gone
             }
             Process uninstaller; 
             ProcessStartInfo si = new ProcessStartInfo(ustring, "/S");
@@ -1701,6 +1643,112 @@ namespace InstallWizard
                 store.Close();
             }
         }
+
+        static public RegistryKey GetDriverKey(RegistryKey deviceKey)
+        {
+            Trace.WriteLine("Device name " + deviceKey.Name);
+            foreach (string key in deviceKey.GetSubKeyNames())
+            {
+                try
+                {
+                    Trace.WriteLine("looking at key " + key);
+                    RegistryKey subkey = deviceKey.OpenSubKey(key);
+                    string drivername = (string)subkey.GetValue("Driver");
+                    Trace.WriteLine("found driver key key " + drivername);
+                    if (drivername.Length == 0)
+                    {
+                        Trace.WriteLine("driver name empty");
+                        continue;
+                    }
+                    RegistryKey driverkey = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Control\\Class\\" + drivername);
+                    return driverkey;
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine("Hit " + e.ToString());
+                }
+            }
+            Trace.WriteLine("Could not find driver name");
+            throw new Exception("Cannot find driver key");
+
+        }
+
+        static public RegistryKey GetDeviceKey(string deviceName)
+        {
+            RegistryKey pciKey = Registry.LocalMachine.OpenSubKey("SYSTEM\\CurrentControlSet\\Enum\\PCI");
+
+            foreach (string key in pciKey.GetSubKeyNames())
+            {
+                Trace.WriteLine("Key " + key.Substring(0, deviceName.Length) + " DevName " + deviceName);
+                if ((key.Length >= deviceName.Length) &&
+                    (key.Substring(0, deviceName.Length).Equals(deviceName)))
+                {
+                    return pciKey.OpenSubKey(key);
+                }
+            }
+            Trace.WriteLine("Could not find device key");
+            throw new Exception("No such key");
+        }
+
+        static public RegistryKey GetPciDeviceKey()
+        {
+            try
+            {
+                return GetDeviceKey("VEN_5853&DEV_0001");
+            }
+            catch
+            {
+                try
+                {
+                    return GetDeviceKey("VEN_5853&DEV_0002");
+                }
+                catch
+                {
+                    Trace.WriteLine("Could not find pci device");
+                    throw new Exception("PCI Device not found");
+                }
+            }
+        }
+
+        static public string GetPciDeviceName()
+        {
+            try
+            {
+                RegistryKey deviceKey = GetPciDeviceKey();
+                Trace.WriteLine("Got device key");
+                RegistryKey driverKey = GetDriverKey(deviceKey);
+                Trace.WriteLine("Got driver key");
+                string name = (string)driverKey.GetValue("DriverDesc");
+                Trace.WriteLine("Driver is " + name);
+                return name;
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("Could not find pci device name: " + e.ToString());
+                throw new Exception("Cannot find name of PCI device");
+            }
+        }
+
+        static public bool unknownDeviceInstalled()
+        {
+            try
+            {
+                string pciDeviceName = GetPciDeviceName();
+                if ((pciDeviceName != "XenServer PV Bus") // XenServer Standard drivers
+                    && (pciDeviceName != "Citrix PV Bus") // Citrix XenServer Standard Drivers
+                    && (pciDeviceName != "Citrix PV SCSI Host Adapter") // Legacy Drivers
+                   ) 
+                {
+                    return true;
+                }
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         new public void install(string args, string logfile, InstallerState installstate)
         {
             //addcerts(installdir);
@@ -1708,6 +1756,7 @@ namespace InstallWizard
             base.install(args, logfile, installstate);
             
         }
+
         bool checkservicerunning(string name)
         {
             Trace.WriteLine("Checking service " + name);
