@@ -185,8 +185,7 @@ namespace InstallWizard
                 InstallState.Progress = 1;
                 Trace.WriteLine("Initializing Install =======================================");
 
-                
-                HwidState HWID = new HwidState(@"PCI\VEN_5853&DEV_0002&REV_02");
+            
                 DriverPackage DriversMsi;
                 MsiInstaller VssProvMsi;
                 MsiInstaller AgentMsi;
@@ -257,7 +256,7 @@ namespace InstallWizard
                        
                     }
 
-                    if ((!InstallState.GotDrivers) && (InstallState.NsisFree) && (!HWID.needsupdate()))
+                    if ((!InstallState.GotDrivers) && (InstallState.NsisFree))
                     {
                         Trace.WriteLine("Check if drivers are functioning");
 
@@ -345,7 +344,7 @@ namespace InstallWizard
                     if ((!InstallState.NsisFree) && (!InstallState.NsisHandlingRequired))
                     {
                         Trace.WriteLine("Checking NSIS");
-                        if (InstallerNSIS.installed())
+                        if (InstallerNSIS.installed() || InstallerNSIS.nsisPartiallyInstalled())
                         {
                             Trace.WriteLine("NSIS is installed, and needs to be removed");
                             if (InstallState.RebootReady)
@@ -364,74 +363,7 @@ namespace InstallWizard
                         }
                         else
                         {
-                            Trace.WriteLine("No NSIS based installer found");
-                            if (HWID.needsupdate())
-                            {
-                                Vif.CopyPV();
-                                Trace.WriteLine("Attempting legacy Install");
-                                try
-                                {
-
-                                    RegistryKey classes = Registry.LocalMachine.OpenSubKey(@"System\CurrentControlSet\Control\Class");
-                                    foreach (String classuuid in classes.GetSubKeyNames())
-                                    {
-                                        Trace.WriteLine("Examining " + classuuid);
-                                        RegistryKey classkey = classes.OpenSubKey(classuuid,true);
-                                        string[] filters = (string[])classkey.GetValue("UpperFilters");
-                                        if (filters != null)
-                                        {
-                                            Trace.WriteLine("UpperFilters Exists");
-                                            List<string> newfilters = new List<String>();
-                                            foreach (String filter in filters)
-                                            {
-
-                                                if (filter.ToUpper() != "XENFILT")
-                                                {
-                                                    newfilters.Add(filter);
-                                                }
-                                                else
-                                                {
-                                                    Trace.WriteLine("Removing XENFILT");
-                                                }
-                                            }
-                                            if (newfilters.Count > 0)
-                                            {
-                                                if (newfilters.Count < filters.Length)
-                                                {
-                                                    Trace.WriteLine("Updating UpperFilters");
-                                                    classkey.SetValue("UpperFilters", newfilters.ToArray(), RegistryValueKind.MultiString);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                classkey.DeleteValue("UpperFilters");
-                                            }
-                                        }
-                                        else
-                                        {
-                                            Trace.WriteLine("UpperFilters not found");
-                                        }
-                                    }
-                                    
-                                }
-                                catch
-                                {
-                                    Trace.WriteLine("Removing xenfilt from UpperFilters entries failed");
-                                }
-                                if (DriversMsi.installed())
-                                {
-                                    DriversMsi.uninstall();
-                                    
-                                    
-                                }
-                                if (AgentMsi.installed())
-                                {
-                                    AgentMsi.uninstall();
-                                }
-                                
-                                InstallState.NsisHandlingRequired = true;
-                                InstallState.RebootNow = true;
-                            }
+                            Trace.WriteLine("No NSIS based installer found");                        
                             InstallState.NsisFree = true;
                         }
                     }
@@ -439,6 +371,13 @@ namespace InstallWizard
                     {
                         Trace.WriteLine("No NSIS work");
                     }
+
+                    if (DriverPackage.unknownDeviceInstalled())
+                    {
+                        InstallState.Fail("Unknown PV drivers installed on system.  Uninstall PV drivers and retry");
+                        continue;
+                    }
+
 
                     if (InstallWizard.InstallerState.WinVersion.isServerSKU())
                     {
@@ -578,54 +517,20 @@ namespace InstallWizard
                         InstallState.Rebooting = true;
                         if (InstallState.NsisHandlingRequired)
                         {
-                            // We have to do the HWID check before NSIS is uninstalled, but
-                            // when we know NSIS is about to be uninstalled.
-                            //
-                            // NSIS leads to a blue screen if it doesn't have the right HWID at start of day
-                            //
-                            if ((InstallerNSIS.installed()) && (!InstallState.GotDrivers) && (!InstallState.HWIDCorrect))
-                            {
-                                Trace.WriteLine("Checking HWID");
-                                if (HWID.needsupdate())
-                                {
-                                    Trace.WriteLine("HWID Needs updating");
-                                    try
-                                    {
-                                        if (!HWID.update())
-                                        {
-                                            InstallState.Fail("Unable to enable Xeniface WMI Client when trying to change device id");
-                                        }
-                                        Trace.WriteLine("HWID should be changed following next reboot");
-                                    }
-                                    catch (ManagementException)
-                                    {
-                                        //This suggests we don't have a WMI interface.  update nsis and try again
-                                        InstallState.NsisHandlingRequired = false;
-                                    }
-
-
-                                }
-                                else
-                                {
-                                    Trace.WriteLine("Correct HWID Found");
-                                    InstallState.HWIDCorrect = true;
-                                }
-                            }
+                           
                             // Irritatingly, the NSIS installer continues running for longer than the
                             // lifetime of the uninstall.exe process.  Since we don't want to reboot
                             // while it (or its unattached children) are still running, we rely on
                             // the NSIS uninstaller to perform its own reboot, when it is done.
-                            if (InstallerNSIS.installed() && InstallState.NsisHandlingRequired)
+                            if (InstallerNSIS.installed())
                             {
                                 InstallerNSIS.uninstall();
                             }
-                            else
+                            else 
                             {
-                                // NSIS is not installed
-                                // The version of NSIS installed does not support WMI
-                                // or NSIS is installed, but the install is corrupt and the uninstaller can't be located
+                                // NSIS is installed, but the install is corrupt and the uninstaller can't be located
                                 InstallerNSIS.update();
-
+  
                                 //NSIS returns the same errorlevel for 'failure to install' and for 
                                 // 'needs a reboot to install'.  So we have to presume the install
                                 // was a success.
