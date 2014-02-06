@@ -67,3 +67,8 @@ in the .\build.py command
     --addcert <certificate file> 
         Add an aditional <certificate file> to the signature block
 
+Alternatively a user specified commandline (to which the name of the file
+to be signed is appended) can be specifed as follows
+
+    --signcmd <full command line for signing tool>
+
