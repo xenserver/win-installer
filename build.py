@@ -437,6 +437,18 @@ if __name__ == '__main__':
         print("Revision : "+os.environ['GIT_COMMIT'])
         f.close()
 
+    f = open(os.sep.join(['installer','buildnumber']),"w")
+    f.write(os.environ['MAJOR_VERSION']+"."+
+            os.environ['MINOR_VERSION']+"."+
+            os.environ['MICRO_VERSION']+"."+
+            os.environ['BUILD_NUMBER'])
+    f.close()
+    f = open(os.sep.join(['installer','hotfixnumber']),"w")
+    f.write(os.environ['MAJOR_VERSION']+"."+
+            os.environ['MINOR_VERSION']+"."+
+            os.environ['MICRO_VERSION']+"."+
+            os.environ['TOOLS_HOTFIX_NUMBER'])
+    f.close()
 
     listfile = callfnout(['git','ls-tree','-r','--name-only','HEAD'])
     archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
