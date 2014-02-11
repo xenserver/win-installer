@@ -2022,11 +2022,6 @@ namespace InstallWizard
                    
                     return true;
                 }
-                else
-                {
-                    Trace.WriteLine("Set up xenvif boot for PVS");
-                    Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\xenvif", true).SetValue("BootFlags", 0x00000001);
-                }
 
                 return true;
 
