@@ -1423,7 +1423,36 @@ namespace InstallWizard
             return res;
 
         }
-   
+
+        public int majorVersion()
+        {
+            int res;
+            if (InstallService.is64BitOS() && (!InstallService.isWOW64()))
+            {
+                res = (int)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenTools", "MajorVersion", "");
+            }
+            else
+            {
+                res = (int)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenTools", "MajorVersion", "");
+            }
+            return res;
+        }
+
+        public int minorVersion()
+        {
+            int res;
+            if (InstallService.is64BitOS() && (!InstallService.isWOW64()))
+            {
+                res = (int)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenTools", "MinorVersion", "");
+            }
+            else
+            {
+                res = (int)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenTools", "MinorVersion", "");
+            }
+            return res;
+        }
+
+
         public bool nsisPartiallyInstalled()
         {
             try
@@ -1737,6 +1766,7 @@ namespace InstallWizard
                 if ((pciDeviceName != "XenServer PV Bus") // XenServer Standard drivers
                     && (pciDeviceName != "Citrix PV Bus") // Citrix XenServer Standard Drivers
                     && (pciDeviceName != "Citrix PV SCSI Host Adapter") // Legacy Drivers
+                    && (pciDeviceName != "Citrix XenServer PV SCSI Host Adapter") // 5.5 Legacy Drivers
                    ) 
                 {
                     return true;
