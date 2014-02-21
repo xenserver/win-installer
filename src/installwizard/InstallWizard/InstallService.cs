@@ -522,7 +522,12 @@ namespace InstallWizard
                             // lifetime of the uninstall.exe process.  Since we don't want to reboot
                             // while it (or its unattached children) are still running, we rely on
                             // the NSIS uninstaller to perform its own reboot, when it is done.
-                            if (InstallerNSIS.installed())
+                            //
+                            // We want to update George or earlier installers, as they don't
+                            // uninstall silently
+                            if (InstallerNSIS.installed() && 
+                                ((InstallerNSIS.majorVersion()>5 ) || 
+                                 ((InstallerNSIS.majorVersion()==5) && (InstallerNSIS.minorVersion()>5))))
                             {
                                 InstallerNSIS.uninstall();
                             }
