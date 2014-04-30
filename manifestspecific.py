@@ -29,8 +29,8 @@
 # SUCH DAMAGE.
 
 build_tar_source_files = {
-        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS.git/30/artifact/xenbus.tar",
-        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF.git/32/artifact/xenvif.tar",
+        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS.git/32/artifact/xenbus.tar",
+        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF.git/35/artifact/xenvif.tar",
         "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET.git/14/artifact/xennet.tar",
         "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/XENIFACE.git/14/artifact/xeniface.tar",
         "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD.git/17/artifact/xenvbd.tar",
