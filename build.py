@@ -169,6 +169,18 @@ def make_pe(pack):
         shutil.copytree(pack+"\\xenbus", "installer\\pe\\xenbus")
         shutil.copytree("src\\pescripts", "installer\\pe\\scripts")
 
+def make_builds(pack):
+        if (os.path.exists('installer\\builds')):
+                shutil.rmtree('installer\\builds')
+        os.makedirs('installer\\builds')
+        shutil.copytree(pack+"\\xenvif", "installer\\builds\\xenvif")
+        shutil.copytree(pack+"\\xenvbd", "installer\\builds\\xenvbd")
+        shutil.copytree(pack+"\\xennet", "installer\\builds\\xennet")
+        shutil.copytree(pack+"\\xenbus", "installer\\builds\\xenbus")
+        shutil.copytree(pack+"\\xeniface", "installer\\builds\\xeniface")
+        shutil.copytree(pack+"\\xenguestagent", "installer\\builds\\xenguestagent")
+        shutil.copytree(pack+"\\xenvss", "installer\\builds\\xenvss")
+
 def make_installers(pack):
     src = ".\\src\\drivers"
 
@@ -430,6 +442,7 @@ if __name__ == '__main__':
     make_installers(location)
 
     make_pe(location)
+    make_builds(location)
 
     if 'GIT_COMMIT' in os.environ.keys():
         f = open(os.sep.join(['installer','revision']),"w")
