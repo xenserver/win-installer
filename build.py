@@ -247,6 +247,9 @@ def make_installers(pack):
     f = open("installer\\XenLegacy.Exe","w")
     f.write("DUMMY FILE")
     f.close()
+    f = open("installer\\xluninstallerfix.exe","w")
+    f.write("DUMMY FILE")
+    f.close()
     
     callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
 
@@ -255,6 +258,7 @@ def make_installers(pack):
 
     # Remove XenLegacy.Exe so that we don't archive the dummy file
     os.remove("installer\\XenLegacy.Exe")    
+    os.remove("installer\\xluninstallerfix.exe")    
 
 def archive(filename, files, tgz=False):
     access='w'

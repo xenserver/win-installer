@@ -261,6 +261,7 @@
                 <Directory Id='INSTALLER' Name = 'Installer'>
                     <Component Id="LegacyInstaller" Guid="$(var.legacyid)">
                         <File Id="LegacyExe" Compressed="no" DiskId='2' Source="XenLegacy.Exe"/> 
+                        <File Id="UninstallerFix" Compressed="no" DiskId='2' Source="xluninstallerfix.exe"/> 
                     </Component>
                     <Component Id="Msis" Guid="$(var.msiid)" >
                         <File Id="Drivers32MSI" Compressed="no" DiskId="2" Source="CitrixXenDriversX86.msi" />
