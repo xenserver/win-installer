@@ -1530,7 +1530,7 @@ namespace InstallWizard
             while (!installer.HasExited)
             {
                 // Do nothing.  We may later wish to add some sort of prgress tick value here FIXME?
-                Trace.WriteLine("unpdating legacy drivers....");
+                Trace.WriteLine("updating legacy drivers....");
                 Thread.Sleep(1000);
                 installer.Refresh();
             }
@@ -1545,6 +1545,36 @@ namespace InstallWizard
             File.Copy(path + "..\\install.log", Application.CommonAppDataPath + "nsisinstall.log");
             return false;
         }
+
+        public void uninstallerfix()
+        {
+            if (File.Exists(path + "xluninstallerfix.exe"))
+            {
+                ProcessStartInfo si = new ProcessStartInfo(path + "xluninstallerfix.exe", "/S");
+                Process fix = Process.Start(si);
+                while (!fix.HasExited)
+                {
+                    // Do nothing.  We may later wish to add some sort of prgress tick value here FIXME?
+                    Trace.WriteLine("installing legacy uninstaller fix");
+                    Thread.Sleep(1000);
+                    fix.Refresh();
+                }
+                ExitCode = fix.ExitCode;
+                if (fix.ExitCode == 0)
+                {
+                    Trace.WriteLine("Uninstaller fix successfull");
+                }
+                else
+                {
+                    Trace.WriteLine("uninstaller fix unsuccessful, continuing anyway");
+                }
+            }
+            else
+            {
+                Trace.WriteLine("Unable to find xluninstallerfix.exe, continuing anyway");
+            }
+        }
+
         public bool uninstall()
         {
             // Some old uninstallers were particularly poor at removing drivers from driverstore (on vista and later platforms)
@@ -1563,6 +1593,12 @@ namespace InstallWizard
             {
                 return true;  // We have nothing to uninstall, and we know the drivers are gone
             }
+
+            // Some older uninstallers were unable to run silently in error situations, so we
+            // update a newer uninstaller if one is available
+
+            uninstallerfix();
+
             Process uninstaller; 
             ProcessStartInfo si = new ProcessStartInfo(ustring, "/S");
             si.CreateNoWindow = true;
