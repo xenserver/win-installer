@@ -369,17 +369,17 @@ if __name__ == '__main__':
         if (sys.argv[argptr] == "--branch"):
 
             reference = sys.argv[argptr+1]
-            fo = urllib.request.urlopen('http://www.uk.xensource.com/carbon/'+reference+'/xe-phase-1-latest/xe-phase-1/globals')
+            fo = urllib.request.urlopen('http://hg.uk.xensource.com/carbon/'+reference+'/branding.hg/raw-file/tip/toplevel-versions-xenserver')
             text=str(fo.read())
-            m = re.search('PRODUCT_MAJOR_VERSION="(.*?)"',text)
+            m = re.search('^.*PRODUCT_MAJOR_VERSION\s*:=\s*(\d*).*$',text)
             os.environ['MAJOR_VERSION'] = m.group(1)
-            m = re.search('PRODUCT_MINOR_VERSION="(.*?)"',text)
+            m = re.search('^.*PRODUCT_MINOR_VERSION\s*:=\s*(\d*).*$',text)
             os.environ['MINOR_VERSION'] = m.group(1)
-            m = re.search('PRODUCT_MICRO_VERSION="(.*?)"',text)
+            m = re.search('^.*PRODUCT_MICRO_VERSION\s*:=\s*(\d*).*$',text)
             os.environ['MICRO_VERSION'] = m.group(1)
             rtf = open('src\\bitmaps\\EULA_DRIVERS.rtf', "w")
             print(r"{\rtf1\ansi{\fonttbl\f0\fmodern Courier;}\f0\fs10\pard", file=rtf)
-            txt = urllib.request.urlopen('http://www.uk.xensource.com/carbon/'+reference+'/xe-phase-1-latest/xe-phase-1/eulas/EULA_DRIVERS_OPEN')
+            txt = urllib.request.urlopen('http://hg.uk.xensource.com/carbon/'+reference+'/docsource.hg/raw-file/tip/EULA_DRIVERS_OPEN')
             while (1):
                 line = txt.readline()
                 if not line:
