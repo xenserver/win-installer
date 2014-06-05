@@ -28,14 +28,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 # SUCH DAMAGE.
 
+secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
+localserver = r'\\10.80.3.48\work\ahbisto'
+
 build_tar_source_files = {
-        "xenbus" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenbus-7-2-0-47.tar",
-        "xenvif" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvif-7-2-0-44.tar",
-        "xennet" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xennet-7-2-0-14.tar",
-        "xeniface" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xeniface-7-2-0-14.tar",
-        "xenvbd" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvbd-7-2-0-40.tar",
-        "xenguestagent" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenguestagent-34.tar",
-        "xenvss" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvss-7.tar",
-        } 
+       	"xenbus" : r'xenbus.git\1\xenbus.tar',
+	"xenvif" : r'xenvif.git\1\xenvif.tar',
+       	"xennet" : r'xennet.git\1\xennet.tar',
+       	"xeniface" : r'xeniface.git\5\xeniface.tar',
+       	"xenvbd" : r'xenvbd.git\1\xenvbd.tar',
+       	"xenguestagent" : r'xenguestagent.git\1\xenguestagent.tar',
+       	"xenvss" : r'xenvss.git\1\xenvss.tar',
+} 
 
 all_drivers_signed = True

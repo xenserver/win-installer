@@ -48,8 +48,7 @@ def unpack_from_jenkins(filelist, packdir):
     for urlkey in filelist:
         url = filelist[urlkey]
         print(url)
-        fo = urllib.request.urlopen(url)
-        tf = tarfile.open(name=None, mode='r|', fileobj=fo)
+        tf = tarfile.open(name=url, mode='r|')
         tf.extractall(packdir)
 
 
@@ -328,6 +327,14 @@ def shell(command):
 
     return pipe.close()
 
+def build_tar_source_files(securebuild):
+	if securebuild:
+		server = manifestspecific.secureserver
+	else:
+		server = manifestspecific.localserver
+	return { k:  os.sep.join([server, v]) for k,v in 
+			manifestspecific.build_tar_source_files.items() }
+
 if __name__ == '__main__':
 
     print (sys.argv)
@@ -365,7 +372,14 @@ if __name__ == '__main__':
     signstr = None
     signname = None
 
+    securebuild=False
+
     while (len(sys.argv) > argptr):
+        if (sys.argv[argptr] == "--secure"):
+            securebuild = True
+            argptr +=1
+            continue
+
         if (sys.argv[argptr] == "--branch"):
 
             reference = sys.argv[argptr+1]
@@ -417,7 +431,7 @@ if __name__ == '__main__':
         all_drivers_signed = False
     elif (command == '--specific'):
         print( "Specific Build")
-        unpack_from_jenkins(manifestspecific.build_tar_source_files, location)
+        unpack_from_jenkins(build_tar_source_files(securebuild), location)
         all_drivers_signed = manifestspecific.all_drivers_signed
     elif (command == '--latest'):
         print ("Latest Build")
