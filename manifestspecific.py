@@ -29,13 +29,13 @@
 # SUCH DAMAGE.
 
 build_tar_source_files = {
-        "xenbus" : "http://xenbus-build.uk.xensource.com:8080/job/XENBUS.git/47/artifact/xenbus.tar",
-        "xenvif" : "http://xenvif-build.uk.xensource.com:8080/job/XENVIF.git/44/artifact/xenvif.tar",
-        "xennet" : "http://xennet-build.uk.xensource.com:8080/job/XENNET.git/14/artifact/xennet.tar",
-        "xeniface" : "http://xeniface-build.uk.xensource.com:8080/job/XENIFACE.git/14/artifact/xeniface.tar",
-        "xenvbd" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVBD.git/40/artifact/xenvbd.tar",
-        "xenguestagent" : "http://xeniface-build.uk.xensource.com:8080/job/guest%20agent.git/34/artifact/xenguestagent.tar",
-        "xenvss" : "http://xenvbd-build.uk.xensource.com:8080/job/XENVSS.git/7/artifact/xenvss.tar",
+        "xenbus" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenbus-7-2-0-47.tar",
+        "xenvif" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvif-7-2-0-44.tar",
+        "xennet" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xennet-7-2-0-14.tar",
+        "xeniface" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xeniface-7-2-0-14.tar",
+        "xenvbd" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvbd-7-2-0-40.tar",
+        "xenguestagent" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenguestagent-34.tar",
+        "xenvss" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvss-7.tar",
         } 
 
-all_drivers_signed = False
+all_drivers_signed = True
