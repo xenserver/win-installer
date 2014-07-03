@@ -1820,6 +1820,7 @@ namespace InstallWizard
             //addcerts(installdir);
             Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\partmgr\Parameters", true).SetValue("SanPolicy", 0x00000001);
             base.install(args, logfile, installstate);
+            enumerateBus();
             
         }
 
@@ -1991,24 +1992,30 @@ namespace InstallWizard
 
         }
 
+        public bool enumerateBus()
+        {
+            int rootnode = 0;
+            if (CM_Locate_DevNodeA(ref rootnode, null, CM_LOCATE_DEVNODE.NORMAL) != CR.SUCCESS)
+            {
+                Trace.WriteLine("Unable to find bus to reenumerate");
+                return false;
+            }
+
+            CM_Reenumerate_DevNode(rootnode, CM_REENUMERATE.SYNCHRONOUS);
+            return true;
+        }
+
         public bool checkemulated(string emulateddevice)
         {
             try
             {
-                int rootnode=0;
                 Trace.WriteLine("Checking emulated " + emulateddevice);
 
                 // First check to see if a driver exists
 
                 if (!checkserviceandchildrenenumerated(emulateddevice))
                 {
-                    if (CM_Locate_DevNodeA(ref rootnode, null, CM_LOCATE_DEVNODE.NORMAL) != CR.SUCCESS)
-                    {
-                        Trace.WriteLine("Unable to find bus to reenumerate");
-                        return false;
-                    }
-
-                    CM_Reenumerate_DevNode(rootnode, CM_REENUMERATE.SYNCHRONOUS);
+                    enumerateBus();
                 }
 
                 if (!checkserviceandchildrenenumerated(emulateddevice))
