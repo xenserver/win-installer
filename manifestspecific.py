@@ -29,16 +29,16 @@
 # SUCH DAMAGE.
 
 secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
-localserver = r'\\10.80.3.48\work\ahbisto'
+localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
-       	"xenbus" : r'xenbus.git\1\xenbus.tar',
-	"xenvif" : r'xenvif.git\1\xenvif.tar',
-       	"xennet" : r'xennet.git\1\xennet.tar',
-       	"xeniface" : r'xeniface.git\5\xeniface.tar',
-       	"xenvbd" : r'xenvbd.git\1\xenvbd.tar',
-       	"xenguestagent" : r'xenguestagent.git\1\xenguestagent.tar',
-       	"xenvss" : r'xenvss.git\1\xenvss.tar',
+       "xenbus" : r'standard-lcm\10\xenbus-7-2-0-47.tar',
+       "xenvif" : r'standard-lcm\15\xenvif-7-2-0-44.tar',
+       "xennet" : r'standard-lcm\13\xennet-7-2-0-14.tar',
+       "xeniface" : r'standard-lcm\12\xeniface-7-2-0-14.tar',
+       "xenvbd" : r'standard-lcm\14\xenvbd-7-2-0-40.tar',
+       "xenguestagent" : r'standard-lcm\11\xenguestagent-34.tar',
+       "xenvss" : r'standard-lcm\16\xenvss-7.tar',
 } 
 
 all_drivers_signed = True
