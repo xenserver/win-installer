@@ -373,6 +373,8 @@ if __name__ == '__main__':
     signname = None
 
     securebuild=False
+    if ('AUTOCOMMIT' in os.environ):
+        buildlocation = os.environ['BUILD_URL']+"artifact/installer.tar"
 
     while (len(sys.argv) > argptr):
         if (sys.argv[argptr] == "--secure"):
@@ -422,6 +424,11 @@ if __name__ == '__main__':
             signstr = sys.argv[argptr+1]
             additionalcert = ""
             argptr += 2
+            continue
+
+        if (sys.argv[argptr] == '--buildlocation'):
+            buildlocation = sys.argv[argptr+1]
+            argptr +=2
             continue
 
     make_header()
@@ -492,12 +499,12 @@ if __name__ == '__main__':
             shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
             callfn(['hg','clone',repository+"/guest-packages.hg",os.sep.join([location, 'guest-packages.hg'])])
             insturl = open(os.sep.join([location,'guest-packages.hg\\win-tools-iso\\installer.url']),'w')
-            print (os.environ['BUILD_URL']+"artifact/installer.tar", file=insturl, end="")
-            print (os.environ['BUILD_URL']+"artifact/installer.tar")
+            print (buildlocation, file=insturl, end="")
+            print (buildlocation)
             insturl.close()
             pwd = os.getcwd()
             os.chdir(os.sep.join([location, 'guest-packages.hg']))
-            callfn(['hg','commit','-m','Auto-update installer to '+os.environ['BUILD_URL']+' '+os.environ['GIT_COMMIT'],'-u','jenkins@xeniface-build'])
+            callfn(['hg','commit','-m','Auto-update installer to '+buildlocation+' '+os.environ['GIT_COMMIT'],'-u','jenkins@xeniface-build'])
             callfn(['hg','push'])
             os.chdir(pwd)
             shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
