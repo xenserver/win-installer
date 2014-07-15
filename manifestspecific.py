@@ -28,14 +28,17 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 # SUCH DAMAGE.
 
+secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
+localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
+
 build_tar_source_files = {
-        "xenbus" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenbus-7-2-0-47.tar",
-        "xenvif" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvif-7-2-0-44.tar",
-        "xennet" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xennet-7-2-0-14.tar",
-        "xeniface" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xeniface-7-2-0-14.tar",
-        "xenvbd" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvbd-7-2-0-40.tar",
-        "xenguestagent" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenguestagent-34.tar",
-        "xenvss" : "http://www.uk.xensource.com/distfiles/pvdrivers-win-signed/pvdrivers-win-creedence/xenvss-7.tar",
-        } 
+       "xenbus" : r'standard-lcm\10\xenbus-7-2-0-47.tar',
+       "xenvif" : r'standard-lcm\15\xenvif-7-2-0-44.tar',
+       "xennet" : r'standard-lcm\13\xennet-7-2-0-14.tar',
+       "xeniface" : r'standard-lcm\12\xeniface-7-2-0-14.tar',
+       "xenvbd" : r'standard-lcm\14\xenvbd-7-2-0-40.tar',
+       "xenguestagent" : r'standard-lcm\11\xenguestagent-34.tar',
+       "xenvss" : r'standard-lcm\16\xenvss-7.tar',
+} 
 
 all_drivers_signed = True
