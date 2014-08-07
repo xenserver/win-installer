@@ -70,7 +70,7 @@ def sign(filename, signname, additionalcert=None, signstr=None):
         callfn(signstr+" "+filename)
 
 
-def signdrivers(pack, signname, arch, additionalcert, signstr=None):
+def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr=None):
 
     additionalcertfiles = [
         pack+"\\xenvif\\"+arch+"\\xenvif.sys",
@@ -81,10 +81,13 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None):
         pack+"\\xeniface\\"+arch+"\\liteagent.exe",
         pack+"\\xenbus\\"+arch+"\\xenbus.sys",
         pack+"\\xenbus\\"+arch+"\\xen.sys",
-        pack+"\\xenbus\\"+arch+"\\xenfilt.sys"
+        pack+"\\xenbus\\"+arch+"\\xenfilt.sys",
     ]
     
     noadditionalcertfiles = [
+        pack+"\\xenguestagent\\xenguestagent\\xenguestagent.exe",
+        pack+"\\xenguestagent\\xenguestagent\\xenguestlib.dll", 
+        pack+"\\xenguestagent\\xendpriv\\xendpriv.exe",
         pack+"\\xenvif\\"+arch+"\\xenvif_coinst.dll",
         pack+"\\xenvss\\"+arch+"\\vssclient.dll", 
         pack+"\\xenvss\\"+arch+"\\vsstest.exe", 
@@ -92,14 +95,11 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None):
         pack+"\\xenvbd\\"+arch+"\\xenvbd_coinst.dll",
         pack+"\\xennet\\"+arch+"\\xennet_coinst.dll",
         pack+"\\xenbus\\"+arch+"\\xenbus_coinst.dll",
-        pack+"\\xenguestagent\\xenguestagent\\xenguestagent.exe",
-        pack+"\\xenguestagent\\xenguestagent\\xenguestlib.dll", 
-        pack+"\\xenguestagent\\xendpriv\\xendpriv.exe"
     ]
 
 
     for afile in additionalcertfiles:
-        sign(afile, signname, additionalcert, signstr=signstr)
+        sign(afile, signname, additionalcert, signstr=crosssignstr)
 
     for afile in noadditionalcertfiles:
         sign(afile, signname, signstr=signstr)
@@ -370,6 +370,7 @@ if __name__ == '__main__':
 
     additionalcert = None
     signstr = None
+    crosssignstr = None
     signname = None
 
     securebuild=False
@@ -422,8 +423,9 @@ if __name__ == '__main__':
             signcmd = True
             signfiles = True
             signstr = sys.argv[argptr+1]
+            crosssignstr = sys.argv[argptr+2]
             additionalcert = ""
-            argptr += 2
+            argptr += 3
             continue
 
         if (sys.argv[argptr] == '--buildlocation'):
@@ -449,11 +451,11 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if (signfiles):
-        signdrivers(location, signname, 'x86', additionalcert, signstr=signstr)
-        signdrivers(location, signname, 'x64', additionalcert, signstr=signstr)
+        signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
+        signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
         if not all_drivers_signed:
-            signcatfiles(location, signname, 'x86', additionalcert, signstr=signstr)
-            signcatfiles(location, signname, 'x64', additionalcert, signstr=signstr)
+            signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
+            signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
 
     msbuild('installwizard', False )
 
