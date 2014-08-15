@@ -580,9 +580,9 @@ namespace InstallWizard
             RegistryKey nics = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Citrix\\XenToolsNetSettings");
             RegistryKey devicekey = nics.CreateSubKey(device);
             RegistryKey nsikey = Registry.LocalMachine.OpenSubKey("System\\CurrentControlSet\\Control\\Nsi");
-            copyregkey(serviceskey.OpenSubKey("NETBT\\Parameters\\Interfaces\\Tcpip_" + uuid), devicekey.CreateSubKey("nbt"));
-            copyregkey(serviceskey.OpenSubKey("Tcpip\\Parameters\\Interfaces\\" + uuid), devicekey.CreateSubKey("tcpip"));
-            copyregkey(serviceskey.OpenSubKey("Tcpip6\\Parameters\\Interfaces\\" + uuid), devicekey.CreateSubKey("tcpip6"));
+            copyregkey(serviceskey.OpenSubKey("NETBT\\Parameters\\Interfaces\\Tcpip_" + uuid), devicekey.CreateSubKey("NetBt"));
+            copyregkey(serviceskey.OpenSubKey("Tcpip\\Parameters\\Interfaces\\" + uuid), devicekey.CreateSubKey("Tcpip"));
+            copyregkey(serviceskey.OpenSubKey("Tcpip6\\Parameters\\Interfaces\\" + uuid), devicekey.CreateSubKey("Tcpip6"));
 
             copyipv6address(nsikey.OpenSubKey("{eb004a01-9b1a-11d4-9123-0050047759bc}\\10"), luidindex, iftype, devicekey);
            
@@ -656,7 +656,7 @@ namespace InstallWizard
                         uint luidindex = (UInt32)((Int32)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id, "NetLuidIndex", null));
                         uint iftype = (UInt32)((Int32)Registry.GetValue("HKEY_LOCAL_MACHINE\\System\\CurrentControlSet\\Control\\Class\\" + driver_id, "*IfType", null));
                         string uuid = linkage[0];
-                        uuids.Add(new uuiddevice() { uuid = uuid, device = pci_device_id, luidindex = luidindex, iftype = iftype });
+                        uuids.Add(new uuiddevice() { uuid = uuid, device = "override\\"+x.ToString(), luidindex = luidindex, iftype = iftype });
                     }
                     catch (Exception e)
                     {
@@ -682,15 +682,182 @@ namespace InstallWizard
             }
         }
 
-        public void CopyNewPVWorkaround()
+        static void buildAlias(int index, string devicepath)
         {
-            copynics_byservice("xennet", "XENVIF\\DEVICE&REV_02", "XEN\\VIF");
+            RegistryKey xenvif = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\xenvif", true);
+            RegistryKey aliases = xenvif.CreateSubKey("aliases");
+                
+            if (aliases.GetSubKeyNames().Contains(index.ToString())) {
+                    return;
+            }
+
+            aliases.SetValue(index.ToString(), devicepath);
+
+        }
+
+        static public void FixupAliases()
+        {       
+            // If we currently have xennet devices working
+            //   And we don't have any aliases listed 
+            //     Generate aliases as per the coinstaller
+            try {
+                RegistryKey netkey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\xennet\enum");
+                int count = (int)netkey.GetValue("Count");
+                int i;
+                for (i = 0; i < count; i++)
+                {
+                    try
+                    {
+                        buildAlias(i, (string)netkey.GetValue(i.ToString()));
+                    }
+                    catch (Exception e)
+                    {
+                        Trace.WriteLine("Failed to build alias for " + i.ToString() + " : " + e.ToString());
+                    }
+                }
+            
+            }
+            catch {
+                Trace.WriteLine("No xennet instances found");
+            }
+
+
         }
 
         public void CopyPV()
         {
             copynics_byservice("xennet");
             copynics_byservice("xennet6");
+        }
+
+        static bool restored = false;
+        [DllImport("setupapi.dll", CharSet = CharSet.Auto)]     // 2nd form uses an Enumerator only, with null ClassGUID 
+        static extern IntPtr SetupDiGetClassDevs(
+           IntPtr ClassGuid,
+           string Enumerator,
+           IntPtr hwndParent,
+           DiGetClassFlags Flags
+        );
+        [Flags]
+        public enum DiGetClassFlags : uint
+        {
+            DIGCF_DEFAULT = 0x00000001,  // only valid with DIGCF_DEVICEINTERFACE
+            DIGCF_PRESENT = 0x00000002,
+            DIGCF_ALLCLASSES = 0x00000004,
+            DIGCF_PROFILE = 0x00000008,
+            DIGCF_DEVICEINTERFACE = 0x00000010,
+        }
+        [DllImport("setupapi.dll", SetLastError = true)]
+        static extern bool SetupDiCallClassInstaller(
+             DiFunctions InstallFunction,
+             IntPtr DeviceInfoSet,
+             SP_DEVINFO_DATA DeviceInfoData
+        );
+
+        public enum DiFunctions : uint
+        {
+            PropertyChange = (int)0x12
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct DeviceInfoData
+        {
+            public int Size;
+            public Guid ClassGuid;
+            public int DevInst;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PropertyChangeParameters
+        {
+            public int Size;
+            // part of header. It's flattened out into 1 structure.
+            public DiFunctions DiFunction;
+            public StateChangeAction StateChange;
+            public Scopes Scope;
+            public int HwProfile;
+        }
+        [Flags()]
+        internal enum Scopes
+        {
+            Global = 1
+        }
+
+        internal enum StateChangeAction
+        {
+            Enable = 1,
+            Disable = 2
+        }
+        [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        static extern bool SetupDiSetClassInstallParams(IntPtr DeviceInfoSet, SP_DEVINFO_DATA DeviceInfoData, ref PropertyChangeParameters ClassInstallParams, int ClassInstallParamsSize);
+
+        [StructLayout(LayoutKind.Sequential)]
+        struct SP_DEVINFO_DATA
+        {
+            public uint cbSize;
+            public Guid ClassGuid;
+            public uint DevInst;
+            public IntPtr Reserved;
+        }
+        [DllImport("setupapi.dll", SetLastError = true)]
+        static extern bool SetupDiEnumDeviceInfo(IntPtr DeviceInfoSet, uint MemberIndex, ref SP_DEVINFO_DATA DeviceInfoData);
+        static void vifDisableEnable(bool enable)
+        {
+            IntPtr devlist = SetupDiGetClassDevs(IntPtr.Zero, "XENVIF", IntPtr.Zero, DiGetClassFlags.DIGCF_PRESENT | DiGetClassFlags.DIGCF_ALLCLASSES);
+            uint i = 0;
+            SP_DEVINFO_DATA DevData = new SP_DEVINFO_DATA();
+            DevData.cbSize = (uint)Marshal.SizeOf(DevData);
+            while (SetupDiEnumDeviceInfo(devlist, i, ref DevData))
+            {
+                i++;
+                PropertyChangeParameters pcparams = new PropertyChangeParameters();
+                pcparams.Size = 8;
+                pcparams.DiFunction = DiFunctions.PropertyChange;
+                pcparams.Scope = Scopes.Global;
+                if (enable)
+                {
+                    pcparams.StateChange = StateChangeAction.Enable;
+                }
+                else
+                {
+                    pcparams.StateChange = StateChangeAction.Disable;
+                }
+                pcparams.HwProfile = 0;
+                Trace.WriteLine("InstallPaarams " + SetupDiSetClassInstallParams(devlist, DevData, ref pcparams, Marshal.SizeOf(pcparams)).ToString());
+
+                Trace.WriteLine("CallClassInstaller " + SetupDiCallClassInstaller(DiFunctions.PropertyChange, devlist, DevData).ToString() + " " + Marshal.GetLastWin32Error().ToString());
+
+            }
+        }
+
+        static public void RestoreNetSettings()
+        {
+
+            if (!restored)
+            {
+                Trace.WriteLine("Restoring network settings");
+                ProcessStartInfo start = new ProcessStartInfo();
+                start.Arguments = "/log /restore";
+                start.FileName = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\..\\netsettings\\QNetSettings.exe";
+                Trace.WriteLine("Using: " + start.FileName);
+                start.WindowStyle = ProcessWindowStyle.Hidden;
+                start.CreateNoWindow = true;
+
+                using (Process proc = Process.Start(start))
+                {
+                    proc.WaitForExit();
+                }
+
+
+                vifDisableEnable(false);
+                vifDisableEnable(true);
+
+
+                Trace.WriteLine("Done restore");
+                restored = true;
+            }
+
         }
 
     }
@@ -1871,7 +2038,11 @@ namespace InstallWizard
                     textout = textout + "  Virtual Network Interface Support Initializing\n";
                     return false;
                 }
+
+                VifConfig.FixupAliases();
+                VifConfig.RestoreNetSettings();
                 
+
                 textout = textout+"  Virtual Network Interface Support Installed\n";
                 if ((!checkservicerunning("xenvbd"))|| (!checkemulated("xenvbd")))
                 {

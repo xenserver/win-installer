@@ -148,7 +148,16 @@
             <Directory Id='ProgramFilesFolder'>
                 <Directory Id='Citrix' Name='Citrix'>
                     <Directory Id='INSTALLDIR' Name='XenTools'>
+                        
                         <Merge Id='Drivers' Language='1033' SourceFile='drivers$(var.arch).msm' DiskId='1' />
+                        <Directory Id="netsettings" Name='netsettings'>
+                            <Component Id="NetSettingsCpy" Guid="*">
+                                <File Id="NetSettingsExe" Name="NetSettings.exe" DiskId='1' Source='installwizard\netsettings\Win32\netsettings.exe' />
+                            </Component>
+                            <Component Id="QNetSettingsCpy" Guid="*">
+                                <File Id="QNetSettingsExe" Name="QNetSettings.exe" DiskId='1' Source='installwizard\qnetsettings\Win32\qnetsettings.exe' />
+                            </Component>
+                        </Directory>
                     </Directory>
                 </Directory>
             </Directory>
@@ -157,28 +166,50 @@
                 <Directory Id='Citrix' Name='Citrix'>
                     <Directory Id='INSTALLDIR' Name='XenTools'>
                         <Merge Id='Drivers' Language='1033' SourceFile='drivers$(var.arch).msm' DiskId='1' />
+                        <Directory Id="netsettings" Name='netsettings'>
+                            <Component Id="NetSettingsCpy" Guid="*">
+                                <File Id="NetSettingsExe" Name="NetSettings.exe" DiskId='1' Source='installwizard\netsettings\x64\netsettings.exe' />
+                            </Component>
+                            <Component Id="QNetSettingsCpy" Guid="*">
+                                <File Id="QNetSettingsExe" Name="QNetSettings.exe" DiskId='1' Source='installwizard\qnetsettings\x64\qnetsettings.exe' />
+                            </Component>
+                        </Directory>
                     </Directory>
                 </Directory>
             </Directory>
-            <?endif?>
-            <Component Id='RegEntry' Guid='*'>
-                <RegistryKey Root='HKLM'
-                    Key='Software\Citrix\XenTools'
-                    Action='createAndRemoveOnUninstall'>
-                    <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
-                </RegistryKey>
-            </Component>
-            <Component Id='RegEntry32' Guid='3a428079-00d8-4c55-b314-321e757ff988' Win64='no'>
-                <RegistryKey Root='HKLM'
-                    Key='Software\Citrix\XenTools'
-                    Action='createAndRemoveOnUninstall'>
-                    <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
-                </RegistryKey>
-            </Component>
+        <?endif?>
+        <Component Id='RegEntry' Guid='*'>
+            <RegistryKey Root='HKLM'
+                Key='Software\Citrix\XenTools'
+                Action='createAndRemoveOnUninstall'>
+                <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
+            </RegistryKey>
+        </Component>
+        <Component Id='RegEntry32' Guid='3a428079-00d8-4c55-b314-321e757ff988' Win64='no'>
+            <RegistryKey Root='HKLM'
+                Key='Software\Citrix\XenTools'
+                Action='createAndRemoveOnUninstall'>
+                <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
+            </RegistryKey>
+        </Component>
     </Directory>
+
+    <?if $(var.arch)=x86?>
+        <Binary Id='qnetset.exe' SourceFile='installwizard\qnetsettings\Win32\qnetsettings.exe'/>
+    <?else?>
+        <Binary Id='qnetset.exe' SourceFile='installwizard\qnetsettings\x64\qnetsettings.exe'/>
+    <?endif?>
+    <CustomAction Id="SaveNetSettings" BinaryKey="qnetset.exe" Impersonate="yes" ExeCommand='/log /save' Execute='immediate' Return="check" SuppressModularization='yes'/>
+    
+    <InstallExecuteSequence>
+         <Custom Action="SaveNetSettings" Before="RemoveExistingProducts" Overridable="no" />
+    </InstallExecuteSequence>    
+
     <Feature Id='Complete' Level='1'>
         <MergeRef Id='Drivers' />
         <ComponentRef Id='RegEntry'/>
+        <ComponentRef Id="NetSettingsCpy" />
+        <ComponentRef Id="QNetSettingsCpy" />
         <?if $(sys.BUILDARCH)=x64 ?>
             <ComponentRef Id='RegEntry32'/>
         <?endif ?>
