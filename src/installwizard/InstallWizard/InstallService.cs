@@ -281,7 +281,7 @@ namespace InstallWizard
 
                                 if (DriversMsi.olderinstalled())
                                 {
-                                    Vif.CopyNewPVWorkaround();
+                                    
                                 }
 
                                 try

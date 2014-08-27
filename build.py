@@ -193,12 +193,12 @@ def make_installers(pack):
     callfn([wix("light.exe"), "installer\\driversx86.wixobj","-darch=x86",wix("difxapp_x86.wixlib"),"-ext","WixUtilExtension.dll","-ext","WixDifxAppExtension.dll","-b",pack,"-o","installer\\driversx86.msm"])
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x64","-b", ".\\installer", "-o", "installer\\citrixxendriversx64.msi", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x64","-b", ".\\installer", "-o", "installer\\citrixxendriversx64.msi","-b",pack, "-sw1076"])
     if signfiles:
         sign("installer\\citrixxendriversx64.msi", signname, signstr=signstr)
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-darch=x86", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x86","-b", ".\\installer", "-o", "installer\\citrixxendriversx86.msi", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x86","-b", ".\\installer", "-o", "installer\\citrixxendriversx86.msi","-b",pack, "-sw1076"])
     if signfiles:
         sign("installer\\citrixxendriversx86.msi", signname, signstr=signstr)
 #
@@ -271,7 +271,7 @@ def archive(filename, files, tgz=False):
 
 
 
-def msbuild(name, debug = False):
+def msbuild(name, platform, debug = False):
     cwd = os.getcwd()
     configuration=''
     if debug:
@@ -281,7 +281,7 @@ def msbuild(name, debug = False):
 
     os.environ['CONFIGURATION'] = configuration
 
-    os.environ['PLATFORM'] = 'Any CPU'
+    os.environ['PLATFORM'] = platform
 
     os.environ['SOLUTION'] = name
     os.environ['TARGET'] = 'Build'
@@ -289,24 +289,33 @@ def msbuild(name, debug = False):
     os.chdir('proj')
     status=shell('msbuild.bat')
     os.chdir(cwd)
+    if status != None:
+        print("Exit status",status,status)
+        sys.exit(status)
 
-def getsrcpath(subproj,debug=False):
+def getsrcpath(subproj,arch="",debug=False):
     configuration=''
     if debug:
         configuration = 'Debug'
     else:
         configuration = 'Release'
+
+    if not arch == "":
+        configuration = os.sep.join([configuration,arch])
     return  os.sep.join(['proj',subproj,'bin', configuration ])
 
-def copyfiles(name, subproj, dest, debug=False):
+def copyfiles(name, subproj, dest, arch="", debug=False):
 
     
-    src_path = getsrcpath(subproj,debug);
+    src_path = getsrcpath(subproj,arch,debug);
 
     if not os.path.lexists(name):
         os.mkdir(name)
 
-    dst_path = os.sep.join([dest,name, subproj])
+    if arch=="":
+        dst_path = os.sep.join([dest,name, subproj])
+    else:
+        dst_path = os.sep.join([dest,name, subproj,arch])
 
     if not os.path.lexists(dst_path):
         os.makedirs(dst_path)
@@ -457,15 +466,25 @@ if __name__ == '__main__':
             signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
             signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
 
-    msbuild('installwizard', False )
+    msbuild('installwizard','x64', False )
+    msbuild('installwizard','Win32', False )
+    msbuild('installwizard','Any CPU', False )
 
     if (signfiles):
-        sign(os.sep.join([getsrcpath('installwizard', False),"InstallWizard.exe"]), signname, signstr=signstr)
-        sign(os.sep.join([getsrcpath('installgui', False),"InstallGui.exe"]), signname, signstr=signstr)
-        sign(os.sep.join([getsrcpath('UIEvent', False),"UIEvent.exe"]), signname, signstr=signstr)
-    copyfiles('installwizard', 'installwizard', location, False)
-    copyfiles('installwizard', 'installgui', location, False)
-    copyfiles('installwizard', 'UIEvent', location, False)
+        sign(os.sep.join([getsrcpath('installwizard', debug=False),"InstallWizard.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('installgui', debug=False),"InstallGui.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('UIEvent', debug=False),"UIEvent.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('netsettings','x64',False),"netsettings.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('netsettings','Win32',False),"netsettings.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('qnetsettings','x64',False),"qnetsettings.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('qnetsettings','Win32',False),"qnetsettings.exe"]), signname, signstr=signstr)
+    copyfiles('installwizard', 'installwizard', location, debug=False)
+    copyfiles('installwizard', 'installgui', location, debug=False)
+    copyfiles('installwizard', 'UIEvent', location, debug=False)
+    copyfiles('installwizard', 'netsettings', location,'x64', debug=False)
+    copyfiles('installwizard', 'netsettings', location,'Win32', debug=False)
+    copyfiles('installwizard', 'qnetsettings', location,'x64', debug=False)
+    copyfiles('installwizard', 'qnetsettings', location,'Win32', debug=False)
     make_installers(location)
 
     make_pe(location)
