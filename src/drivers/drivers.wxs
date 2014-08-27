@@ -50,12 +50,14 @@
       <?define XenVbdDriverGUID = 'FF1FBC65-784F-4c69-BD4E-656AC5B9BDE4' ?>
       <?define XenNetDriverGUID = '23ADA04F-E332-4919-8B33-1343F23726AF' ?>
       <?define XenBusDriverGUID = 'E758A393-4C2A-4514-B752-C4C643473F35' ?>
+      <?define NetSettingsGUID = '9bcd2bf6-ad9b-4bf2-914e-e0d76d36ff62' ?>
     <?else?>
       <?define XenIfaceDriverGUID = '0015EBE7-54B7-4e3c-8A57-7A27C18C9B34' ?>
       <?define XenVifDriverGUID = '059914AF-D2A5-476e-9015-69A9FD216865' ?>
       <?define XenVbdDriverGUID = '1B2BF4D8-DEDB-484e-8495-C7C359207DA9' ?>
       <?define XenNetDriverGUID = '08B4AC6E-1B49-4a72-A94E-1C89A7734191' ?>
       <?define XenBusDriverGUID = '92EBFF13-EBAB-40c2-BC5E-40AE5BF2FC93' ?>
+      <?define NetSettingsGUID = '67e23d28-fc32-4638-9fd5-9786c566f777' ?>
 
     <?endif?>
 
@@ -65,7 +67,7 @@
      InstallerVersion='200' Languages='1033' 
      SummaryCodepage='1252' />
 
-    <Directory Id='TARGETDIR' Name='SourceDir'>
+ <Directory Id='TARGETDIR' Name='SourceDir'>
         <Directory Id='XenIfaceDir' Name='XenIface'>
             
           <Component Id='XenIfaceDriver' Guid='$(var.XenIfaceDriverGUID)' >    
@@ -127,7 +129,5 @@
         </Component>
       </Directory> 
   </Directory>
-  <InstallExecuteSequence>
-  </InstallExecuteSequence> 
   </Module>
 </Wix>
