@@ -25,13 +25,9 @@ rem Make the registry changes needed to set up filters and unplug
 rem the emulated devices
 
 reg load HKLM\pemount mountpe\Windows\System32\config\SYSTEM
-reg ADD HKLM\pemount\ControlSet001\Services\xenbus\Parameters /v ActiveDevice /t REG_SZ /d "PCI\VEN_5853&DEV_0002&SUBSYS_00025853&REV_02"
 reg ADD HKLM\pemount\ControlSet001\Services\xenfilt /v WindowsPEMode /t REG_DWORD /d 1
 reg ADD HKLM\pemount\ControlSet001\Services\xenfilt\UNPLUG /v DISKS /t REG_MULTI_SZ /d xenvbd
 reg ADD HKLM\pemount\ControlSet001\Services\xenfilt\UNPLUG /v NICS /t REG_MULTI_SZ /d xenvif\0xennet
-reg ADD HKLM\pemount\ControlSet001\Services\xennet /v Count /t REG_DWORD /d 1
-reg ADD HKLM\pemount\ControlSet001\Services\xenvif /v Count /t REG_DWORD /d 1
-reg ADD HKLM\pemount\ControlSet001\Services\xenvbd /v Count /t REG_DWORD /d 1
 reg ADD HKLM\pemount\ControlSet001\Control\class\{4D36E96A-E325-11CE-BFC1-08002BE10318} /v UpperFilters /t REG_MULTI_SZ /d XENFILT
 reg ADD HKLM\pemount\ControlSet001\Control\class\{4D36E97D-E325-11CE-BFC1-08002BE10318} /v UpperFilters /t REG_MULTI_SZ /d XENFILT
 reg unload HKLM\pemount
