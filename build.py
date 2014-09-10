@@ -61,13 +61,20 @@ timestamp="http://timestamp.verisign.com/scripts/timestamp.dll"
 #remembersignname = "Citrix Systems, Inc"
 
 def sign(filename, signname, additionalcert=None, signstr=None):
-    if signstr == None:
-        if additionalcert == None:
-            callfn([signtool, "sign", "/a", "/s", "my", "/n", signname, "/t", timestamp, filename])
-        else:
-            callfn([signtool, "sign", "/a", "/s", "my", "/n", signname, "/t", timestamp, "/ac", "c:\\MSCV-VSClass3.cer", filename])
-    else:
-        callfn(signstr+" "+filename)
+    for i in range(1,10):
+        try: 
+            if signstr == None:
+                if additionalcert == None:
+                    callfn([signtool, "sign", "/a", "/s", "my", "/n", signname, "/t", timestamp, filename])
+                else:
+                    callfn([signtool, "sign", "/a", "/s", "my", "/n", signname, "/t", timestamp, "/ac", "c:\\MSCV-VSClass3.cer", filename])
+            else:
+                callfn(signstr+" "+filename)
+        except:
+            if i==9:
+                raise
+            continue
+        break;
 
 
 def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr=None):
