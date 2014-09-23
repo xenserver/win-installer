@@ -2007,7 +2007,10 @@ namespace InstallWizard
             enumerateBus();
             try
             {
-                Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase",true).DeleteSubKeyTree(@"root#xenevtchn");
+                Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase", true).DeleteSubKeyTree(@"root#xenevtchn");
+            }
+            catch
+            {
             }
             finally {
                 Trace.WriteLine("root#xenevtchn key not present in CDDB");
