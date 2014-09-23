@@ -2005,6 +2005,13 @@ namespace InstallWizard
             Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\partmgr\Parameters", true).SetValue("SanPolicy", 0x00000001);
             base.install(args, logfile, installstate);
             enumerateBus();
+            try
+            {
+                Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase",true).DeleteSubKeyTree(@"root#xenevtchn");
+            }
+            finally {
+                Trace.WriteLine("root#xenevtchn key not present in CDDB");
+            }
             
         }
 
