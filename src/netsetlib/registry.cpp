@@ -736,11 +736,15 @@ CopyValues(
         goto fail1;
     }
 
-    Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+    Error = RegCreateKeyEx(HKEY_LOCAL_MACHINE,
                          SourceKeyName,
                          0,
+						 NULL,
+						 REG_OPTION_NON_VOLATILE,
                          KEY_ALL_ACCESS,
-                         &SourceKey);
+						 NULL,
+                         &SourceKey,
+						 NULL);
     if (Error != ERROR_SUCCESS) {
         SetLastError(Error);
         goto fail2;
