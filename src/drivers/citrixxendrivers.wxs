@@ -180,15 +180,13 @@
         <?endif?>
         <Component Id='RegEntry' Guid='*'>
             <RegistryKey Root='HKLM'
-                Key='Software\Citrix\XenTools'
-                Action='createAndRemoveOnUninstall'>
+                Key='Software\Citrix\XenTools' >
                 <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
             </RegistryKey>
         </Component>
         <Component Id='RegEntry32' Guid='3a428079-00d8-4c55-b314-321e757ff988' Win64='no'>
             <RegistryKey Root='HKLM'
-                Key='Software\Citrix\XenTools'
-                Action='createAndRemoveOnUninstall'>
+                Key='Software\Citrix\XenTools' >
                 <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
             </RegistryKey>
         </Component>
