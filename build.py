@@ -41,6 +41,7 @@ import manifestlatest
 import manifestspecific
 import re
 import errno
+import stat
 
 def unpack_from_jenkins(filelist, packdir):
     if ('GIT_COMMIT' in os.environ):
@@ -165,9 +166,14 @@ def callfn(cmd):
         raise(Exception("Error %d in : %s" % (ret, cmd)))
     print("------------------------------------------------------------")
 
+def remove_readonly(func, path, execinfo):
+    if (os.path.exists(path)):
+        os.chmod(path, stat.S_IWRITE)
+        os.unlink(path)
+
 def make_pe(pack):
         if os.path.exists('installer\\pe'):
-                shutil.rmtree('installer\\pe')
+                shutil.rmtree('installer\\pe', onerror=remove_readonly)
         os.makedirs('installer\\pe')
         shutil.copytree(pack+"\\xenvif", "installer\\pe\\xenvif")
         shutil.copytree(pack+"\\xenvbd", "installer\\pe\\xenvbd")
@@ -177,7 +183,7 @@ def make_pe(pack):
 
 def make_builds(pack):
         if (os.path.exists('installer\\builds')):
-                shutil.rmtree('installer\\builds')
+                shutil.rmtree('installer\\builds', onerror=remove_readonly)
         os.makedirs('installer\\builds')
         shutil.copytree(pack+"\\xenvif", "installer\\builds\\xenvif")
         shutil.copytree(pack+"\\xenvbd", "installer\\builds\\xenvbd")
