@@ -1445,6 +1445,132 @@ fail1:
 	return Error;
 }
 
+HRESULT RegistryDeleteValuesOnCondition(PTCHAR KeyName, CONDITIONAL_CALLBACK callback, void *data)
+{
+	HRESULT Error;
+	HKEY Key;
+    DWORD Values;
+	DWORD MaxNameLength;
+	DWORD Index;
+	ITERATOR_CALLBACK_DATA cbargs;
+
+	Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+                         KeyName,
+                         0,
+                         KEY_ALL_ACCESS,
+                         &Key);
+    if (Error != ERROR_SUCCESS) {
+        SetLastError(Error);
+		Warning("Cannot open key %s", KeyName);
+        goto fail1;
+    }
+
+	cbargs.ParentKey = &Key;
+    Error = RegQueryInfoKey(Key,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            &Values,
+                            &MaxNameLength,
+                            NULL,
+                            NULL,
+                            NULL);
+    if (Error != ERROR_SUCCESS) {
+		Warning("Cannot query key info");
+        SetLastError(Error);
+        goto fail2;
+    }
+
+	Log("Values is %d", Values);
+    if (Values == 0)
+        goto done;
+
+    MaxNameLength += sizeof (TCHAR);
+
+    cbargs.Name = (PTCHAR)malloc(MaxNameLength);
+    if (cbargs.Name == NULL) {
+		Warning("Cannot allocated memory for name");
+        goto fail3;
+	}
+
+    for (Index = 0; ; ) {
+        cbargs.NameLength = MaxNameLength;
+        memset(cbargs.Name, 0, cbargs.NameLength);
+
+        Error = RegEnumValue(Key,
+                             Index,
+                             (LPTSTR)cbargs.Name,
+                             &cbargs.NameLength,
+                             NULL,
+                             NULL,
+                             NULL,
+                             &cbargs.ValueLength);
+        if (Error == ERROR_NO_MORE_ITEMS)
+            break;
+
+        cbargs.Value = (LPBYTE)malloc(cbargs.ValueLength);
+        if (cbargs.Value == NULL) {
+		    Warning("Cannot allocated memory for value");
+            goto fail4;
+	    }
+
+        Error = RegEnumValue(Key,
+                             Index,
+                             (LPTSTR)cbargs.Name,
+                             &cbargs.NameLength,
+                             NULL,
+                             &cbargs.Type,
+                             cbargs.Value,
+                             &cbargs.ValueLength);
+        if (Error != ERROR_SUCCESS) {
+            SetLastError(Error);
+			Warning("Cannot enumerate keys");
+            goto fail5;
+        }
+        if (callback(&cbargs, data)) {
+            Log("Deleting Value %s", cbargs.Value);
+
+		    Error = RegDeleteValue(Key, (LPCTSTR)cbargs.Value);
+		    if (Error != ERROR_SUCCESS) {
+			    Warning("Unable to delete value %s @ %d", cbargs.Value, Index);
+                ++Index;
+		    }
+            // else, dont increment the index, next value will have the same index as this value after the delete
+        } else {
+            ++Index;
+        }
+
+        free(cbargs.Value);
+	}
+	
+	free(cbargs.Name);
+done:
+	RegCloseKey(Key);
+	return ERROR_SUCCESS;
+
+fail5:
+    free(cbargs.Value);
+fail4:
+	free(cbargs.Name);
+fail3:
+fail2:
+	RegCloseKey(Key);
+fail1:
+    Error = GetLastError();
+
+    {
+        PTCHAR  Message;
+
+        Message = __GetErrorMessage(Error);
+        Log("fail1 (%s)", Message);
+        LocalFree(Message);
+    }
+	return Error;
+}
+
 #define NETLUIDSTRINGSIZE (sizeof (ULONG64) * 2)
 
 HRESULT
@@ -1523,6 +1649,13 @@ HRESULT RegistryDeleteIfMatchingNetLuid(ITERATOR_CALLBACK_DATA *iteratordata, vo
 	return ERROR_SUCCESS;
 }
 	
+BOOLEAN RegistryIsMatchingNetLuid(ITERATOR_CALLBACK_DATA *iteratordata, void *externaldata)
+{
+    NET_LUID	*NetLuid = (NET_LUID *)externaldata;
+
+    return nsiDataMatchesNetLuid(*NetLuid, iteratordata->Name);
+}
+
 HRESULT RegistryRestoreWithNewNetLuid(ITERATOR_CALLBACK_DATA *iteratordata, void *externaldata)
 {
 	TCHAR				Buffer[NETLUIDSTRINGSIZE+1];

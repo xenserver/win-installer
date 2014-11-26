@@ -182,6 +182,8 @@ typedef HRESULT(*ITERATOR_CALLBACK)(ITERATOR_CALLBACK_DATA *, void*);
 
 typedef HRESULT(*SUBKEY_ITERATOR_CALLBACK)(SUBKEY_ITERATOR_CALLBACK_DATA *, void*);
 
+typedef BOOLEAN(*CONDITIONAL_CALLBACK)(ITERATOR_CALLBACK_DATA *, void*);
+
 extern HRESULT 
 RegistryDeleteIfMatchingNetLuid(
 	ITERATOR_CALLBACK_DATA	*iteratordata, 
@@ -192,6 +194,12 @@ extern HRESULT
 RegistryRestoreWithNewNetLuid(
 	ITERATOR_CALLBACK_DATA	*iteratordata, 
 	void					*externaldata
+);
+
+extern BOOLEAN
+RegistryIsMatchingNetLuid(
+    ITERATOR_CALLBACK_DATA  *iteratordata,
+    void                    *externaldata
 );
 
 extern HRESULT 
@@ -206,6 +214,13 @@ RegistryIterateOverKeySubKeys(
 	PTCHAR						KeyName, 
 	SUBKEY_ITERATOR_CALLBACK	callback, 
 	void						*data
+);
+
+extern HRESULT 
+RegistryDeleteValuesOnCondition(
+    PTCHAR                  KeyName,
+    CONDITIONAL_CALLBACK    callback, 
+    void                    *data
 );
 
 extern PTCHAR
