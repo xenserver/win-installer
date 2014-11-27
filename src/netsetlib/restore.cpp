@@ -131,7 +131,7 @@ HRESULT restoreStaticNetworkConfiguration(DWORD deviceIndex, HKEY DestinationKey
 		RegCloseKey(CheckKey);
 
 		Log("IPV6 Static deletion required");
-		Error = RegistryIterateOverKeyValues(STATIC_IPV6_KEY, RegistryDeleteIfMatchingNetLuid, &restoreData.NetLuid);
+        Error = RegistryDeleteValuesOnCondition(STATIC_IPV6_KEY, RegistryIsMatchingNetLuid, &restoreData.NetLuid);
 		if (Error != ERROR_SUCCESS) {
 			Warning("Removing values failed");
 			goto fail3;
