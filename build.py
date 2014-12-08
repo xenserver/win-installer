@@ -473,9 +473,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     if (signfiles):
-        # Don't sign driver binaries with secure build
-        #signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
-        #signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
+        signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
+        signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
         if not all_drivers_signed:
             signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
             signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
