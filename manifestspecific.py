@@ -41,4 +41,4 @@ build_tar_source_files = {
        "xenvss" : r'standard-lcm\16\xenvss-7.tar',
 } 
 
-all_drivers_signed = True
+all_drivers_signed = False 
