@@ -1256,9 +1256,9 @@ HRESULT RegistryIterateOverKeySubKeys(PTCHAR KeyName, SUBKEY_ITERATOR_CALLBACK c
     if (SubKeys == 0)
         goto done;
 
-    MaxSubKeyLength += sizeof (TCHAR);
+    MaxSubKeyLength += 1;
 
-    cbargs.Name = (PTCHAR)malloc(MaxSubKeyLength);
+    cbargs.Name = (PTCHAR)malloc(MaxSubKeyLength * sizeof(TCHAR));
     if (cbargs.Name == NULL) {
 		Warning("Cannot allocated memory for name");
         goto fail3;
@@ -1269,7 +1269,7 @@ HRESULT RegistryIterateOverKeySubKeys(PTCHAR KeyName, SUBKEY_ITERATOR_CALLBACK c
 
 
         cbargs.NameLength = MaxSubKeyLength;
-        memset(cbargs.Name, 0, cbargs.NameLength);
+        memset(cbargs.Name, 0, cbargs.NameLength*sizeof(TCHAR));
 
         Error = RegEnumKeyEx(Key,
                              Index,
@@ -1281,7 +1281,7 @@ HRESULT RegistryIterateOverKeySubKeys(PTCHAR KeyName, SUBKEY_ITERATOR_CALLBACK c
                              NULL);
         if (Error != ERROR_SUCCESS) {
             SetLastError(Error);
-			Warning("Cannot enumerate keys");
+			Warning("Cannot enumerate keys subkeys");
             goto fail4;
         }
 
@@ -1372,9 +1372,9 @@ HRESULT RegistryIterateOverKeyValues(PTCHAR KeyName, ITERATOR_CALLBACK callback,
     if (Values == 0)
         goto done;
 
-    MaxNameLength += sizeof (TCHAR);
+    MaxNameLength += 1;
 
-    cbargs.Name = (PTCHAR)malloc(MaxNameLength);
+    cbargs.Name = (PTCHAR)malloc(MaxNameLength * sizeof(TCHAR));
     if (cbargs.Name == NULL) {
 		Warning("Cannot allocated memory for name");
         goto fail3;
@@ -1391,7 +1391,7 @@ HRESULT RegistryIterateOverKeyValues(PTCHAR KeyName, ITERATOR_CALLBACK callback,
 
 
         cbargs.NameLength = MaxNameLength;
-        memset(cbargs.Name, 0, cbargs.NameLength);
+        memset(cbargs.Name, 0, cbargs.NameLength * sizeof(TCHAR));
 
         cbargs.ValueLength = MaxValueLength;
         memset(cbargs.Value, 0, cbargs.ValueLength);
@@ -1406,7 +1406,7 @@ HRESULT RegistryIterateOverKeyValues(PTCHAR KeyName, ITERATOR_CALLBACK callback,
                              &cbargs.ValueLength);
         if (Error != ERROR_SUCCESS) {
             SetLastError(Error);
-			Warning("Cannot enumerate keys");
+			Warning("Cannot enumerate values");
             goto fail5;
         }
 		Error = callback(&cbargs, data);
@@ -1488,9 +1488,9 @@ HRESULT RegistryDeleteValuesOnCondition(PTCHAR KeyName, CONDITIONAL_CALLBACK cal
     if (Values == 0)
         goto done;
 
-    MaxNameLength += sizeof (TCHAR);
+    MaxNameLength += 1;
 
-    cbargs.Name = (PTCHAR)malloc(MaxNameLength);
+    cbargs.Name = (PTCHAR)malloc(MaxNameLength*sizeof(TCHAR));
     if (cbargs.Name == NULL) {
 		Warning("Cannot allocated memory for name");
         goto fail3;
@@ -1498,7 +1498,7 @@ HRESULT RegistryDeleteValuesOnCondition(PTCHAR KeyName, CONDITIONAL_CALLBACK cal
 
     for (Index = 0; ; ) {
         cbargs.NameLength = MaxNameLength;
-        memset(cbargs.Name, 0, cbargs.NameLength);
+        memset(cbargs.Name, 0, cbargs.NameLength*sizeof(TCHAR));
 
         Error = RegEnumValue(Key,
                              Index,
@@ -1517,6 +1517,7 @@ HRESULT RegistryDeleteValuesOnCondition(PTCHAR KeyName, CONDITIONAL_CALLBACK cal
             goto fail4;
 	    }
 
+        cbargs.NameLength = MaxNameLength;
         Error = RegEnumValue(Key,
                              Index,
                              (LPTSTR)cbargs.Name,
@@ -1527,7 +1528,7 @@ HRESULT RegistryDeleteValuesOnCondition(PTCHAR KeyName, CONDITIONAL_CALLBACK cal
                              &cbargs.ValueLength);
         if (Error != ERROR_SUCCESS) {
             SetLastError(Error);
-			Warning("Cannot enumerate keys");
+			Warning("Cannot enumerate values for deletion");
             goto fail5;
         }
         if (callback(&cbargs, data)) {
@@ -1552,11 +1553,15 @@ done:
 	return ERROR_SUCCESS;
 
 fail5:
+	Log("fail 5");
     free(cbargs.Value);
 fail4:
+	Log("fail 4");
 	free(cbargs.Name);
 fail3:
+	Log("fail 3");
 fail2:
+	Log("fail 2");
 	RegCloseKey(Key);
 fail1:
     Error = GetLastError();
