@@ -185,8 +185,7 @@
       </Directory>
                 <Component Id='RegEntry' Guid="*">
                 <RegistryKey Root='HKLM'
-                    Key='Software\Citrix\XenTools'
-                    Action='createAndRemoveOnUninstall'>
+                    Key='Software\Citrix\XenTools' >
                     <RegistryValue Type='integer' Name='MajorVersion' Value='$(var.CurrentMajorVersion)' />
                     <RegistryValue Type='integer' Name='MinorVersion' Value='$(var.CurrentMinorVersion)' />
                     <RegistryValue Type='integer' Name='MicroVersion' Value='$(var.CurrentMicroVersion)' />
