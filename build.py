@@ -359,7 +359,7 @@ if __name__ == '__main__':
     os.environ['MINOR_VERSION'] = '2'
     os.environ['MICRO_VERSION'] = '50'
 
-    os.environ['TOOLS_HOTFIX_NUMBER'] = '20000'
+    os.environ['TOOLS_HOTFIX_NUMBER'] = '20001'
     # Note that the TOOLS_HOTFIX_NUMBER should be reset to 0 following a change of majror, minor or micro numbers
 
     if 'BUILD_NUMBER' not in os.environ.keys():
