@@ -118,7 +118,54 @@
                   Property="HOSTTIME"
                   Value="[HOSTTIME64]"
                   Execute="firstSequence" />
-
+    <Property Id='SAVEMAJOR' Value="#1">
+        <RegistrySearch Id='SaveMajor'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='MajorVersion'
+                        Type='raw' 
+                        />
+    </Property>
+    <Property Id='SAVEMINOR' Value="#1">
+        <RegistrySearch Id='SaveMinor'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='MinorVersion'
+                        Type='raw' 
+                        />
+    </Property>
+    <Property Id='SAVEMICRO' Value="#1">
+        <RegistrySearch Id='SaveMicro'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='MicroVersion'
+                        Type='raw' 
+                        />
+    </Property>
+    <Property Id='SAVEBUILD' Value="#1">
+        <RegistrySearch Id='SaveBuild'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='BuildVersion'
+                        Type='raw' 
+                        />
+    </Property>
+    <Property Id='SAVEINSTALL' Value="UNSET">
+        <RegistrySearch Id='SaveInstall'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='Install_Dir'
+                        Type='raw' 
+                        />
+    </Property>
+    <Property Id='SAVEMSI' Value="#0">
+        <RegistrySearch Id='SaveMSI'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='MsiGuestAgent'
+                        Type='raw' 
+                        />
+    </Property>
 
     <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
     <Property Id="ARPPRODUCTICON" Value="icon.ico" />
@@ -182,6 +229,12 @@
             <RegistryKey Root='HKLM'
                 Key='Software\Citrix\XenTools' >
                 <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
+                <RegistryValue Type='string' Name='MajorVersion' Value='[SAVEMAJOR]' />
+                <RegistryValue Type='string' Name='MinorVersion' Value='[SAVEMINOR]' />
+                <RegistryValue Type='string' Name='MicroVersion' Value='[SAVEMICRO]' />
+                <RegistryValue Type='string' Name='BuildVersion' Value='[SAVEBUILD]' /> 
+                <RegistryValue Type='string' Name='Install_Dir' Value='[SAVEINSTALL]' />
+                <RegistryValue Type='string' Name='MsiGuestAgent' Value='[SAVEMSI]' />
             </RegistryKey>
         </Component>
         <Component Id='RegEntry32' Guid='3a428079-00d8-4c55-b314-321e757ff988' Win64='no'>
