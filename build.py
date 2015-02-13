@@ -94,6 +94,7 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
     noadditionalcertfiles = [
         pack+"\\xenguestagent\\xenguestagent\\xenguestagent.exe",
         pack+"\\xenguestagent\\xenguestagent\\xenguestlib.dll", 
+        pack+"\\xenguestagent\\xenguestagent\\Interop.NetFwTypeLib.dll", 
         pack+"\\xenguestagent\\xendpriv\\xendpriv.exe",
         pack+"\\xenvif\\"+arch+"\\xenvif_coinst.dll",
         pack+"\\xenvss\\"+arch+"\\vssclient.dll", 
