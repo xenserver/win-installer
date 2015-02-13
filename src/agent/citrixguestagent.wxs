@@ -157,6 +157,7 @@
               <Component Id='dotnetagentsupport' Guid='$(var.supportid)'>
                   <File Id="XenDPrivExe" Name="XenDPriv.exe" Source="xenguestagent\xendpriv\XenDPriv.exe" />
                   <File Id="XenGuestLibDll" Name="XenGuestLib.Dll" Source="xenguestagent\xenguestagent\XenGuestLib.Dll" />
+                  <File Id="XenGuestLibDll" Name="XenGuestLib.Dll" Source="xenguestagent\xenguestagent\Interop.NetFwTypeLib.dll" />
               </Component>
               <Component Id='XenService' Guid="*">
                   <File Id='XenGuestAgent.Exe' Name='XenGuestAgent.Exe' Source="xenguestagent\xenguestagent\xenguestagent.exe" />
