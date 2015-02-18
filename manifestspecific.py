@@ -37,7 +37,7 @@ build_tar_source_files = {
        "xennet" : r'standard-lcm\13\xennet-7-2-0-14.tar',
        "xeniface" : r'standard-lcm\12\xeniface-7-2-0-14.tar',
        "xenvbd" : r'standard-lcm\14\xenvbd-7-2-0-40.tar',
-       "xenguestagent" : r'xenguestagent.git.locked\130\xenguestagent.tar',
+       "xenguestagent" : r'xenguestagent.git.locked\131\xenguestagent.tar',
        "xenvss" : r'standard-lcm\16\xenvss-7.tar',
 } 
 
