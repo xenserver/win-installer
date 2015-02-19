@@ -32,12 +32,12 @@ secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
 localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
-       "xenbus" : r'xenbus-patchq.git\12\xenbus.tar',
-       "xenvif" : r'xenvif-patchq.git\5\xenvif.tar',
-       "xennet" : r'xennet-patchq.git\4\xennet.tar',
-       "xeniface" : r'xeniface-patchq.git\3\xeniface.tar',
-       "xenvbd" : r'xenvbd-patchq.git\9\xenvbd.tar',
-       "xenguestagent" : r'xenguestagent.git\130\xenguestagent.tar',
+       "xenbus" : r'xenbus.git.whql/51/xenbus-7-2-0-51.tar',
+       "xenvif" : r'xenvif.git.whql\56\xenvif-7-2-0-56.tar',
+       "xennet" : r'standard-lcm\13\xennet-7-2-0-14.tar',
+       "xeniface" : r'standard-lcm\12\xeniface-7-2-0-14.tar',
+       "xenvbd" : r'xenvbd.git\41\xenvbd.tar',
+       "xenguestagent" : r'xenguestagent.git\131\xenguestagent.tar',
        "xenvss" : r'standard-lcm\16\xenvss-7.tar',
 } 
 
