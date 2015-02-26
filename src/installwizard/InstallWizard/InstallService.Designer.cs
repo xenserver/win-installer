@@ -1,4 +1,4 @@
-﻿namespace InstallWizard
+namespace InstallWizard
 {
 
     partial class InstallService
