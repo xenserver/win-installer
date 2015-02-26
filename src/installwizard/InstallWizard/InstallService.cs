@@ -495,7 +495,10 @@ namespace InstallWizard
 
                     if ((!InstallState.RebootReady) && InstallState.RebootNow && InstallState.Unchanged)
                     {
+
                         // We are ready to reboot
+                        Trace.WriteLine("Is anything preventing us from shutting down?");
+                        setupapi.CMP_WaitNoPendingInstallEvents(0xffffffff);
                         Trace.WriteLine("Ready to reboot");
                         InstallState.Polling = false;
                         InstallState.RebootDesired = true;
