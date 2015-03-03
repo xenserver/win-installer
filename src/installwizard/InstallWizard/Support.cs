@@ -51,6 +51,147 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace InstallWizard
 {
+    class setupapi {
+        [DllImport("setupapi.dll", CharSet = CharSet.Auto)]     // 2nd form uses an Enumerator only, with null ClassGUID 
+        public static extern IntPtr SetupDiGetClassDevs(
+           IntPtr ClassGuid,
+           string Enumerator,
+           IntPtr hwndParent,
+           DiGetClassFlags Flags
+        );
+        [Flags]
+        public enum DiGetClassFlags : uint
+        {
+            DIGCF_DEFAULT = 0x00000001,  // only valid with DIGCF_DEVICEINTERFACE
+            DIGCF_PRESENT = 0x00000002,
+            DIGCF_ALLCLASSES = 0x00000004,
+            DIGCF_PROFILE = 0x00000008,
+            DIGCF_DEVICEINTERFACE = 0x00000010,
+        }
+
+        public enum DNFlags : uint {
+            DN_ROOT_ENUMERATED =(0x00000001) ,// Was enumerated by ROOT
+            DN_DRIVER_LOADED   =(0x00000002) ,// Has Register_Device_Driver
+            DN_ENUM_LOADED     =(0x00000004) ,// Has Register_Enumerator
+            DN_STARTED         =(0x00000008) ,// Is currently configured
+            DN_MANUAL          =(0x00000010) ,// Manually installed
+            DN_NEED_TO_ENUM    =(0x00000020) ,// May need reenumeration
+            DN_NOT_FIRST_TIME  =(0x00000040) ,// Has received a config
+            DN_HARDWARE_ENUM   =(0x00000080) ,// Enum generates hardware ID
+            DN_LIAR            =(0x00000100) ,// Lied about can reconfig once
+            DN_HAS_MARK        =(0x00000200) ,// Not CM_Create_DevInst lately
+            DN_HAS_PROBLEM     =(0x00000400) ,// Need device installer
+            DN_FILTERED        =(0x00000800) ,// Is filtered
+            DN_MOVED           =(0x00001000) ,// Has been moved
+            DN_DISABLEABLE     =(0x00002000) ,// Can be disabled
+            DN_REMOVABLE       =(0x00004000) ,// Can be removed
+            DN_PRIVATE_PROBLEM =(0x00008000) ,// Has a private problem
+            DN_MF_PARENT       =(0x00010000) ,// Multi function parent
+            DN_MF_CHILD        =(0x00020000) ,// Multi function child
+            DN_WILL_BE_REMOVED =(0x00040000) ,// DevInst is being removed
+
+            //
+            // Windows 4 OPK2 Flags
+            //
+            DN_NOT_FIRST_TIMEE  =0x00080000  ,// S: Has received a config enumerate
+            DN_STOP_FREE_RES    =0x00100000  ,// S: When child is stopped, free resources
+            DN_REBAL_CANDIDATE  =0x00200000  ,// S: Don't skip during rebalance
+            DN_BAD_PARTIAL      =0x00400000  ,// S: This devnode's log_confs do not have same resources
+            DN_NT_ENUMERATOR    =0x00800000  ,// S: This devnode's is an NT enumerator
+            DN_NT_DRIVER        =0x01000000  ,// S: This devnode's is an NT driver
+            //
+            // Windows 4.1 Flags
+            //
+            DN_NEEDS_LOCKING    =0x02000000  ,// S: Devnode need lock resume processing
+            DN_ARM_WAKEUP       =0x04000000  ,// S: Devnode can be the wakeup device
+            DN_APM_ENUMERATOR   =0x08000000  ,// S: APM aware enumerator
+            DN_APM_DRIVER       =0x10000000  ,// S: APM aware driver
+            DN_SILENT_INSTALL   =0x20000000  ,// S: Silent install
+            DN_NO_SHOW_IN_DM    =0x40000000  ,// S: No show in device manager
+            DN_BOOT_LOG_PROB    =0x80000000  // S: Had a problem during preassignment of boot log conf
+        }   
+
+        [DllImport("setupapi.dll", SetLastError = true)]
+        public static extern bool SetupDiCallClassInstaller(
+             DiFunctions InstallFunction,
+             IntPtr DeviceInfoSet,
+             IntPtr DeviceInfoData
+        );
+
+        public enum DiFunctions : uint
+        {
+            PropertyChange = (int)0x12
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DeviceInfoData
+        {
+            public int Size;
+            public Guid ClassGuid;
+            public int DevInst;
+            public IntPtr Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack=1)]
+        public struct PropertyChangeParameters
+        {
+            public uint Size;
+            public DiFunctions DiFunction;
+            public StateChangeAction StateChange;
+            public Scopes Scope;
+            public uint HwProfile;
+        }
+        [Flags()]
+        public enum Scopes : uint
+        {
+            Global = 1
+        }
+
+        public enum StateChangeAction : uint
+        {
+            Enable = 1,
+            Disable = 2
+        }
+        [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool SetupDiSetClassInstallParams(IntPtr DeviceInfoSet, IntPtr DeviceInfoData, IntPtr paramaters, int ClassInstallParamsSize);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SP_DEVINFO_DATA
+        {
+            public uint cbSize;
+            public Guid ClassGuid;
+            public uint DevInst;
+            public IntPtr Reserved;
+        }
+        [DllImport("setupapi.dll", SetLastError = true)]
+        public static extern bool SetupDiEnumDeviceInfo(IntPtr DeviceInfoSet, uint MemberIndex, ref SP_DEVINFO_DATA DeviceInfoData);
+        [DllImport("setupapi.dll", SetLastError=true)]
+        public static extern uint CM_Get_DevNode_Status(out UInt32 status, out UInt32 probNum, UInt32 devInst, int flags);
+        [DllImport("cfgmgr32.dll", SetLastError = true, EntryPoint = "CMP_WaitNoPendingInstallEvents", CharSet = CharSet.Auto)]
+        public static extern UInt32 CMP_WaitNoPendingInstallEvents(UInt32 TimeOut);
+        public static bool childrenInstalled(string enumname)
+        {
+            UInt32 devStatus;
+            UInt32 devProblemCode;
+            IntPtr devlist = SetupDiGetClassDevs(IntPtr.Zero, enumname, IntPtr.Zero, DiGetClassFlags.DIGCF_PRESENT | DiGetClassFlags.DIGCF_ALLCLASSES);
+            uint i = 0;
+            SP_DEVINFO_DATA DevData = new SP_DEVINFO_DATA();
+            DevData.cbSize = (uint)Marshal.SizeOf(DevData);
+            
+            while(SetupDiEnumDeviceInfo(devlist, i , ref DevData)) {
+
+                CM_Get_DevNode_Status(out devStatus, out devProblemCode, DevData.DevInst, 0);
+    
+                if ((devStatus & (uint)DNFlags.DN_STARTED) == 0) {
+                    Trace.WriteLine(enumname + " child not started "+devStatus.ToString() );
+
+                    return false;
+                }
+                i++;
+            }
+            return true;
+        }
+    }
     public class MsiInstaller
     {
 
@@ -732,98 +873,30 @@ namespace InstallWizard
         }
 
         static bool restored = false;
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto)]     // 2nd form uses an Enumerator only, with null ClassGUID 
-        static extern IntPtr SetupDiGetClassDevs(
-           IntPtr ClassGuid,
-           string Enumerator,
-           IntPtr hwndParent,
-           DiGetClassFlags Flags
-        );
-        [Flags]
-        public enum DiGetClassFlags : uint
-        {
-            DIGCF_DEFAULT = 0x00000001,  // only valid with DIGCF_DEVICEINTERFACE
-            DIGCF_PRESENT = 0x00000002,
-            DIGCF_ALLCLASSES = 0x00000004,
-            DIGCF_PROFILE = 0x00000008,
-            DIGCF_DEVICEINTERFACE = 0x00000010,
-        }
-        [DllImport("setupapi.dll", SetLastError = true)]
-        static extern bool SetupDiCallClassInstaller(
-             DiFunctions InstallFunction,
-             IntPtr DeviceInfoSet,
-             IntPtr DeviceInfoData
-        );
 
-        public enum DiFunctions : uint
-        {
-            PropertyChange = (int)0x12
-        }
 
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct DeviceInfoData
-        {
-            public int Size;
-            public Guid ClassGuid;
-            public int DevInst;
-            public IntPtr Reserved;
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack=1)]
-        internal struct PropertyChangeParameters
-        {
-            public uint Size;
-            public DiFunctions DiFunction;
-            public StateChangeAction StateChange;
-            public Scopes Scope;
-            public uint HwProfile;
-        }
-        [Flags()]
-        internal enum Scopes : uint
-        {
-            Global = 1
-        }
-
-        internal enum StateChangeAction : uint
-        {
-            Enable = 1,
-            Disable = 2
-        }
-        [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
-        static extern bool SetupDiSetClassInstallParams(IntPtr DeviceInfoSet, IntPtr DeviceInfoData, IntPtr paramaters, int ClassInstallParamsSize);
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct SP_DEVINFO_DATA
-        {
-            public uint cbSize;
-            public Guid ClassGuid;
-            public uint DevInst;
-            public IntPtr Reserved;
-        }
-        [DllImport("setupapi.dll", SetLastError = true)]
-        static extern bool SetupDiEnumDeviceInfo(IntPtr DeviceInfoSet, uint MemberIndex, ref SP_DEVINFO_DATA DeviceInfoData);
         static void vifDisableEnable(bool enable)
         {
-            IntPtr devlist = SetupDiGetClassDevs(IntPtr.Zero, "XENVIF", IntPtr.Zero, DiGetClassFlags.DIGCF_PRESENT | DiGetClassFlags.DIGCF_ALLCLASSES);
+            IntPtr devlist = setupapi.SetupDiGetClassDevs(IntPtr.Zero, "XENVIF", IntPtr.Zero, setupapi.DiGetClassFlags.DIGCF_PRESENT | setupapi.DiGetClassFlags.DIGCF_ALLCLASSES);
             uint i = 0;
-            SP_DEVINFO_DATA DevData = new SP_DEVINFO_DATA();
+            setupapi.SP_DEVINFO_DATA DevData = new setupapi.SP_DEVINFO_DATA();
             DevData.cbSize = (uint)Marshal.SizeOf(DevData);
             Trace.WriteLine("devinfosize " + DevData.cbSize.ToString());
-            while (SetupDiEnumDeviceInfo(devlist, i, ref DevData))
+            while (setupapi.SetupDiEnumDeviceInfo(devlist, i, ref DevData))
             {
                 Trace.WriteLine("dev inst: " + DevData.DevInst.ToString());
                 i++;
-                PropertyChangeParameters pcparams = new PropertyChangeParameters();
+                setupapi.PropertyChangeParameters pcparams = new setupapi.PropertyChangeParameters();
                 pcparams.Size = 8;
-                pcparams.DiFunction = DiFunctions.PropertyChange;
-                pcparams.Scope = Scopes.Global;
+                pcparams.DiFunction = setupapi.DiFunctions.PropertyChange;
+                pcparams.Scope = setupapi.Scopes.Global;
                 if (enable)
                 {
-                    pcparams.StateChange = StateChangeAction.Enable;
+                    pcparams.StateChange = setupapi.StateChangeAction.Enable;
                 }
                 else
                 {
-                    pcparams.StateChange = StateChangeAction.Disable;
+                    pcparams.StateChange = setupapi.StateChangeAction.Disable;
                 }
                 pcparams.HwProfile = 0;
                 var pinned = GCHandle.Alloc(pcparams, GCHandleType.Pinned);
@@ -839,10 +912,10 @@ namespace InstallWizard
                 var pdd = GCHandle.Alloc(DevData, GCHandleType.Pinned);
 
                 Trace.WriteLine(Marshal.SizeOf(pcparams).ToString());
-                Trace.WriteLine("InstallPaarams " + SetupDiSetClassInstallParams(devlist, pdd.AddrOfPinnedObject(), pinned.AddrOfPinnedObject(), Marshal.SizeOf(pcparams)).ToString());
+                Trace.WriteLine("InstallPaarams " + setupapi.SetupDiSetClassInstallParams(devlist, pdd.AddrOfPinnedObject(), pinned.AddrOfPinnedObject(), Marshal.SizeOf(pcparams)).ToString());
                 Trace.WriteLine(Marshal.GetLastWin32Error().ToString());
 
-                Trace.WriteLine("CallClassInstaller " + SetupDiCallClassInstaller(DiFunctions.PropertyChange, devlist, pdd.AddrOfPinnedObject()).ToString() + " " + Marshal.GetLastWin32Error().ToString());
+                Trace.WriteLine("CallClassInstaller " + setupapi.SetupDiCallClassInstaller(setupapi.DiFunctions.PropertyChange, devlist, pdd.AddrOfPinnedObject()).ToString() + " " + Marshal.GetLastWin32Error().ToString());
                 pdd.Free();
                 pinned.Free();
             }
@@ -1054,6 +1127,9 @@ namespace InstallWizard
         }
 
         public static void winReboot() {
+            Trace.WriteLine("One last attempt not to shutdown if something is still installing");
+            setupapi.CMP_WaitNoPendingInstallEvents(0xffffffff);
+            Trace.WriteLine("OK - shutting down");
             AcquireSystemPrivilege(SE_SHUTDOWN_NAME);
             WinVersion vers = new WinVersion();
             if (vers.GetVersionValue() >= 0x500 &&
@@ -2023,6 +2099,7 @@ namespace InstallWizard
             Trace.WriteLine("Checking service " + name);
             try
             {
+
                 ServiceController sc = new ServiceController(name);
                 ServiceControllerStatus status = sc.Status;
                 if (sc.Status != ServiceControllerStatus.Running)
@@ -2050,6 +2127,7 @@ namespace InstallWizard
                     return false;
                 }
                 textout = textout + "  Bus Device Installed\n";
+                
                 if (!checkservicerunning("xeniface"))
                 {
                     Trace.WriteLine("Interface device not ready");
@@ -2058,23 +2136,49 @@ namespace InstallWizard
                 }
                 textout = textout+"  XenServer Interface Device Installed\n";
 
-                Trace.WriteLine("Which emulated devices are available");
-                if (checkserviceneeded("VIF") && ((!checkservicerunning("xenvif")) || (!checkemulated("xenvif"))))
-                {
-                    Trace.WriteLine("VIF not ready");
-                    textout = textout + "  Virtual Network Interface Support Initializing\n";
-                    return false;
+              
+                // If there are no vifs for the VM, xenbus dose not enumerate a device for xenvif 
+                if (checkserviceneeded("VIF")) {
+
+                    if (!checkservicerunning("xenvif")) {
+                        textout = textout + "  Virtual Network Interface Device Initializing\n";
+                        return false;
+                    }
+
+                    if ((!setupapi.childrenInstalled("xenvif")))
+                    {
+                        textout = textout + "  Virtual Network Interface Children Initializing\n";
+                        Trace.WriteLine("XenVif children not ready");
+                        return false;
+                    }
+                    
+                    if (!checkemulatedneedreboot("xenvif"))
+                    {
+                        textout = textout + "  Virtual Network Interface Removing Emulated Devices\n";
+                        return false;
+                    }
+
+                    try {
+                        VifConfig.FixupAliases();
+                        VifConfig.RestoreNetSettings();
+                    }
+                    catch(Exception e) {
+                        Trace.WriteLine("Restoring network config triggered an exception : "+e.ToString());
+                    }
+
+                    textout = textout+"  Virtual Network Interface Support Installed\n";
                 }
-
-                VifConfig.FixupAliases();
-                VifConfig.RestoreNetSettings();
                 
-
-                textout = textout+"  Virtual Network Interface Support Installed\n";
-                if ((!checkservicerunning("xenvbd"))|| (!checkemulated("xenvbd")))
+                
+                if ((!checkservicerunning("xenvbd")))
                 {
                     Trace.WriteLine("VBD not ready");
                     textout = textout + "  Virtual Block Device Support Initializing\n";
+                    return false;
+                }
+                if (!checkemulatedneedreboot("xenvbd"))
+                {
+                    textout = textout + "  Virtual Block Device Support Removing Emulated Devices\n";
                     return false;
                 }
                 textout = textout + "  Virtual Block Device Support Installed\n";
@@ -2203,26 +2307,11 @@ namespace InstallWizard
             return true;
         }
 
-        public bool checkemulated(string emulateddevice)
+        public bool checkemulatedneedreboot(string emulateddevice)
         {
             try
             {
-                Trace.WriteLine("Checking emulated " + emulateddevice);
-
-                // First check to see if a driver exists
-
-                if (!checkserviceandchildrenenumerated(emulateddevice))
-                {
-                    enumerateBus();
-                }
-
-                if (!checkserviceandchildrenenumerated(emulateddevice))
-                    return false;
-
-                // Having determined that all class drivers for the device have drivers, and that all child devices have drivers,
-                // we must no determine if those drivers need reboots prior to being ready
-
-                Trace.WriteLine(emulateddevice + " : drivers ready, checking if reboot needed");
+                Trace.WriteLine(emulateddevice + " : checking if reboot needed");
 
                 RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\"+emulateddevice);
                 string[] values = key.GetValueNames();
@@ -2249,8 +2338,10 @@ namespace InstallWizard
             try
             {
 
-                if (!servicesrunning(ref textout))
+                if (!servicesrunning(ref textout)) {
+                    enumerateBus();
                     return false;
+                }
 
                 ManagementObject session = null;
                 UInt32 Numchildren = 0;
