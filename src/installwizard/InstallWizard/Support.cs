@@ -109,7 +109,11 @@ namespace InstallWizard
             DN_SILENT_INSTALL   =0x20000000  ,// S: Silent install
             DN_NO_SHOW_IN_DM    =0x40000000  ,// S: No show in device manager
             DN_BOOT_LOG_PROB    =0x80000000  // S: Had a problem during preassignment of boot log conf
-        }   
+        }
+
+        public const UInt32 WAIT_TIMEOUT = 0x00000102;
+        public const UInt32 WAIT_FAILED = 0xFFFFFFFF;
+        public const UInt32 INFINITE = 0xFFFFFFFF;
 
         [DllImport("setupapi.dll", SetLastError = true)]
         public static extern bool SetupDiCallClassInstaller(
@@ -1128,7 +1132,10 @@ namespace InstallWizard
 
         public static void winReboot() {
             Trace.WriteLine("One last attempt not to shutdown if something is still installing");
-            setupapi.CMP_WaitNoPendingInstallEvents(0xffffffff);
+            if (!InstallerState.ExistingDriverInstalling)
+            {
+                setupapi.CMP_WaitNoPendingInstallEvents(setupapi.INFINITE);
+            }
             Trace.WriteLine("OK - shutting down");
             AcquireSystemPrivilege(SE_SHUTDOWN_NAME);
             WinVersion vers = new WinVersion();
@@ -1145,7 +1152,8 @@ namespace InstallWizard
             }
         }
 
-        
+        public static bool ExistingDriverInstalling = false;
+
         public const UInt32 SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001;
         public const UInt32 SE_PRIVILEGE_REMOVED = 0x00000004;
         public const UInt32 SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000;
@@ -1180,6 +1188,8 @@ namespace InstallWizard
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool OpenProcessToken(IntPtr ProcessHandle,
             UInt32 DesiredAccess, out IntPtr TokenHandle);
+
+
 
         //Use these for DesiredAccess
         public const UInt32 STANDARD_RIGHTS_REQUIRED = 0x000F0000;
