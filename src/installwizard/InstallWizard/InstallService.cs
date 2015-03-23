@@ -185,21 +185,7 @@ namespace InstallWizard
                 InstallState.Progress = 1;
                 Trace.WriteLine("Initializing Install =======================================");
 
-                InstallerState.ExistingDriverInstalling = false;
-                uint res = setupapi.CMP_WaitNoPendingInstallEvents(0);
-                if ( res == setupapi.WAIT_TIMEOUT || res == setupapi.WAIT_FAILED) {
-                    InstallerState.ExistingDriverInstalling = true;
-                    Registry.SetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller","existingDriverInstalling",1,RegistryValueKind.DWord);
-                }
-                Trace.WriteLine("check reg");
-                Object regval = Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller","existingDriverInstalling",0);
-
-                if (regval != null && ((int)regval)==1) {
-                    Trace.WriteLine("set from reg");
-                    InstallerState.ExistingDriverInstalling = true;
-                }
-                Trace.WriteLine("reg done");
-
+            
                 DriverPackage DriversMsi;
                 MsiInstaller VssProvMsi;
                 MsiInstaller AgentMsi;
@@ -512,15 +498,7 @@ namespace InstallWizard
 
                         // We are ready to reboot
                         Trace.WriteLine("Is anything preventing us from shutting down?");
-                        if (InstallerState.ExistingDriverInstalling)
-                        {
-                            setupapi.CMP_WaitNoPendingInstallEvents(1000 * 20 * 60);
-                        }
-                        else
-                        {
-                            setupapi.CMP_WaitNoPendingInstallEvents(setupapi.INFINITE);
-                        }
-                        
+                        setupapi.CMP_WaitNoPendingInstallEvents(0xffffffff);
                         Trace.WriteLine("Ready to reboot");
                         InstallState.Polling = false;
                         InstallState.RebootDesired = true;
@@ -608,15 +586,6 @@ namespace InstallWizard
                     }
                     Trace.WriteLine("Turn off DriverFinalReboot");
                     Application.CommonAppDataRegistry.SetValue("DriverFinalReboot", 0);
-
-                    try
-                    {
-                        Registry.LocalMachine.OpenSubKey(@"HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", true).DeleteValue("existingDriverInstalling");
-                    }
-                    catch
-                    {
-                    }
-
                     Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\XenPVInstall", "Start", 3);
                     (new Thread(delegate()
                     {
