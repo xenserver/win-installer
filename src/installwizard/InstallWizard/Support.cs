@@ -933,7 +933,8 @@ namespace InstallWizard
                 Trace.WriteLine("Restoring network settings");
                 ProcessStartInfo start = new ProcessStartInfo();
                 start.Arguments = "/log /restore";
-                start.FileName = System.IO.Path.GetDirectoryName(Application.ExecutablePath) + "\\..\\netsettings\\QNetSettings.exe";
+                String driverinstalldir = (string)Registry.LocalMachine.GetValue("Software\\Citrix\\XenTools\\Driver_Install_Dir", System.IO.Path.GetDirectoryName(Application.ExecutablePath));
+                start.FileName = driverinstalldir + "\\netsettings\\QNetSettings.exe";
                 Trace.WriteLine("Using: " + start.FileName);
                 start.WindowStyle = ProcessWindowStyle.Hidden;
                 start.CreateNoWindow = true;
