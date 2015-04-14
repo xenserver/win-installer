@@ -235,6 +235,7 @@
                 <RegistryValue Type='string' Name='BuildVersion' Value='[SAVEBUILD]' /> 
                 <RegistryValue Type='string' Name='Install_Dir' Value='[SAVEINSTALL]' />
                 <RegistryValue Type='string' Name='MsiGuestAgent' Value='[SAVEMSI]' />
+                <RegistryValue Type='string' Name='Driver_Install_Dir' Value='[INSTALLDIR]' />
             </RegistryKey>
         </Component>
         <Component Id='RegEntry32' Guid='3a428079-00d8-4c55-b314-321e757ff988' Win64='no'>
