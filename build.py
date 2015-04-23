@@ -105,7 +105,7 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
         pack+"\\xenvbd\\"+arch+"\\xenvbd_coinst.dll",
         pack+"\\xennet\\"+arch+"\\xennet_coinst.dll",
         pack+"\\xenbus\\"+arch+"\\xenbus_coinst.dll",
-        pack+"\\xenbus\\"+arch+"\\xeniface_coinst.dll",
+        pack+"\\xeniface\\"+arch+"\\xeniface_coinst.dll",
     ]
 
 
