@@ -58,13 +58,13 @@
     <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
     <?define CurrentBuildVersion = '$(var.BRANDING_BUILD_NR_STR)' ?>
 
-  <Product Name='Citrix Xen Windows $(var.arch) PV Drivers' Id='$(var.ProductId)'
+  <Product Name='Citrix Xen Windows $(var.arch) Preview PV Drivers For Windows 10 Only' Id='$(var.ProductId)'
       Language='1033' Codepage='1252' 
       Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' 
       Manufacturer='Citrix'
       UpgradeCode='$(var.UpgradeCode)' >
     <Package Id='*' Keywords='Citrix Xen Drivers' Description='Citrix Xen Windows Drivers'
-             Comments='Paravitualized Windows Drivers For Citrix XenServer' Manufacturer='Citrix'
+             Comments='Preview Paravitualized Windows Drivers For Citrix XenServer.  Windows 10 Only' Manufacturer='Citrix'
              InstallerVersion='200' Languages='1033' Compressed='yes'
 
              Platform='$(var.arch)'
@@ -186,8 +186,8 @@
     </Condition>
    
 
-    <Condition Message="These Citrix Xen PV Drivers for Windows require Windows Vista, Windows Server 2008 or Later">
-        <![CDATA[Installed OR (VersionNT>=600)]]>
+    <Condition Message="These Preview Citrix Xen PV Drivers for Windows require Windows 10">
+        <![CDATA[Installed OR (VersionNT>=603)]]>
     </Condition>
     <Media Id='1' Cabinet='XenDriversInstaller.cab' EmbedCab='yes' />
     <Directory Id='TARGETDIR' Name='SourceDir'>

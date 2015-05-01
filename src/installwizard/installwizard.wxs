@@ -57,11 +57,11 @@
       <?define certs= 'f056d833-6b1f-4c9d-9636-f26ff3a75292' ?>
       <?define pf="ProgramFilesFolder" ?>
 
-  <Product Name='Citrix XenServer Tools Installer' Id='$(var.ProductId)'
+  <Product Name='Citrix Preview XenServer Tools Installer For Windows 10 Only' Id='$(var.ProductId)'
            Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='Citrix'
            UpgradeCode='$(var.UpgradeCode)' >
     <Package Id='*' Keywords='Citrix XenServer Windows Installer' Description='PV Tools Install Wizard'
-             Comments='Installs Citrix XenServer Tools' Manufacturer='Citrix'
+             Comments='Installs Preview Citrix XenServer Tools For Windows 10 Only' Manufacturer='Citrix'
              InstallerVersion='200' Languages='1033' Compressed='yes'
              InstallScope='perMachine'
              SummaryCodepage='1252' />
@@ -220,7 +220,9 @@
     <Condition Message="A later version of [ProductName] is already installed.  Setup will now exit">
         <![CDATA[((NOT UPGRADINGNEWERVERSION) OR (FORCEINSTALL="1"))]]>
     </Condition>
-
+    <Condition Message="These Preview Citrix Xenserver PV Tools for Windows require Windows 10">
+        <![CDATA[Installed OR (VersionNT>=603)]]>
+    </Condition>
     <Property Id="NETFRAMEWORK4XFULL">
         <RegistrySearch Id="NetFramework4xFull" Root="HKLM" 
             Key="Software\Microsoft\NET Framework Setup\NDP\v4\Full"
