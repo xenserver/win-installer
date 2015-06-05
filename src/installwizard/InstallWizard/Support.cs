@@ -2233,14 +2233,31 @@ namespace InstallWizard
         {
             Trace.WriteLine("Is "+device+" needed?");
             RegistryKey enumkey= Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\enum\xenbus");
+            if (enumkey == null)
+            {
+                Trace.WriteLine("Cannot find " + @"SYSTEM\CurrentControlSet\enum\xenbus");
+            }
             string[] subkeynames = enumkey.GetSubKeyNames();
+            if (subkeynames == null)
+            {
+                Trace.WriteLine("No subkeys available");
+            }
             foreach (string name in subkeynames)
             {
+                if (name == null)
+                {
+                    Trace.WriteLine("The subkey name is null");
+                }
                 // We only care about new-style VEN_XS devices
                 if (name.StartsWith("VEN_XS"))
                 {
                     RegistryKey subkeydetailskey = enumkey.OpenSubKey(name + @"\_");
                     string subkeydevice = (string)subkeydetailskey.GetValue("LocationInformation");
+                    if (subkeydevice == null)
+                    {
+                        //LocationInformation isn't certain to be set
+                        continue;
+                    }
                     if (subkeydevice.Equals(device))
                     {
                         return true;
