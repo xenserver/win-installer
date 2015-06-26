@@ -95,7 +95,6 @@
             <File Id='XenVbdSys' Name='XenVbd.sys' DiskId='1' Source='xenvbd\$(var.build)\xenvbd.sys' KeyPath='yes' />
             <File Id='XenVbdCat' Name='XenVbd.cat' DiskId='1' Source='xenvbd\$(var.build)\xenvbd.cat' />
             <File Id='XenCrshSys' Name='XenCrsh.sys' DiskId='1' Source='xenvbd\$(var.build)\xencrsh.sys' />
-            <File Id='XenDiskSys' Name='XenDisk.sys' DiskId='1' Source='xenvbd\$(var.build)\xendisk.sys' />
             <File Id='XenVbdCoInstDll' Name='XenVbd_coinst.dll' DiskId='1' Source='xenvbd\$(var.build)\xenvbd_coinst.dll' />
             <File Id='XenVbdInf' Name='XenVbd.inf' DiskId='1' Source='xenvbd\$(var.build)\xenvbd.inf' />
             <difx:Driver PlugAndPlayPrompt='no' DeleteFiles='no' ForceInstall='no' Sequence='3' Legacy="yes"/>
