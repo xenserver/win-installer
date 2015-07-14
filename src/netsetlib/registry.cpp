@@ -741,7 +741,7 @@ CopyValues(
                          0,
 						 NULL,
 						 REG_OPTION_NON_VOLATILE,
-                         KEY_ALL_ACCESS,
+                         KEY_READ,
 						 NULL,
                          &SourceKey,
 						 NULL);
@@ -998,7 +998,7 @@ RegistryStoreIpVersion6Addresses(
     Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                          DeviceKeyName,
                          0,
-                         KEY_ALL_ACCESS,
+                         KEY_READ,
                          &DeviceKey);
     if (Error != ERROR_SUCCESS) {
         SetLastError(Error);
@@ -1227,7 +1227,7 @@ HRESULT RegistryIterateOverKeySubKeys(PTCHAR KeyName, SUBKEY_ITERATOR_CALLBACK c
 	Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
                          KeyName,
                          0,
-                         KEY_ALL_ACCESS,
+                         KEY_READ,
                          &Key);
     if (Error != ERROR_SUCCESS) {
         SetLastError(Error);
