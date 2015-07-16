@@ -2102,7 +2102,15 @@ namespace InstallWizard
             finally {
                 Trace.WriteLine("root#xenevtchn key not present in CDDB");
             }
-            
+            try
+            {
+                Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\xenfilt\unplug",true).DeleteValue("DISKS");
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("Disks still scheduled to be unplugged "+e.ToString());
+            }
+           
         }
 
         bool checkservicerunning(string name)
