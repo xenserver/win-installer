@@ -289,18 +289,19 @@ namespace InstallWizard
                             }
                             if ((!InstallState.DriversPlaced) && ((!DriversMsi.installed()) || DriversMsi.olderinstalled()))
                             {
+                                bool drvupgrading = false;
                                 Trace.WriteLine("Driver install package not found");
                                 Trace.WriteLine("Attempt driver install");
                                 Trace.WriteLine(DriversMsi.ToString());
 
                                 if (DriversMsi.olderinstalled())
                                 {
-                                    
+                                    drvupgrading = true;
                                 }
 
                                 try
                                 {
-                                    DriversMsi.install("INSTALLDIR=" + installdir, "driversmsi", InstallState);
+                                    DriversMsi.install("INSTALLDIR=" + installdir, "driversmsi", InstallState, drvupgrading);
                                     InstallState.DriversPlaced = true;
                                     InstallState.NeedsReboot = true;
                                     InstallState.Polling = true;

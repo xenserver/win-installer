@@ -2086,7 +2086,7 @@ namespace InstallWizard
             }
         }
 
-        new public void install(string args, string logfile, InstallerState installstate)
+        public void install(string args, string logfile, InstallerState installstate, bool driverupgrade)
         {
             //addcerts(installdir);
             Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\partmgr\Parameters", true).SetValue("SanPolicy", 0x00000001);
@@ -2102,15 +2102,17 @@ namespace InstallWizard
             finally {
                 Trace.WriteLine("root#xenevtchn key not present in CDDB");
             }
-            try
+            if (driverupgrade)
             {
-                Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\xenfilt\unplug",true).DeleteValue("DISKS");
+                try
+                {
+                    Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\xenfilt\unplug", true).DeleteValue("DISKS");
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine("Disks still scheduled to be unplugged " + e.ToString());
+                }
             }
-            catch (Exception e)
-            {
-                Trace.WriteLine("Disks still scheduled to be unplugged "+e.ToString());
-            }
-           
         }
 
         bool checkservicerunning(string name)
