@@ -2112,6 +2112,14 @@ namespace InstallWizard
                 {
                     Trace.WriteLine("Disks still scheduled to be unplugged " + e.ToString());
                 }
+                try
+                {
+                    Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\xenfilt\unplug", true).DeleteValue("NICS");
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine("NICs still scheduled to be unplugged " + e.ToString());
+                }
             }
         }
 
