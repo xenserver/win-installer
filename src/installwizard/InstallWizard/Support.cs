@@ -2115,6 +2115,7 @@ namespace InstallWizard
                 try
                 {
                     Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\xenfilt\unplug", true).DeleteValue("NICS");
+                    Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\xenvif", true).SetValue("Start", 3, RegistryValueKind.DWord);
                 }
                 catch (Exception e)
                 {
