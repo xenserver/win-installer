@@ -2328,7 +2328,7 @@ namespace InstallWizard
             {
                 Trace.WriteLine(emulateddevice + " : checking if reboot needed");
 
-                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\\CurrentControlSet\\services\\"+emulateddevice+"\\Status");
+                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\"+emulateddevice+@"\Status");
                 string[] values = key.GetValueNames();
 
                 if (values.Contains("NeedReboot"))
