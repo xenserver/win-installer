@@ -2132,12 +2132,17 @@ namespace InstallWizard
                 Trace.WriteLine("Which services are running");
                 if (!checkservicerunning("xenbus"))
                 {
+                    Trace.WriteLine("Bus Device not ready");
                     textout = textout + "  Bus Device Initializing\n";
-                    Trace.WriteLine("Bus device not ready");
+                    return false;
+                }
+                if (!checkemulatedneedreboot("xenbus"))
+                {
+                    textout = textout + "  Bus Device Installing Filters\n";
                     return false;
                 }
                 textout = textout + "  Bus Device Installed\n";
-                
+
                 if (!checkservicerunning("xeniface"))
                 {
                     Trace.WriteLine("Interface device not ready");
@@ -2323,7 +2328,7 @@ namespace InstallWizard
             {
                 Trace.WriteLine(emulateddevice + " : checking if reboot needed");
 
-                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\"+emulateddevice);
+                RegistryKey key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\services\"+emulateddevice+"\Status");
                 string[] values = key.GetValueNames();
 
                 if (values.Contains("NeedReboot"))
