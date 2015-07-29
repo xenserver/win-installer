@@ -242,7 +242,7 @@ namespace InstallWizard
                     Trace.WriteLine("Install failed");
                     InstallState.Fail("PV Tools cannot be installed on systems where .Net applications are forced to run under WoW64\n\nSet HKEY_LOCAL_MACHINE\\Software\\Microsoft\\.NetFramework\\Enable64Bit to 1 and attempt the install again.");
                 }
-
+                string oldtext = InstallState.DriverText;
                 while ((!InstallState.Failed) && (InstallState.RebootCount > 0) && (!InstallState.Done))
                 {
                     InstallState.Unchanged = true;
@@ -274,8 +274,6 @@ namespace InstallWizard
                     {
                         Trace.WriteLine("Check if drivers are functioning");
 
-                        string oldtext = InstallState.DriverText;
-
                         if ((DriversMsi.installed() && (!DriversMsi.olderinstalled())) && DriversMsi.functioning(ref InstallState.DriverText))
                         {
                             Trace.WriteLine("Drivers functioning");
@@ -286,6 +284,7 @@ namespace InstallWizard
                             if (InstallState.DriverText != oldtext)
                             {
                                 InstallState.PollingReset();
+                                oldtext = InstallState.DriverText;
                             }
                             if ((!InstallState.DriversPlaced) && ((!DriversMsi.installed()) || DriversMsi.olderinstalled()))
                             {

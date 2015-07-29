@@ -1287,24 +1287,25 @@ namespace InstallWizard
             }
             return false;
         }
-        int longpolltimeout = 5 * 60 * 1000;
+
         int shortpolltimeout = 10 * 1000;
         int polltimeout = 0;
         int pollcount = 0;
+        int initialtimeout = 0;
         object polllock = new object();
         public void PollingReset() {
             lock(polllock) {
                 Trace.WriteLine("Reset polling");
                 // Start counting again from the beginning
-                pollcount = 0;
+                if (polltimeout != 0)
+                {
+                    polltimeout = pollcount+shortpolltimeout;
+                }
                 // If the timeout is non-zero then
                 // a) we have already started polling
                 // b) after we started polling, something has caused us to reset
-                // since this implies 'something is happening' reset to a short timeout
-                if (polltimeout != 0)
-                {
-                    polltimeout = shortpolltimeout;
-                }
+                // since this implies 'something is happening' wait a short while longer
+                
             }
         }
 
@@ -1315,6 +1316,7 @@ namespace InstallWizard
                 {
                     Trace.WriteLine("Setting new poll timeout");
                     polltimeout = (int)Application.UserAppDataRegistry.GetValue("PollingTimeout", shortpolltimeout);
+                    initialtimeout = polltimeout;
                 }
                 else
                 {
@@ -1324,9 +1326,13 @@ namespace InstallWizard
                 {
                     // If we have timed out, we want to ensure we use longer timoouts by default
                     // on future reboots.
-                    if (polltimeout != longpolltimeout)
+                    if (polltimeout == initialtimeout)
                     {
-                        Application.UserAppDataRegistry.SetValue("PollingTimeout", longpolltimeout);
+                        Application.UserAppDataRegistry.SetValue("PollingTimeout", polltimeout * 2);
+                    }
+                    else
+                    {
+                        Application.UserAppDataRegistry.SetValue("PollingTimeout", shortpolltimeout);
                     }
                     PollTimedOut = true;
                     return;
