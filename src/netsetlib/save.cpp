@@ -31,6 +31,46 @@
 
 #include "registry.h"
 
+HRESULT
+saveStaticNetworkConfiguration(
+	HKEY SourceKey, 
+	PTCHAR statickey, 
+	PTCHAR installerkey
+)
+{
+	STORE_IF_MATCHING_NET_LUID	matchdata;
+	HKEY						CheckKey;
+	HRESULT						Error;
+	Error = RegistryGetNetLuid(SourceKey, &matchdata.NetLuid);
+    if (Error != ERROR_SUCCESS) {
+		Log("Can't find NetLuid");
+        goto done1;
+	}
+
+	matchdata.StoreKeyName = RegistryGetStorageKeyName(SourceKey, installerkey);
+
+	if (matchdata.StoreKeyName == NULL)
+		goto done2;
+
+	Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE, statickey, 0, KEY_READ, &CheckKey);
+	if (Error == ERROR_SUCCESS) {
+		RegCloseKey(CheckKey);
+		Error = RegistryIterateOverKeyValues(statickey, RegistryStoreIfMatchingNetLuid, &matchdata);
+		if (Error != ERROR_SUCCESS)
+			goto fail1;
+	}
+
+done2:
+	free(matchdata.StoreKeyName);
+done1:
+	return ERROR_SUCCESS;
+
+fail1:
+	free(matchdata.StoreKeyName);
+	Fail(Error);
+	return Error;
+}
+
 HRESULT 
 saveDevice(
 	SUBKEY_ITERATOR_CALLBACK_DATA	*cbargs, 
@@ -43,7 +83,7 @@ saveDevice(
     PTCHAR						SourceName;
     BOOLEAN						Success;
 	HRESULT						Error;	
-	HKEY						CheckKey;
+	
 	STORE_IF_MATCHING_NET_LUID	matchdata;
 
 	SourceName = RegistryGetInterfaceName(cbargs->Key);
@@ -71,41 +111,25 @@ saveDevice(
 									  PARAMETERS_KEY(Tcpip6) "\\Interfaces\\",
 									  SourceName);
 
-    free(DestinationName);
-    free(SourceName);
+    Error = saveStaticNetworkConfiguration(cbargs->Key, STATIC_IPV4_KEY, INSTALLER_KEY_IPV4);
+	if (Error != ERROR_SUCCESS)
+		goto fail1;
 
-    matchdata.StoreKeyName = RegistryGetStorageKeyName(cbargs->Key, INSTALLER_KEY_IPV6);
+	Error = saveStaticNetworkConfiguration(cbargs->Key, STATIC_IPV6_KEY, INSTALLER_KEY_IPV6);
+	if (Error != ERROR_SUCCESS)
+		goto fail2;
 
-	if (matchdata.StoreKeyName == NULL)
-		goto done3;
-
-	Error = RegistryGetNetLuid(cbargs->Key, &matchdata.NetLuid);
-    if (Error != ERROR_SUCCESS) {
-		Log("Can't find NetLuid");
-        goto done4;
-	}
-
-	Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE, STATIC_IPV6_KEY, 0, KEY_READ, &CheckKey);
-	if (Error == ERROR_SUCCESS) {
-		RegCloseKey(CheckKey);
-		Error = RegistryIterateOverKeyValues(STATIC_IPV6_KEY, RegistryStoreIfMatchingNetLuid, &matchdata);
-		if (Error != ERROR_SUCCESS)
-			goto fail1;
-	}
-
-done4:
-done3:
-	free(matchdata.StoreKeyName);
-	goto done1;
-
+	free(DestinationName);
 done2:
     free(SourceName);
 
 done1:
 	return ERROR_SUCCESS;
 
+fail2:
 fail1:
-	free(matchdata.StoreKeyName);
+	
+    free(SourceName);
 	Fail(err);
 	return err;
 }

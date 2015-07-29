@@ -74,11 +74,16 @@
 
 #define INSTALLER_KEY_MAC   \
         SOFTWARE_KEY ## "\\XenToolsNetSettings\\Mac"
+#define INSTALLER_KEY_IPV4   \
+        SOFTWARE_KEY ## "\\XenToolsNetSettings\\IPV4"
 #define INSTALLER_KEY_IPV6   \
         SOFTWARE_KEY ## "\\XenToolsNetSettings\\IPV6"
 
 #define INSTALLER_KEY_OVERRIDE   \
         SOFTWARE_KEY ## "\\XenToolsNetSettings\\override"
+
+#define STATIC_IPV4_KEY \
+		NSI_KEY ## "\\{eb004a00-9b1a-11d4-9123-0050047759bc}\\10\\"
 
 #define STATIC_IPV6_KEY \
 		NSI_KEY ## "\\{eb004a01-9b1a-11d4-9123-0050047759bc}\\10\\"

@@ -88,7 +88,7 @@ fail1:
 	return Error;
 }
 
-HRESULT restoreStaticNetworkConfiguration(DWORD deviceIndex, HKEY DestinationKey) 
+HRESULT restoreStaticNetworkConfiguration(DWORD deviceIndex, HKEY DestinationKey, PTCHAR statickey, PTCHAR installerkey) 
 {
 	HRESULT				Error;
 	PTCHAR				StoreName;
@@ -101,11 +101,11 @@ HRESULT restoreStaticNetworkConfiguration(DWORD deviceIndex, HKEY DestinationKey
         goto fail1;
 	}
 
-	int storesize = sizeof(STATIC_IPV6_KEY)+sizeof(TCHAR);
+	int storesize = strlen(statickey)*sizeof(TCHAR)+sizeof(TCHAR);
 	
-	Error = RegCreateKeyEx(HKEY_LOCAL_MACHINE, STATIC_IPV6_KEY, 0,NULL, REG_OPTION_NON_VOLATILE,  KEY_ALL_ACCESS, NULL,  &restoreData.DestinationKey,NULL);
+	Error = RegCreateKeyEx(HKEY_LOCAL_MACHINE, statickey, 0,NULL, REG_OPTION_NON_VOLATILE,  KEY_ALL_ACCESS, NULL,  &restoreData.DestinationKey,NULL);
 	if (Error != ERROR_SUCCESS) {
-		Warning("Cannot open key " STATIC_IPV6_KEY);
+		Warning("Cannot open key %s", statickey);
 		goto fail2;
 	}
 
@@ -116,22 +116,24 @@ HRESULT restoreStaticNetworkConfiguration(DWORD deviceIndex, HKEY DestinationKey
 			RegCloseKey(CheckKey);
 		}
 	}
+
+
 	if ((StoreName == NULL) || (Error != ERROR_SUCCESS)) {
-		StoreName = RegistryGetStorageKeyName(DestinationKey, INSTALLER_KEY_IPV6);
+		StoreName = RegistryGetStorageKeyName(DestinationKey, installerkey);
 		if (StoreName == NULL) {
-			Log("Can't find ipv6 store");
+			Log("Can't find store");
 			goto done;
 		}
 	}
 
-	Log("IPV6 Static Restore");
+	Log("Static Restore");
 
-	Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE, STATIC_IPV6_KEY, 0, KEY_READ, &CheckKey);
+	Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE, statickey, 0, KEY_READ, &CheckKey);
 	if (Error == ERROR_SUCCESS) {
 		RegCloseKey(CheckKey);
 
-		Log("IPV6 Static deletion required");
-        Error = RegistryDeleteValuesOnCondition(STATIC_IPV6_KEY, RegistryIsMatchingNetLuid, &restoreData.NetLuid);
+		Log("Static deletion required");
+        Error = RegistryDeleteValuesOnCondition(statickey, RegistryIsMatchingNetLuid, &restoreData.NetLuid);
 		if (Error != ERROR_SUCCESS) {
 			Warning("Removing values failed");
 			goto fail3;
@@ -141,7 +143,7 @@ HRESULT restoreStaticNetworkConfiguration(DWORD deviceIndex, HKEY DestinationKey
 	Error = RegOpenKeyEx(HKEY_LOCAL_MACHINE, StoreName, 0, KEY_READ, &CheckKey);
 	if (Error == ERROR_SUCCESS) {
 		RegCloseKey(CheckKey);
-		Log("IPV6 Static cloning required");
+		Log("Static cloning required");
 		Error = RegistryIterateOverKeyValues(StoreName, RegistryRestoreWithNewNetLuid, &restoreData);
 		if (Error != ERROR_SUCCESS)
 		{
@@ -217,16 +219,23 @@ restoreDevice(
 		goto fail2;
 	}
 
-	Error = restoreStaticNetworkConfiguration(deviceIndex, DestinationKey);
+	Error = restoreStaticNetworkConfiguration(deviceIndex, DestinationKey, STATIC_IPV4_KEY, INSTALLER_KEY_IPV4);
 	if (Error != ERROR_SUCCESS) {
 		Warning("Unable to restore network interfaces for device %d", deviceIndex);
 		goto fail3;
+	}
+
+	Error = restoreStaticNetworkConfiguration(deviceIndex, DestinationKey, STATIC_IPV6_KEY, INSTALLER_KEY_IPV6);
+	if (Error != ERROR_SUCCESS) {
+		Warning("Unable to restore network interfaces for device %d", deviceIndex);
+		goto fail4;
 	}
 
 	RegCloseKey(DestinationKey);
 
 	return ERROR_SUCCESS;
 
+fail4:
 fail3:
 fail2:
 	RegCloseKey(DestinationKey);
