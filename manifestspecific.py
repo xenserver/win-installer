@@ -32,13 +32,13 @@ secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
 localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
-       "xenbus" : r'xenbus.git.whql\51\xenbus-7-2-0-51.tar',
-       "xenvif" : r'xenvif.git\57\xenvif.tar',
-       "xennet" : r'standard-lcm\13\xennet-7-2-0-14.tar',
-       "xeniface" : r'standard-lcm\12\xeniface-7-2-0-14.tar',
-       "xenvbd" : r'standard-lcm\14\xenvbd-7-2-0-40.tar',
+       "xenbus" : r'xenbus.git.whql\51-w10\xenbus-7-2-0-51-w10.tar',
+       "xenvif" : r'xenvif.git.whql\56-w10\xenvif-7-2-0-56-w10.tar',
+       "xennet" : r'xennet.git.whql\17-w10\xennet-7-2-0-17-w10.tar',
+       "xeniface" : r'xeniface.git.whql\14-w10\xeniface-7-2-0-14-w10.tar',
+       "xenvbd" : r'xenvbd.git.whql\40-w10\xenvbd-7-2-0-40-w10.tar',
        "xenguestagent" : r'xenguestagent.git.locked\135\xenguestagent.tar',
        "xenvss" : r'standard-lcm\16\xenvss-7.tar',
 }
 
-all_drivers_signed = False
+all_drivers_signed = True
