@@ -2086,24 +2086,71 @@ namespace InstallWizard
             }
         }
 
-        new public void install(string args, string logfile, InstallerState installstate)
+        public void workaroundSystemStartOptions()
+        {
+            RegistryKey control;
+            try {
+                control= Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control", false);
+            }
+            catch {
+                Trace.WriteLine("Unable to open control key");
+                return;
+            }
+            try
+            {
+                string ssv = (string)control.GetValue("SystemStartOptions");
+                if (ssv != "")
+                {
+                    Trace.WriteLine("No need to workaround SystemStartOptions (value not empty)");
+                    return;
+                }
+            }
+            catch
+            {
+                Trace.WriteLine("No need to workaround SystemStartOptions (no such value)");
+                return;
+            }
+            try
+            {
+                Trace.WriteLine("Setting loadoptions");
+                ProcessStartInfo start = new ProcessStartInfo();
+                start.Arguments = "/set LOADOPTIONS XEN:NONE";
+                start.FileName = Environment.GetFolderPath(Environment.SpecialFolder.System) + "\\bcdedit.exe";
+                Trace.WriteLine("Using: " + start.FileName);
+                start.WindowStyle = ProcessWindowStyle.Hidden;
+                start.CreateNoWindow = true;
+
+                using (Process proc = Process.Start(start))
+                {
+                    proc.WaitForExit();
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("Setting loadopitons failed : " + e.ToString());
+            }
+        }
+
+        public void install(string args, string logfile, InstallerState installstate)
         {
             //addcerts(installdir);
+
+            workaroundSystemStartOptions();
+
             Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\partmgr\Parameters", true).SetValue("SanPolicy", 0x00000001);
             base.install(args, logfile, installstate);
             enumerateBus();
             try
             {
-                Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase",true).DeleteSubKeyTree(@"root#xenevtchn");
+                Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\CriticalDeviceDatabase", true).DeleteSubKeyTree(@"root#xenevtchn");
             }
             catch
             {
             }
             finally {
                 Trace.WriteLine("root#xenevtchn key not present in CDDB");
-            }
-            
-        }
+	    }
+	}
 
         bool checkservicerunning(string name)
         {
