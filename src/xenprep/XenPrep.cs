@@ -23,9 +23,14 @@ namespace Xenprep
             prepareThread = new PrepareThread(args, progressWindow);
 
             Thread backgroundThread = new Thread(new ThreadStart(prepareThread.Run));
+
+            progressWindow.Show();
             backgroundThread.Start();
 
             Application.Run(progressWindow);
+
+       
+            
             
 
         }
@@ -43,71 +48,85 @@ namespace Xenprep
 
         public void Run()
         {
-            SetProgress(0);
-            
-            SetCaption("Lock CD Drive");
-            XenPrepSupport.LockCD();
-            Thread.Sleep(1000);
-            
-            SetProgress(10);
-            
-            SetCaption("Set restore point");
-            XenPrepSupport.SetRestorePoint();
-            Thread.Sleep(1000);
+            try
+            {
+                
 
-            SetProgress(20);
+                SetProgress(0);
 
-            SetCaption("Store network settings");
-            XenPrepSupport.StoreNetworkSettings();
-            Thread.Sleep(1000);
+                SetCaption("Lock CD Drive");
+                XenPrepSupport.LockCD();
+                Thread.Sleep(1000);
 
-            SetProgress(30);
+                SetProgress(10);
 
-            SetCaption("Remove reliance on PV drivers");
-            XenPrepSupport.RemovePVDriversFromFilters();
-            XenPrepSupport.DontBootStartPVDrivers();
-            Thread.Sleep(1000);
+                SetCaption("Set restore point");
+                XenPrepSupport.SetRestorePoint();
+                Thread.Sleep(1000);
 
-            SetProgress(40);
+                SetProgress(20);
 
-            SetCaption("Set restore point");
-            XenPrepSupport.SetRestorePoint();
-            Thread.Sleep(1000);
+                SetCaption("Store network settings");
+                XenPrepSupport.StoreNetworkSettings();
+                Thread.Sleep(1000);
 
-            SetProgress(50);
+                SetProgress(30);
 
-            SetCaption("Remove Installer Packages");
-            XenPrepSupport.UninstallMSIs();
-            XenPrepSupport.UninstallXenLegacy();        
-            Thread.Sleep(1000);
+                SetCaption("Remove reliance on PV drivers");
+                XenPrepSupport.RemovePVDriversFromFilters();
+                XenPrepSupport.DontBootStartPVDrivers();
+                Thread.Sleep(1000);
 
-            SetProgress(60);
+                SetProgress(40);
 
-            SetCaption("Clean up drivers");
-            XenPrepSupport.CleanUpPVDrivers();
-            Thread.Sleep(1000);
+                SetCaption("Set restore point");
+                XenPrepSupport.SetRestorePoint();
+                Thread.Sleep(1000);
 
-            SetProgress(70);
+                SetProgress(50);
 
-            SetCaption("Install new guest agent");
-            XenPrepSupport.InstallGuestAgent();
-            Thread.Sleep(1000);
+                SetCaption("Remove Installer Packages");
+                XenPrepSupport.UninstallMSIs();
+                XenPrepSupport.UninstallXenLegacy();
+                Thread.Sleep(1000);
 
-            SetProgress(80);
+                SetProgress(60);
 
-            Thread.Sleep(1000);
+                SetCaption("Clean up drivers");
+                XenPrepSupport.CleanUpPVDrivers();
+                Thread.Sleep(1000);
 
-            SetProgress(90);
+                SetProgress(70);
 
-            SetCaption("Unlock CD Drive");
-            XenPrepSupport.UnlockCD();
-            Thread.Sleep(1000);
-            
-            SetProgress(100);
+                SetCaption("Install new guest agent");
+                XenPrepSupport.InstallGuestAgent();
+                Thread.Sleep(1000);
 
-            CloseProgressWindow();
+                SetProgress(80);
+
+                Thread.Sleep(1000);
+
+                SetProgress(90);
+
+                SetCaption("Unlock CD Drive");
+                XenPrepSupport.UnlockCD();
+                Thread.Sleep(1000);
+
+                SetProgress(100);
+                CloseProgressWindow();
+            }
+            catch(Exception e)
+            {
+                progressWindow.SetRed();
+                
+                MessageBox.Show(e.Message);
+                SetCaption("XenPrep Failed");
+            }
+
 
         }
+
+       
 
         void SetCaption(string caption)
         {
