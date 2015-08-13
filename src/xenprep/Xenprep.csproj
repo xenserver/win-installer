@@ -66,6 +66,12 @@
     <EmbeddedResource Include="citrixguestagentx64.msi" />
     <EmbeddedResource Include="citrixguestagentx86.msi" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="64\qnetsettings.exe" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="32\qnetsettings.exe" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

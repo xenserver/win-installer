@@ -118,9 +118,9 @@ namespace Xenprep
             catch(Exception e)
             {
                 progressWindow.SetRed();
-                
-                MessageBox.Show(e.Message);
                 SetCaption("XenPrep Failed");
+                MessageBox.Show(e.Message);
+                
             }
 
 

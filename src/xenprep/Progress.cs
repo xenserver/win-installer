@@ -17,15 +17,17 @@ namespace Xenprep
             InitializeComponent();
             progressBar.Maximum = 100;
             progressBar.Minimum = 0;
+            progressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = false)]
         static extern IntPtr SendMessage(IntPtr hWnd, uint Msg, IntPtr w, IntPtr l);
         public void SetRed()
         {
-            this.Invoke((MethodInvoker)(() =>
+            progressBar.Invoke((MethodInvoker)(() =>
             {
-                SendMessage(progressBar.Handle, 1040, (IntPtr)1, IntPtr.Zero);
+                SendMessage(progressBar.Handle, 1040, (IntPtr)2, IntPtr.Zero);
+                progressBar.Value = 100;
             }));
         }
 

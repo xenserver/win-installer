@@ -6,6 +6,7 @@ using System.Reflection;
 using System.IO;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace Xenprep
 {
@@ -13,7 +14,86 @@ namespace Xenprep
     {
         public static void LockCD() {}
         public static void SetRestorePoint() {}
-        public static void StoreNetworkSettings() {}
+
+
+        static string extractToTemp(string name, string extension)
+        {
+            try
+            {
+                Assembly assembly;
+                assembly = Assembly.GetExecutingAssembly();
+                byte[] buffer = new byte[16 * 1024];
+                string destname;
+                using (Stream stream = assembly.GetManifestResourceStream(name))
+                {
+
+                    do
+                    {
+                        destname = Path.Combine(Path.GetTempPath(), Path.ChangeExtension(Path.GetRandomFileName(), "." + extension));
+                    } while (File.Exists(destname));
+
+                    using (Stream destination = File.Create(destname))
+                    {
+                        try
+                        {
+                            int read;
+                            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                destination.Write(buffer, 0, read);
+                            }
+                        }
+                        catch
+                        {
+                            File.Delete(destname);
+                            throw;
+                        }
+                    }
+                }
+                return destname;
+            }
+            catch
+            {
+                throw new Exception("Unable to extract " + name);
+            }
+        }
+
+        public static void StoreNetworkSettings() {
+            
+            string netsettingsexe;
+            if (is64BitOS())
+            {
+                netsettingsexe = "Xenprep._64.qnetsettings.exe";
+            }
+            else
+            {
+                netsettingsexe = "Xenprep._32.qnetsettings.exe";
+            }
+
+            string deststring = extractToTemp(netsettingsexe, "exe");
+
+            try
+            {
+                ProcessStartInfo start = new ProcessStartInfo();
+                start.Arguments = "/log /save";
+                start.FileName = deststring;
+                start.WindowStyle = ProcessWindowStyle.Hidden;
+                start.CreateNoWindow = true;
+                using (Process proc = Process.Start(start))
+                {
+                    proc.WaitForExit();
+                }
+            }
+            catch
+            {
+                throw new Exception("Unable to store network settings");
+            }
+            finally
+            {
+                File.Delete(deststring);
+            }
+
+        }
+
         public static void RemovePVDriversFromFilters() {}
         public static void DontBootStartPVDrivers() {}
         public static void UninstallMSIs() {}
@@ -126,11 +206,11 @@ namespace Xenprep
             return isWOW64();
         }
 
+ 
 
         public static void InstallGuestAgent() {
-            Assembly assembly;
-            assembly = Assembly.GetExecutingAssembly();
-            byte[] buffer = new byte[16*1024];
+            
+            
             string destname;
             try
             {
@@ -142,31 +222,7 @@ namespace Xenprep
                 else {
                     msitouse = "Xenprep.citrixguestagentx86.msi";
                 }
-                using (Stream stream = assembly.GetManifestResourceStream(msitouse))
-                {
-
-                    do
-                    {
-                        destname = Path.Combine(Path.GetTempPath(), Path.ChangeExtension(Path.GetRandomFileName(), ".msi"));
-                    } while (File.Exists(destname));
-
-                    using (Stream destination = File.Create(destname))
-                    {
-                        try
-                        {
-                            int read;
-                            while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                destination.Write(buffer, 0, read);
-                            }
-                        }
-                        catch
-                        {
-                            File.Delete(destname);
-                            throw;
-                        }
-                    }
-                }
+                destname = extractToTemp(msitouse,"msi");
             }
             catch
             {
