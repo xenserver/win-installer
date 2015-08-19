@@ -63,14 +63,18 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="citrixguestagentx64.msi" />
-    <EmbeddedResource Include="citrixguestagentx86.msi" />
+    <EmbeddedResource Include="..\..\installer\citrixguestagentx64.msi" />
+    <EmbeddedResource Include="..\..\installer\citrixguestagentx86.msi" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="64\qnetsettings.exe" />
+    <EmbeddedResource Include="..\..\proj\qnetsettings\bin\Release\x64\qnetsettings.exe">
+      <LogicalName>Xenprep._64.qnetsettings.exe</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="32\qnetsettings.exe" />
+    <EmbeddedResource Include="..\..\proj\qnetsettings\bin\Release\Win32\qnetsettings.exe">
+      <LogicalName>Xenprep._32.qnetsettings.exe</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
