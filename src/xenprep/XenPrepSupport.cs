@@ -12,9 +12,37 @@ namespace Xenprep
 {
     class XenPrepSupport
     {
+        [DllImport("DIFxAPI.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        static extern Int32 DriverPackageUninstall([MarshalAs(UnmanagedType.LPTStr)] string DriverPackageInfPath, Int32 Flags, IntPtr pInstallerInfo, out bool pNeedReboot);
+        const Int32 DRIVER_PACKAGE_REPAIR = 0x00000001;
+        const Int32 DRIVER_PACKAGE_SILENT = 0x00000002;
+        const Int32 DRIVER_PACKAGE_FORCE = 0x00000004;
+        const Int32 DRIVER_PACKAGE_ONLY_IF_DEVICE_PRESENT = 0x00000008;
+        const Int32 DRIVER_PACKAGE_LEGACY_MODE = 0x00000010;
+        const Int32 DRIVER_PACKAGE_DELETE_FILES = 0x00000020;
+        private static void pnpremove(string hwid)
+        {
+            Trace.WriteLine("remove " + hwid);
+            string infpath = Environment.GetFolderPath(Environment.SpecialFolder.System) + "\\..\\inf";
+            Trace.WriteLine("inf dir = " + infpath);
+            string[] oemlist = Directory.GetFiles(infpath, "oem*.inf");
+            Trace.WriteLine(oemlist.ToString());
+            foreach (string oemfile in oemlist)
+            {
+                Trace.WriteLine("Checking " + oemfile);
+                string contents = File.ReadAllText(oemfile);
+                if (contents.Contains(hwid))
+                {
+                    bool needreboot;
+                    Trace.WriteLine("Uninstalling");
+                    DriverPackageUninstall(oemfile, DRIVER_PACKAGE_SILENT | DRIVER_PACKAGE_FORCE | DRIVER_PACKAGE_DELETE_FILES, IntPtr.Zero, out needreboot);
+                    Trace.WriteLine("Uninstalled");
+                }
+            }
+        }
+
         public static void LockCD() {}
         public static void SetRestorePoint() {}
-
 
         static string extractToTemp(string name, string extension)
         {
@@ -94,11 +122,104 @@ namespace Xenprep
 
         }
 
-        public static void RemovePVDriversFromFilters() {}
-        public static void DontBootStartPVDrivers() {}
+        public static void RemovePVDriversFromFilters()
+        {
+            RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Class", true);
+
+            foreach (string subKeyName in baseRK.GetSubKeyNames())
+            {
+                using (RegistryKey tmpRK = baseRK.OpenSubKey(subKeyName, true))
+                {
+                    foreach (string filters in new string[] {"LowerFilters", "UpperFilters"})
+                    {
+                        string[] values = (string[]) tmpRK.GetValue(filters);
+
+                        if (values != null)
+                        {
+                            /*
+                             * LINQ expression
+                             * Gets all entries of "values" that
+                             * are not "xenfilt" or "scsifilt"
+                             */
+                            values = values.Where(
+                                val => !(val.Equals("xenfilt", StringComparison.OrdinalIgnoreCase) ||
+                                         val.Equals("scsifilt", StringComparison.OrdinalIgnoreCase))
+                            ).ToArray();
+
+                            tmpRK.SetValue(filters, values, RegistryValueKind.MultiString);
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void DontBootStartPVDrivers()
+        {
+            string[] xenDrivers = {"XENBUS", "xenfilt", "xeniface", "xenlite",
+                                   "xennet", "XenSvc", "xenvbd", "xenvif"};
+
+            RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services", true);
+
+            foreach (string driver in xenDrivers)
+            {
+                if (baseRK.GetValue(driver) != null)
+                {
+                    using (RegistryKey tmpRK = baseRK.OpenSubKey(driver, true))
+                    {
+                        tmpRK.SetValue("Start", 3);
+                    }
+                }
+            }
+
+            if (baseRK.GetValue(@"xenfilt\Unplug") != null)
+            {
+                using (RegistryKey tmpRK = baseRK.OpenSubKey(@"xenfilt\Unplug", true))
+                {
+                    tmpRK.DeleteValue("DISKS", false);
+                    tmpRK.DeleteValue("NICS", false);
+                }
+            }
+        }
+
         public static void UninstallMSIs() {}
         public static void UninstallXenLegacy() {}        
-        public static void CleanUpPVDrivers() {}
+        public static void CleanUpPVDrivers()
+        {
+            string[] PVDrivers = {"xen", "xenbus", "xencrsh", "xenfilt",
+                                   "xeniface", "xennet", "xenvbd", "xenvif"};
+
+            string[] hwIDs = {
+                @"PCI\VEN_5853&DEV_C000&SUBSYS_C0005853&REV_01",
+                @"PCI\VEN_5853&DEV_0002",
+                @"PCI\VEN_5853&DEV_0001",
+                @"XENBUS\VEN_XSC000&DEV_IFACE&REV_00000001",
+                @"XENBUS\VEN_XS0001&DEV_IFACE&REV_00000001",
+                @"XENBUS\VEN_XS0002&DEV_IFACE&REV_00000001",
+                @"XENBUS\VEN_XSC000&DEV_VBD&REV_00000001",
+                @"XENBUS\VEN_XS0001&DEV_VBD&REV_00000001",
+                @"XENBUS\VEN_XS0002&DEV_VBD&REV_00000001",
+                @"XENVIF\VEN_XSC000&DEV_NET&REV_00000000",
+                @"XENVIF\VEN_XS0001&DEV_NET&REV_00000000",
+                @"XENVIF\VEN_XS0002&DEV_NET&REV_00000000",
+                @"XENBUS\VEN_XSC000&DEV_VIF&REV_00000001",
+                @"XENBUS\VEN_XS0001&DEV_VIF&REV_00000001",
+                @"XENBUS\VEN_XS0002&DEV_VIF&REV_00000001"
+            };
+
+            string driverPath = Environment.GetFolderPath(Environment.SpecialFolder.System) + @"\drivers\";
+
+            // Remove drivers from DriverStore
+            foreach (string hwID in hwIDs)
+            {
+                pnpremove(hwID);
+            }
+
+            // Delete driver files
+            foreach (string driver in PVDrivers)
+            {
+                File.Delete(driverPath + driver + ".sys");
+            }
+        }
 
         public enum INSTALLMESSAGE
         {
