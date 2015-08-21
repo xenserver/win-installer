@@ -195,6 +195,7 @@ def make_builds(pack):
         shutil.copytree(pack+"\\xeniface", "installer\\builds\\xeniface")
         shutil.copytree(pack+"\\xenguestagent", "installer\\builds\\xenguestagent")
         shutil.copytree(pack+"\\xenvss", "installer\\builds\\xenvss")
+        shutil.copytree(pack+"\\xenprep", "installer\\builds\\xenprep")
 
 def make_installers(pack):
     src = ".\\src\\drivers"
@@ -502,6 +503,12 @@ if __name__ == '__main__':
     copyfiles('installwizard', 'qnetsettings', location,'x64', debug=False)
     copyfiles('installwizard', 'qnetsettings', location,'Win32', debug=False)
     make_installers(location)
+
+
+    msbuild('xenprep','Any CPU', False)
+    if signfiles:
+        sign(os.sep.join([getsrcpath('xenprep', debug=False),"xenprep.exe"]), signname, signstr=signstr)
+    copyfiles('xenprep', 'xenprep', location, debug=False)
 
     make_pe(location)
     make_builds(location)
