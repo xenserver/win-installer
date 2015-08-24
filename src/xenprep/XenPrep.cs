@@ -55,7 +55,7 @@ namespace Xenprep
                 SetProgress(0);
 
                 SetCaption("Lock CD Drive");
-                XenPrepSupport.LockCD();
+                XenPrepSupport.LockCDs();
                 Thread.Sleep(1000);
 
                 SetProgress(10);
@@ -109,10 +109,11 @@ namespace Xenprep
                 SetProgress(90);
 
                 SetCaption("Unlock CD Drive");
-                XenPrepSupport.UnlockCD();
+                XenPrepSupport.UnlockCDs();
                 Thread.Sleep(1000);
 
                 SetProgress(100);
+                XenPrepSupport.EjectCDs();
                 CloseProgressWindow();
             }
             catch(Exception e)
