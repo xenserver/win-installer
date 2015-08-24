@@ -50,7 +50,6 @@ namespace Xenprep
         {
             try
             {
-                
 
                 SetProgress(0);
 
@@ -61,58 +60,61 @@ namespace Xenprep
                 SetProgress(10);
 
                 SetCaption("Set restore point");
-                XenPrepSupport.SetRestorePoint();
-                Thread.Sleep(1000);
+                using (XenPrepSupport.RestorePoint rp = new XenPrepSupport.RestorePoint("Configure PV Tools For Xenprep", true))
+                {
+                    Thread.Sleep(1000);
 
-                SetProgress(20);
+                    SetProgress(20);
 
-                SetCaption("Store network settings");
-                XenPrepSupport.StoreNetworkSettings();
-                Thread.Sleep(1000);
+                    SetCaption("Store network settings");
+                    XenPrepSupport.StoreNetworkSettings();
+                    Thread.Sleep(1000);
 
-                SetProgress(30);
+                    SetProgress(30);
 
-                SetCaption("Remove reliance on PV drivers");
-                XenPrepSupport.RemovePVDriversFromFilters();
-                XenPrepSupport.DontBootStartPVDrivers();
-                Thread.Sleep(1000);
+                    SetCaption("Remove reliance on PV drivers");
+                    XenPrepSupport.RemovePVDriversFromFilters();
+                    XenPrepSupport.DontBootStartPVDrivers();
+                    Thread.Sleep(1000);
 
-                SetProgress(40);
-
+                    SetProgress(40);
+                }
                 SetCaption("Set restore point");
-                XenPrepSupport.SetRestorePoint();
-                Thread.Sleep(1000);
+                using (XenPrepSupport.RestorePoint rp = new XenPrepSupport.RestorePoint("Xenprep VM", false))
+                {
+                    
+                    Thread.Sleep(1000);
+                    SetProgress(50);
 
-                SetProgress(50);
+                    SetCaption("Remove Installer Packages");
+                    XenPrepSupport.UninstallMSIs();
+                    XenPrepSupport.UninstallXenLegacy();
+                    Thread.Sleep(1000);
 
-                SetCaption("Remove Installer Packages");
-                XenPrepSupport.UninstallMSIs();
-                XenPrepSupport.UninstallXenLegacy();
-                Thread.Sleep(1000);
+                    SetProgress(60);
 
-                SetProgress(60);
+                    SetCaption("Clean up drivers");
+                    XenPrepSupport.CleanUpPVDrivers();
+                    Thread.Sleep(1000);
 
-                SetCaption("Clean up drivers");
-                XenPrepSupport.CleanUpPVDrivers();
-                Thread.Sleep(1000);
+                    SetProgress(70);
 
-                SetProgress(70);
+                    SetCaption("Install new guest agent");
+                    XenPrepSupport.InstallGuestAgent();
+                    Thread.Sleep(1000);
 
-                SetCaption("Install new guest agent");
-                XenPrepSupport.InstallGuestAgent();
-                Thread.Sleep(1000);
+                    SetProgress(80);
 
-                SetProgress(80);
+                    Thread.Sleep(1000);
 
-                Thread.Sleep(1000);
+                    SetProgress(90);
 
-                SetProgress(90);
+                    SetCaption("Unlock CD Drive");
+                    XenPrepSupport.UnlockCD();
+                    Thread.Sleep(1000);
 
-                SetCaption("Unlock CD Drive");
-                XenPrepSupport.UnlockCD();
-                Thread.Sleep(1000);
-
-                SetProgress(100);
+                    SetProgress(100);
+                }
                 CloseProgressWindow();
             }
             catch(Exception e)

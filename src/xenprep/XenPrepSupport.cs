@@ -42,7 +42,74 @@ namespace Xenprep
         }
 
         public static void LockCD() {}
-        public static void SetRestorePoint() {}
+
+
+
+        public class RestorePoint : IDisposable {
+            [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+            public struct RestorePointInfo
+            {
+                public int dwEventType; 	// The type of event
+                public int dwRestorePtType; 	// The type of restore point
+                public Int64 llSequenceNumber; 	// The sequence number of the restore point
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+                public string szDescription; 	// The description to be displayed so 
+                //the user can easily identify a restore point
+            } 
+            [StructLayout(LayoutKind.Sequential)]
+            public struct STATEMGRSTATUS
+            {
+                public int nStatus; 		// The status code
+                public Int64 llSequenceNumber; 	// The sequence number of the restore point
+            }
+            public enum RestoreType : int
+            {
+                ApplicationInstall = 0, 	// Installing a new application
+                ApplicationUninstall = 1, 	// An application has been uninstalled
+                ModifySettings = 12, 		// An application has had features added or removed
+                CancelledOperation = 13, 	// An application needs to delete 
+                // the restore point it created
+                Restore = 6, 			// System Restore
+                Checkpoint = 7, 		// Checkpoint
+                DeviceDriverInstall = 10, 	// Device driver has been installed
+                FirstRun = 11, 		// Program used for 1<sup>st</sup> time 
+                BackupRecovery = 14 		// Restoring a backup
+            }
+            public const Int16 BeginSystemChange = 100;
+            public const Int16 EndSystemChange = 101;
+            [DllImport("srclient.dll")]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            public static extern bool SRSetRestorePointW (ref RestorePointInfo pRestorePtSpec, out STATEMGRSTATUS pSMgrStatus);
+            string description;
+            bool set = false;
+            bool autoterminate = false;
+            Int64 restoreseq;
+            public RestorePoint(string description, bool autoterminate) {
+                this.description = description;
+                this.autoterminate = autoterminate;
+                STATEMGRSTATUS status = new STATEMGRSTATUS();
+                RestorePointInfo rpi = new RestorePointInfo();
+                rpi.dwEventType = BeginSystemChange;
+                rpi.dwRestorePtType = (int) RestoreType.Checkpoint;
+                rpi.llSequenceNumber = 0;
+                rpi.szDescription = description;
+                this.set = SRSetRestorePointW(ref rpi, out status);
+                this.restoreseq = status.llSequenceNumber;
+            }
+
+            void IDisposable.Dispose() {
+                if (this.set && this.autoterminate)
+                {
+                    STATEMGRSTATUS status = new STATEMGRSTATUS();
+                    RestorePointInfo rpi = new RestorePointInfo();
+                    rpi.dwEventType = EndSystemChange;
+                    rpi.dwRestorePtType = (int)RestoreType.Checkpoint;
+                    rpi.llSequenceNumber = this.restoreseq;
+                    rpi.szDescription = description;
+                    this.set = SRSetRestorePointW(ref rpi, out status);
+                }
+            }
+        }
 
         static string extractToTemp(string name, string extension)
         {
