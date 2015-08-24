@@ -7,6 +7,7 @@ using System.IO;
 using Microsoft.Win32;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Xenprep
 {
@@ -41,7 +42,47 @@ namespace Xenprep
             }
         }
 
-        public static void LockCD() {}
+        public static void EjectCDs()
+        {
+            DriveInfo[] drives = DriveInfo.GetDrives();
+
+            foreach (DriveInfo drive in drives)
+            {
+                if (drive.DriveType == DriveType.CDRom)
+                {
+                    // Strip the ":\" part of the drive's name
+                    string tmp = drive.Name.Substring(0, drive.Name.Length - 2);
+
+                    if (!CDTray.Eject(tmp))
+                    {
+                        throw new Exception(
+                            String.Format("Failed to eject drive '{0}'", drive.Name)
+                        );
+                    }
+                }
+            }
+        }
+
+        public static void LockCDs()
+        {
+            DriveInfo[] drives = DriveInfo.GetDrives();
+
+            foreach (DriveInfo drive in drives)
+            {
+                if (drive.DriveType == DriveType.CDRom)
+                {
+                    // Strip the ":\" part of the drive's name
+                    string tmp = drive.Name.Substring(0, drive.Name.Length - 2);
+
+                    if (!CDTray.Lock(tmp))
+                    {
+                        throw new Exception(
+                            String.Format("Failed to lock drive '{0}'", drive.Name)
+                        );
+                    }
+                }
+            }
+        }
         public static void SetRestorePoint() {}
 
         static string extractToTemp(string name, string extension)
@@ -402,6 +443,167 @@ namespace Xenprep
             }
         }
 
-        public static void UnlockCD() { }
+        public static void UnlockCDs()
+        {
+            DriveInfo[] drives = DriveInfo.GetDrives();
+
+            foreach (DriveInfo drive in drives)
+            {
+                if (drive.DriveType == DriveType.CDRom)
+                {
+                    // Strip the ":\" part of the drive's name
+                    string tmp = drive.Name.Substring(0, drive.Name.Length - 2);
+
+                    if (!CDTray.Unlock(tmp))
+                    {
+                        throw new Exception(
+                            String.Format("Failed to unlock drive '{0}'", drive.Name)
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>This class is dedicated to locking and unlocking the CD ejection.
+    /// Here we are importing COM classes relating to DeviceIOControl and using it
+    /// to set Media removal to false.
+    /// NOTE: At time of writing there are complications implementing this class</summary>
+    public static class CDTray
+    {
+        public static bool Lock(string driveLetter)
+        {
+            return ManageLock(driveLetter, true);
+        }
+
+        public static bool Unlock(string driveLetter)
+        {
+            return ManageLock(driveLetter, false);
+        }
+
+        public static bool Eject(string driveLetter)
+        {
+            uint err;
+            bool result = false;
+
+            string fileName = string.Format(@"\\.\{0}:", driveLetter);
+
+            IntPtr deviceHandle = _CreateFile(fileName);
+
+            if (deviceHandle != INVALID_HANDLE_VALUE)
+            {
+                IntPtr null_ptr = IntPtr.Zero;
+                int bytesReturned;
+                NativeOverlapped overlapped = new NativeOverlapped();
+
+                result = DeviceIoControl(
+                    deviceHandle,
+                    IOCTL_STORAGE_EJECT_MEDIA,
+                    ref null_ptr,
+                    0,
+                    out null_ptr,
+                    0,
+                    out bytesReturned,
+                    ref overlapped);
+                CloseHandle(deviceHandle);
+            }
+            return result;
+        }
+
+        private static IntPtr _CreateFile(string fileName)
+        {
+            SECURITY_ATTRIBUTES securityAttributes = new SECURITY_ATTRIBUTES();
+
+            return CreateFile(
+                fileName,
+                GENERIC_READ,
+                FILE_SHARE_READ | FILE_SHARE_WRITE,
+                ref securityAttributes,
+                OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL,
+                IntPtr.Zero);
+        }
+
+        private static bool ManageLock(string driveLetter, bool lockDrive)
+        {
+            bool result = false;
+            string fileName = string.Format(@"\\.\{0}:", driveLetter);
+
+            IntPtr deviceHandle = _CreateFile(fileName);
+
+            if (deviceHandle != INVALID_HANDLE_VALUE)
+            {
+                IntPtr outBuffer;
+                int bytesReturned;
+                NativeOverlapped overlapped = new NativeOverlapped();
+
+                byte[] bytes = new byte[1] {lockDrive ? (byte) 1 : (byte) 0};
+
+                IntPtr unmanagedPointer = Marshal.AllocHGlobal(bytes.Length);
+                Marshal.Copy(bytes, 0, unmanagedPointer, bytes.Length);
+
+                // Call unmanaged code
+                result = DeviceIoControl(
+                    deviceHandle,
+                    IOCTL_STORAGE_MEDIA_REMOVAL,
+                    ref unmanagedPointer,
+                    1,
+                    out outBuffer,
+                    0,
+                    out bytesReturned,
+                    ref overlapped);
+                CloseHandle(deviceHandle);
+
+                Marshal.FreeHGlobal(unmanagedPointer);
+            }
+            return result;
+        }
+
+        // http://msdn.microsoft.com/en-us/library/aa379560(VS.85).aspx
+        [StructLayout(LayoutKind.Sequential)]
+        private struct SECURITY_ATTRIBUTES
+        {
+            int nLength;
+            IntPtr lpSecurityDescriptor;
+            bool bInheritHandle;
+        }
+
+        private const int FILE_SHARE_READ = 0x00000001;
+        private const int FILE_SHARE_WRITE = 0x00000002;
+        private const uint GENERIC_READ = 0x80000000;
+        private const int OPEN_EXISTING = 3;
+        private const int FILE_ATTRIBUTE_NORMAL = 0x80;
+        private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+        private const int IOCTL_STORAGE_MEDIA_REMOVAL = 0x2D4804;
+        private const int IOCTL_STORAGE_EJECTION_CONTROL = 0x2D0940;
+        private const int IOCTL_STORAGE_EJECT_MEDIA = 0x2D4808;
+
+        // http://msdn.microsoft.com/en-us/library/aa363858(VS.85).aspx
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr CreateFile(
+            string lpFileName,
+            uint dwDesiredAccess,
+            int dwShareMode,
+            ref SECURITY_ATTRIBUTES lpSecurityAttributes,
+            int dwCreationDisposition,
+            int dwFlagsAndAttributes,
+            IntPtr hTemplateFile);
+
+        // http://msdn.microsoft.com/en-us/library/aa363216(VS.85).aspx
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool DeviceIoControl(
+            IntPtr hDevice,
+            int dwIoControlCode,
+            ref IntPtr lpInBuffer,
+            int nInBufferSize,
+            out IntPtr lpOutBuffer,
+            int nOutBufferSize,
+            out int lpBytesReturned,
+            ref NativeOverlapped lpOverlapped);
+
+        // http://msdn.microsoft.com/en-us/library/ms724211(VS.85).aspx
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool CloseHandle(
+            IntPtr hObject);
     }
 }
