@@ -114,6 +114,8 @@ namespace Xenprep
 
                 SetProgress(100);
                 XenPrepSupport.EjectCDs();
+
+                XenPrepSupport.ShutDownVm();
                 CloseProgressWindow();
             }
             catch(Exception e)
