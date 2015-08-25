@@ -74,12 +74,7 @@ namespace Xenprep
                     // Strip the ":\" part of the drive's name
                     string tmp = drive.Name.Substring(0, drive.Name.Length - 2);
 
-                    if (!CDTray.Lock(tmp))
-                    {
-                        throw new Exception(
-                            String.Format("Failed to lock drive '{0}'", drive.Name)
-                        );
-                    }
+                    CDTray.Lock(tmp);
                 }
             }
         }
@@ -454,15 +449,266 @@ namespace Xenprep
                     // Strip the ":\" part of the drive's name
                     string tmp = drive.Name.Substring(0, drive.Name.Length - 2);
 
-                    if (!CDTray.Unlock(tmp))
+                    CDTray.Unlock(tmp);
+                }
+            }
+        }
+
+        public class WinVersion
+        {
+            [DllImport("kernel32")]
+            private static extern bool GetVersionEx(ref OSVERSIONINFO osvi);
+
+            struct OSVERSIONINFO
+            {
+                public uint dwOSVersionInfoSize;
+                public uint dwMajorVersion;
+                public uint dwMinorVersion;
+                public uint dwBuildNumber;
+                public uint dwPlatformId;
+                [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+                public string szCSDVersion;
+                public Int16 wServicePackMajor;
+                public Int16 wServicePackMinor;
+                public Int16 wSuiteMask;
+                public Byte wProductType;
+                public Byte wReserved;
+            }
+            OSVERSIONINFO osvi;
+            public enum ProductType : uint
+            {
+                NT_WORKSTATION = 1,
+                NT_DOMAIN_CONTROLLER = 2,
+                NT_SERVER = 3
+            }
+            public WinVersion()
+            {
+                osvi = new OSVERSIONINFO();
+                osvi.dwOSVersionInfoSize = (uint)Marshal.SizeOf(typeof(OSVERSIONINFO));
+
+                GetVersionEx(ref osvi);
+            }
+            public uint GetPlatformId() { return osvi.dwPlatformId; }
+            public uint GetServicePackMajor() { return (uint)osvi.wServicePackMajor; }
+            public uint GetServicePackMinor() { return (uint)osvi.wServicePackMinor; }
+            public uint GetSuite() { return (uint)osvi.wSuiteMask; }
+            public uint GetProductType() { return osvi.wProductType; }
+            public uint GetVersionValue()
+            {
+                uint vers = ((osvi.dwMajorVersion << 8) | osvi.dwMinorVersion);
+                return vers;
+            }
+            public static bool isServerSKU()
+            {
+                WinVersion vers = new WinVersion();
+                return (ProductType)vers.GetProductType() != ProductType.NT_WORKSTATION;
+            }
+        }
+
+        class Privileges
+        {
+            public const UInt32 SE_PRIVILEGE_ENABLED_BY_DEFAULT = 0x00000001;
+            public const UInt32 SE_PRIVILEGE_REMOVED = 0x00000004;
+            public const UInt32 SE_PRIVILEGE_USED_FOR_ACCESS = 0x80000000;
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct LUID
+            {
+                public uint LowPart;
+                public int HighPart;
+            }
+
+            [StructLayout(LayoutKind.Sequential)]
+            public struct LUID_AND_ATTRIBUTES
+            {
+                public LUID Luid;
+                public UInt32 Attributes;
+            }
+
+            private const Int32 ANYSIZE_ARRAY = 1;
+            public struct TOKEN_PRIVILEGES
+            {
+                public UInt32 PrivilegeCount;
+                [MarshalAs(UnmanagedType.ByValArray, SizeConst = ANYSIZE_ARRAY)]
+                public LUID_AND_ATTRIBUTES[] Privileges;
+            }
+
+            [DllImport("advapi32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            private static extern bool LookupPrivilegeValue(IntPtr Null1, string lpName,
+                out LUID lpLuid);
+            [DllImport("advapi32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            private static extern bool OpenProcessToken(IntPtr ProcessHandle,
+                UInt32 DesiredAccess, out IntPtr TokenHandle);
+            //Use these for DesiredAccess
+            public const UInt32 STANDARD_RIGHTS_REQUIRED = 0x000F0000;
+            public const UInt32 STANDARD_RIGHTS_READ = 0x00020000;
+            public const UInt32 TOKEN_ASSIGN_PRIMARY = 0x0001;
+            public const UInt32 TOKEN_DUPLICATE = 0x0002;
+            public const UInt32 TOKEN_IMPERSONATE = 0x0004;
+            public const UInt32 TOKEN_QUERY_SOURCE = 0x0010;
+            public const UInt32 TOKEN_ADJUST_GROUPS = 0x0040;
+            public const UInt32 TOKEN_ADJUST_DEFAULT = 0x0080;
+            public const UInt32 TOKEN_ADJUST_SESSIONID = 0x0100;
+            public const UInt32 TOKEN_READ = (STANDARD_RIGHTS_READ | TOKEN_QUERY);
+            public const UInt32 TOKEN_ALL_ACCESS = (STANDARD_RIGHTS_REQUIRED | TOKEN_ASSIGN_PRIMARY |
+                TOKEN_DUPLICATE | TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_QUERY_SOURCE |
+                TOKEN_ADJUST_PRIVILEGES | TOKEN_ADJUST_GROUPS | TOKEN_ADJUST_DEFAULT |
+                TOKEN_ADJUST_SESSIONID);
+            private const UInt32 TOKEN_QUERY = 0x0008;
+            private const UInt32 TOKEN_ADJUST_PRIVILEGES = 0x0020;
+            private const UInt32 SE_PRIVILEGE_ENABLED = 0x00000002;
+            [DllImport("advapi32.dll", SetLastError = true)]
+            [return: MarshalAs(UnmanagedType.Bool)]
+            static extern bool AdjustTokenPrivileges(IntPtr TokenHandle,
+                [MarshalAs(UnmanagedType.Bool)]bool DisableAllPrivileges,
+                ref TOKEN_PRIVILEGES NewState,
+                UInt32 Zero,
+                IntPtr Null1,
+                IntPtr Null2);
+
+            public static void AcquireSystemPrivilege(string name)
+            {
+                TOKEN_PRIVILEGES tkp;
+                IntPtr token;
+
+                tkp.Privileges = new LUID_AND_ATTRIBUTES[1];
+                LookupPrivilegeValue(IntPtr.Zero, name, out tkp.Privileges[0].Luid);
+                tkp.PrivilegeCount = 1;
+                tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+                if (!OpenProcessToken(Process.GetCurrentProcess().Handle,
+                    TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, out token))
+                {
+                    throw new Exception("OpenProcessToken");
+                }
+                if (!AdjustTokenPrivileges(token, false, ref tkp, 0, IntPtr.Zero,
+                    IntPtr.Zero))
+                {
+                    throw new Exception("AdjustTokenPrivileges"); ;
+                }
+            }
+        }
+
+        class Shutdown
+        {
+            [Flags]
+            public enum ExitFlags : int
+            {
+                EWX_LOGOFF = 0x00000000,
+                EWX_POWEROFF = 0x00000008,
+                EWX_REBOOT = 0x00000002,
+                EWX_RESTARTAPPS = 0x00000040,
+                EWX_SHUTDOWN = 0x00000001,
+                EWX_FORCE = 0x00000004,
+                EWX_FORCEIFHUNG = 0x00000010
+            }
+
+            [DllImport("user32.dll", ExactSpelling = true, SetLastError = true)]
+            internal static extern bool ExitWindowsEx(ExitFlags flg, int rea);
+
+            [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+            public static extern bool InitiateSystemShutdownEx(
+                string lpMachineName,
+                string lpMessage,
+                uint dwTimeout,
+                bool bForceAppsClosed,
+                bool bRebootAfterShutdown,
+                ShutdownReason dwReason);
+
+            [Flags]
+            public enum ShutdownReason : uint
+            {
+                // Microsoft major reasons.
+                SHTDN_REASON_MAJOR_OTHER = 0x00000000,
+                SHTDN_REASON_MAJOR_NONE = 0x00000000,
+                SHTDN_REASON_MAJOR_HARDWARE = 0x00010000,
+                SHTDN_REASON_MAJOR_OPERATINGSYSTEM = 0x00020000,
+                SHTDN_REASON_MAJOR_SOFTWARE = 0x00030000,
+                SHTDN_REASON_MAJOR_APPLICATION = 0x00040000,
+                SHTDN_REASON_MAJOR_SYSTEM = 0x00050000,
+                SHTDN_REASON_MAJOR_POWER = 0x00060000,
+                SHTDN_REASON_MAJOR_LEGACY_API = 0x00070000,
+
+                // Microsoft minor reasons.
+                SHTDN_REASON_MINOR_OTHER = 0x00000000,
+                SHTDN_REASON_MINOR_NONE = 0x000000ff,
+                SHTDN_REASON_MINOR_MAINTENANCE = 0x00000001,
+                SHTDN_REASON_MINOR_INSTALLATION = 0x00000002,
+                SHTDN_REASON_MINOR_UPGRADE = 0x00000003,
+                SHTDN_REASON_MINOR_RECONFIG = 0x00000004,
+                SHTDN_REASON_MINOR_HUNG = 0x00000005,
+                SHTDN_REASON_MINOR_UNSTABLE = 0x00000006,
+                SHTDN_REASON_MINOR_DISK = 0x00000007,
+                SHTDN_REASON_MINOR_PROCESSOR = 0x00000008,
+                SHTDN_REASON_MINOR_NETWORKCARD = 0x00000000,
+                SHTDN_REASON_MINOR_POWER_SUPPLY = 0x0000000a,
+                SHTDN_REASON_MINOR_CORDUNPLUGGED = 0x0000000b,
+                SHTDN_REASON_MINOR_ENVIRONMENT = 0x0000000c,
+                SHTDN_REASON_MINOR_HARDWARE_DRIVER = 0x0000000d,
+                SHTDN_REASON_MINOR_OTHERDRIVER = 0x0000000e,
+                SHTDN_REASON_MINOR_BLUESCREEN = 0x0000000F,
+                SHTDN_REASON_MINOR_SERVICEPACK = 0x00000010,
+                SHTDN_REASON_MINOR_HOTFIX = 0x00000011,
+                SHTDN_REASON_MINOR_SECURITYFIX = 0x00000012,
+                SHTDN_REASON_MINOR_SECURITY = 0x00000013,
+                SHTDN_REASON_MINOR_NETWORK_CONNECTIVITY = 0x00000014,
+                SHTDN_REASON_MINOR_WMI = 0x00000015,
+                SHTDN_REASON_MINOR_SERVICEPACK_UNINSTALL = 0x00000016,
+                SHTDN_REASON_MINOR_HOTFIX_UNINSTALL = 0x00000017,
+                SHTDN_REASON_MINOR_SECURITYFIX_UNINSTALL = 0x00000018,
+                SHTDN_REASON_MINOR_MMC = 0x00000019,
+                SHTDN_REASON_MINOR_TERMSRV = 0x00000020,
+
+                // Flags that end up in the event log code.
+                SHTDN_REASON_FLAG_USER_DEFINED = 0x40000000,
+                SHTDN_REASON_FLAG_PLANNED = 0x80000000,
+                SHTDN_REASON_UNKNOWN = SHTDN_REASON_MINOR_NONE,
+                SHTDN_REASON_LEGACY_API = (SHTDN_REASON_MAJOR_LEGACY_API | SHTDN_REASON_FLAG_PLANNED),
+
+                // This mask cuts out UI flags.
+                SHTDN_REASON_VALID_BIT_MASK = 0xc0ffffff
+            }
+            public const string SE_SHUTDOWN_NAME = "SeShutdownPrivilege";
+            public static void ShutDown()
+            {
+                Privileges.AcquireSystemPrivilege(SE_SHUTDOWN_NAME);
+                WinVersion vers = new WinVersion();
+                if (vers.GetVersionValue() >= 0x500 &&
+                    vers.GetVersionValue() < 0x600)
+                {
+                    bool res = ExitWindowsEx(ExitFlags.EWX_SHUTDOWN |
+                                             ExitFlags.EWX_FORCE, 0);
+                    if (res != true)
                     {
-                        throw new Exception(
-                            String.Format("Failed to unlock drive '{0}'", drive.Name)
-                        );
+                        throw new Exception("ExitWindowsEx Failed");
+                    }
+                }
+                else
+                {
+                    bool res = InitiateSystemShutdownEx("", "", 0, true, false,
+                        ShutdownReason.SHTDN_REASON_MAJOR_OTHER |
+                        ShutdownReason.SHTDN_REASON_MINOR_ENVIRONMENT |
+                        ShutdownReason.SHTDN_REASON_FLAG_PLANNED);
+                    if (res != true)
+                    {
+                        throw new Exception("InitiateSystemShutdownEx Failed");
                     }
                 }
             }
         }
+
+        public static void ShutDownVm()
+        {
+            try
+            {
+                Shutdown.ShutDown();
+            }
+            catch
+            {
+                throw new Exception("Shutdown failed.  Shut down your VM for preparation to continue");
+            }
+        }  
     }
 
     /// <summary>This class is dedicated to locking and unlocking the CD ejection.
@@ -483,7 +729,6 @@ namespace Xenprep
 
         public static bool Eject(string driveLetter)
         {
-            uint err;
             bool result = false;
 
             string fileName = string.Format(@"\\.\{0}:", driveLetter);
@@ -605,5 +850,6 @@ namespace Xenprep
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(
             IntPtr hObject);
+
     }
 }
