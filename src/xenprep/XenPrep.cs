@@ -61,7 +61,7 @@ namespace Xenprep
                 SetProgress(10);
 
                 SetCaption("Set restore point");
-                XenPrepSupport.SetRestorePoint();
+                XenPrepSupport.RestorePoint Restore = new XenPrepSupport.RestorePoint("Configure VM For Xenprep");
                 Thread.Sleep(1000);
 
                 SetProgress(20);
@@ -78,9 +78,10 @@ namespace Xenprep
                 Thread.Sleep(1000);
 
                 SetProgress(40);
+                Restore.End();
 
                 SetCaption("Set restore point");
-                XenPrepSupport.SetRestorePoint();
+                Restore = new XenPrepSupport.RestorePoint("Xenprep VM");
                 Thread.Sleep(1000);
 
                 SetProgress(50);
