@@ -283,7 +283,132 @@ namespace Xenprep
             }
         }
 
-        public static void UninstallMSIs() {}
+        [DllImport("msi.dll", SetLastError = true)]
+        static extern int MsiEnumProducts(int iProductIndex, StringBuilder lpProductBuf);
+
+        [DllImport("msi.dll", CharSet = CharSet.Unicode)]
+        static extern Int32 MsiGetProductInfo(
+            string product,
+            string property,
+            [Out] StringBuilder valueBuf,
+            ref Int32 len);
+
+        public enum INSTALLSTATE : int
+        {
+            NOTUSED      = -7,  // component disabled
+            BADCONFIG    = -6,  // configuration data corrupt
+            INCOMPLETE   = -5,  // installation suspended or in progress
+            SOURCEABSENT = -4,  // run from source, source is unavailable
+            MOREDATA     = -3,  // return buffer overflow
+            INVALIDARG   = -2,  // invalid function argument
+            UNKNOWN      = -1,  // unrecognized product or feature
+            BROKEN       =  0,  // broken
+            ADVERTISED   =  1,  // advertised feature
+            ABSENT       =  2,  // uninstalled (or action state absent but clients remain)
+            LOCAL        =  3,  // installed on local drive
+            SOURCE       =  4,  // run from source, CD or net
+            DEFAULT      =  5,  // use default, local or source
+        }
+
+        public enum INSTALLLEVEL : int
+        {
+            DEFAULT = 0x0000,
+            MINIMUM = 0x0001,
+            MAXIMUM = 0xFFFF
+        }
+
+        public const string INSTALLPROPERTY_INSTALLEDPRODUCTNAME = "InstalledProductName";
+        public const string INSTALLPROPERTY_VERSIONSTRING = "VersionString";
+        public const string INSTALLPROPERTY_HELPLINK = "HelpLink";
+        public const string INSTALLPROPERTY_HELPTELEPHONE = "HelpTelephone";
+        public const string INSTALLPROPERTY_INSTALLLOCATION = "InstallLocation";
+        public const string INSTALLPROPERTY_INSTALLSOURCE = "InstallSource";
+        public const string INSTALLPROPERTY_INSTALLDATE = "InstallDate";
+        public const string INSTALLPROPERTY_PUBLISHER = "Publisher";
+        public const string INSTALLPROPERTY_LOCALPACKAGE = "LocalPackage";
+        public const string INSTALLPROPERTY_URLINFOABOUT = "URLInfoAbout";
+        public const string INSTALLPROPERTY_URLUPDATEINFO = "URLUpdateInfo";
+        public const string INSTALLPROPERTY_VERSIONMINOR = "VersionMinor";
+        public const string INSTALLPROPERTY_VERSIONMAJOR = "VersionMajor";
+
+        [DllImport("msi.dll", SetLastError = true, CharSet=CharSet.Unicode)]
+        static extern uint MsiConfigureProductEx(
+            string szProduct,
+            int iInstallLevel,
+            INSTALLSTATE eInstallState,
+            string szCommandLine);
+
+        public static void UninstallMSIs()
+        {
+            const int GUID_LEN = 39;
+            const int BUF_LEN = 128;
+            int err;
+            int i = 0;
+            int len = BUF_LEN;
+            StringBuilder productCode = new StringBuilder(GUID_LEN, GUID_LEN);
+            StringBuilder productName = new StringBuilder(BUF_LEN, BUF_LEN);
+
+            // MSIs to uninstall
+            string[] msiNameList = {
+                "Citrix XenServer Windows Guest Agent",
+                "Citrix XenServer VSS Provider",
+                "Citrix Xen Windows x64 PV Drivers",
+                "Citrix Xen Windows x86 PV Drivers",
+                "Citrix XenServer Tools Installer"
+            };
+
+            while ((err = MsiEnumProducts(i, productCode)) == 0) // ERROR_SUCCESS
+            {
+                string tmpCode = productCode.ToString();
+
+                // Get ProductName from Product GUID
+                err = MsiGetProductInfo(
+                    tmpCode,
+                    INSTALLPROPERTY_INSTALLEDPRODUCTNAME,
+                    productName,
+                    ref len
+                );
+
+                if (err == 0)
+                {
+                    string tmpName = productName.ToString();
+
+                    if (msiNameList.Any(tmpName.Contains))
+                    {
+                        // Until we find out why MsiConfigureProductEx()
+                        // doesn't remove the Tools Installer...
+                        if (tmpName.Equals(msiNameList[4])) // == "Citrix XenServer Tools Installer"
+                        {
+                            Process process = new Process();
+                            ProcessStartInfo startInfo = new ProcessStartInfo();
+                            startInfo.FileName = "msiexec.exe";
+                            startInfo.Arguments = "/C /x " + tmpCode + " /qn";
+                            process.StartInfo = startInfo;
+                            process.Start();
+                            process.WaitForExit();
+                        }
+                        else
+                        {
+                            MsiConfigureProductEx(
+                                tmpCode,
+                                (int)INSTALLLEVEL.DEFAULT,
+                                INSTALLSTATE.ABSENT,
+                                "REBOOT=ReallySuppress ALLUSERS=1 ARPSYSTEMCOMPONENT=0"
+                            );
+                        }
+                    }
+                }
+
+                if (len == BUF_LEN - 1) // ERROR_MORE_DATA
+                {
+                    // Continue normally.
+                    len = BUF_LEN;
+                }
+
+                ++i;
+            }
+        }
+
         public static void UninstallXenLegacy() {}        
         public static void CleanUpPVDrivers()
         {
