@@ -660,6 +660,10 @@ namespace Xenprep
                                    "xeniface", "xennet", "xenvbd", "xenvif",
                                  "xennet6", "xenutil", "xevtchn"};
 
+            string[] services = {"XENBUS", "xenfilt", "xeniface", "xenlite",
+                                 "xennet", "XenSvc", "xenvbd", "xenvif", "xennet6",
+                                 "xenutil", "xevtchn"};
+
             string[] hwIDs = {
                 @"PCI\VEN_5853&DEV_C000&SUBSYS_C0005853&REV_01",
                 @"PCI\VEN_5853&DEV_0002",
@@ -691,6 +695,19 @@ namespace Xenprep
             foreach (string hwID in hwIDs)
             {
                 pnpremove(hwID);
+            }
+
+            // Delete services' registry entries
+            using (RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services", true))
+            {
+                foreach (string service in services)
+                {
+                    try
+                    {
+                        baseRK.DeleteSubKeyTree(service);
+                    }
+                    catch { }
+                }
             }
 
             // Delete driver files
