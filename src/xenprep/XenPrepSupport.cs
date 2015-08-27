@@ -265,18 +265,18 @@ namespace Xenprep
 
             foreach (string driver in xenDrivers)
             {
-                if (baseRK.GetValue(driver) != null)
+                using (RegistryKey tmpRK = baseRK.OpenSubKey(driver, true))
                 {
-                    using (RegistryKey tmpRK = baseRK.OpenSubKey(driver, true))
+                    if (tmpRK != null)
                     {
                         tmpRK.SetValue("Start", 3);
                     }
                 }
             }
 
-            if (baseRK.GetValue(@"xenfilt\Unplug") != null)
+            using (RegistryKey tmpRK = baseRK.OpenSubKey(@"xenfilt\Unplug", true))
             {
-                using (RegistryKey tmpRK = baseRK.OpenSubKey(@"xenfilt\Unplug", true))
+                if (tmpRK != null)
                 {
                     tmpRK.DeleteValue("DISKS", false);
                     tmpRK.DeleteValue("NICS", false);
