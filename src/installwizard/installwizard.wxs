@@ -332,6 +332,7 @@
                     <RegistryValue Type='string' Name='Install_Dir' Value='[INSTALLDIR]' />
                     <RegistryValue Type='integer' Name='Mode' Value='[UILevel]' />
                     <RegistryValue Type='string' Name='MSISourceDir' Value='[INSTALLER]' />
+                    <RegistryValue Type='string' Name='InstalledFrom' Value='[OriginalDatabase]' />
                 </RegistryKey>
             </Component>
             <Component Id='InstallStatus' Guid="*" >

@@ -93,6 +93,7 @@
       <DependentUpon>InstallService.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <compile Include="..\..\xenprep\xenprepsupport.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
