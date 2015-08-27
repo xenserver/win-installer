@@ -190,7 +190,7 @@
                     <RegistryValue Type='integer' Name='MajorVersion' Value='$(var.CurrentMajorVersion)' />
                     <RegistryValue Type='integer' Name='MinorVersion' Value='$(var.CurrentMinorVersion)' />
                     <RegistryValue Type='integer' Name='MicroVersion' Value='$(var.CurrentMicroVersion)' />
-                    <RegistryValue Type='integer' Name='BuildVersion' Value='$(var.CurrentToolsHotfix)' /> 
+                    <RegistryValue Type='integer' Name='BuildVersion' Value='$(var.CurrentBuildVersion)' /> 
                     <!-- BuildVersion, above, is the number we report to XAPI, so we report the hardcoded tools hotfix number, not the Jenkins build number -->
                     <RegistryValue Type='string' Name='Install_Dir' Value='[INSTALLDIR]' />
                     <RegistryValue Type='integer' Name='MsiGuestAgent' Value='1' />
