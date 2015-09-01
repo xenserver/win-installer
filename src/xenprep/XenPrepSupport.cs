@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -345,9 +346,10 @@ namespace Xenprep
             const int BUF_LEN = 128;
             int err;
             int i = 0;
-            int len = BUF_LEN;
+            int len;
             StringBuilder productCode = new StringBuilder(GUID_LEN, GUID_LEN);
             StringBuilder productName = new StringBuilder(BUF_LEN, BUF_LEN);
+            Hashtable toRemove = new Hashtable();
 
             // MSIs to uninstall
             string[] msiNameList = {
@@ -362,6 +364,8 @@ namespace Xenprep
             {
                 string tmpCode = productCode.ToString();
 
+                len = BUF_LEN;
+
                 // Get ProductName from Product GUID
                 err = MsiGetProductInfo(
                     tmpCode,
@@ -374,39 +378,30 @@ namespace Xenprep
                 {
                     string tmpName = productName.ToString();
 
-                    if (msiNameList.Any(tmpName.Contains))
+                    if (msiNameList.Contains(tmpName))
                     {
-                        // Until we find out why MsiConfigureProductEx()
-                        // doesn't remove the Tools Installer...
-                        if (tmpName.Equals(msiNameList[4])) // == "Citrix XenServer Tools Installer"
-                        {
-                            Process process = new Process();
-                            ProcessStartInfo startInfo = new ProcessStartInfo();
-                            startInfo.FileName = "msiexec.exe";
-                            startInfo.Arguments = "/C /x " + tmpCode + " /qn";
-                            process.StartInfo = startInfo;
-                            process.Start();
-                            process.WaitForExit();
-                        }
-                        else
-                        {
-                            MsiConfigureProductEx(
-                                tmpCode,
-                                (int)INSTALLLEVEL.DEFAULT,
-                                INSTALLSTATE.ABSENT,
-                                "REBOOT=ReallySuppress ALLUSERS=1 ARPSYSTEMCOMPONENT=0"
-                            );
-                        }
+                        toRemove.Add(tmpCode, tmpName);
                     }
                 }
 
-                if (len == BUF_LEN - 1) // ERROR_MORE_DATA
-                {
-                    // Continue normally.
-                    len = BUF_LEN;
-                }
-
                 ++i;
+            }
+
+            foreach (DictionaryEntry product in toRemove)
+            {
+                Process process = new Process();
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.FileName = "msiexec.exe";
+
+                // For some unknown reason, XenServer Tools Installer
+                // doesn't like the '/norestart' option and doesn't get
+                // removed if it's there.
+                startInfo.Arguments = "/x " + product.Key + " /qn" +
+                    (product.Value.Equals(msiNameList[4]) ? "" : " /norestart");
+                process.StartInfo = startInfo;
+                process.Start();
+                process.WaitForExit();
+                process.Close();
             }
         }
 
