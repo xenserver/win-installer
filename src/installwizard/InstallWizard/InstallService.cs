@@ -50,6 +50,7 @@ using System.Windows.Forms;
 using System.Configuration.Install;
 using System.Management.Instrumentation;
 using System.Reflection;
+using Xenprep;
 
 [assembly: Instrumented(@"root\citrix\xenserver\agent")]
 
@@ -615,6 +616,34 @@ namespace InstallWizard
                     }
                     catch
                     {
+                    }
+
+                    try
+                    {
+                        if (InstallState.Installed)
+                        {
+                            string installpath = (string)Registry.GetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Citrix\XenToolsInstaller", "InstalledFrom", "");
+                            if (!installpath.Equals(""))
+                            {
+                                Trace.WriteLine("Got drive path " + installpath);
+                                string currentdisk = Path.GetPathRoot(installpath);
+                                Trace.WriteLine("Got current path " + currentdisk);
+                                if (currentdisk.ElementAt(1) == ':')
+                                {
+                                    string driveletter = currentdisk.Substring(0, 1);
+                                    Trace.WriteLine("Expected drive letter is " + driveletter);
+                                    DriveInfo drive = new DriveInfo(driveletter);
+                                    if (drive.DriveType == DriveType.CDRom)
+                                    {
+                                        CDTray.Eject(driveletter);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        Trace.WriteLine("Eject failed : " + e.ToString());
                     }
 
                     Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\XenPVInstall", "Start", 3);
