@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.Threading;
+using System.Diagnostics;
 
 namespace Xenprep
 {
@@ -19,6 +20,10 @@ namespace Xenprep
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
+            TextWriterTraceListener tlog = new TimeDateTraceListener(Application.CommonAppDataPath + "\\Install.log", "Install");
+            Trace.Listeners.Add(tlog);
+            Trace.AutoFlush = true;
+            
             progressWindow = new Progress();
             prepareThread = new PrepareThread(args, progressWindow);
 
@@ -28,13 +33,26 @@ namespace Xenprep
             backgroundThread.Start();
 
             Application.Run(progressWindow);
-
-       
-            
-            
-
         }
     }
+
+    class TimeDateTraceListener : TextWriterTraceListener
+    {
+        public TimeDateTraceListener(String file, String name)
+            : base(file, name)
+        {
+        }
+
+        public override void WriteLine(object o)
+        {
+            base.WriteLine(DateTime.Now.ToString() +" : " + o.ToString());
+        }
+        public override void WriteLine(string message)
+        {
+            base.WriteLine(DateTime.Now.ToString() +" : " + message);
+        }
+    }
+        
 
     class PrepareThread
     {
@@ -121,6 +139,7 @@ namespace Xenprep
             }
             catch(Exception e)
             {
+                Trace.WriteLine("XenPrep Failed : " + e.ToString());
                 progressWindow.SetRed();
                 SetCaption("XenPrep Failed");
                 MessageBox.Show(e.Message);
@@ -134,6 +153,7 @@ namespace Xenprep
 
         void SetCaption(string caption)
         {
+            Trace.WriteLine("CAPTION: " + caption);
             progressWindow.Invoke((MethodInvoker)(() =>
             {
                 progressWindow.Caption.Text = caption;
@@ -142,6 +162,7 @@ namespace Xenprep
 
         void SetProgress(int value)
         {
+            Trace.WriteLine("Progress: " + value.ToString());
             progressWindow.Invoke((MethodInvoker)(() =>
             {
                 progressWindow.progressBar.Value = value;
