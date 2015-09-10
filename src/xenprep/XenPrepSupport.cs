@@ -128,7 +128,15 @@ namespace Xenprep
                 rpi.dwRestorePtType = (int)RestoreType.Checkpoint;
                 rpi.llSequenceNumber = 0;
                 rpi.szDescription = description;
-                this.set = SRSetRestorePointW(ref rpi, out status);
+                try
+                {
+                    this.set = SRSetRestorePointW(ref rpi, out status);
+                }
+                catch
+                {
+                    this.set = false;
+                    Trace.WriteLine("System Restore Point Not Set (System restore points don't exist on sever class versions of Windows)");
+                }
                 this.restoreseq = status.llSequenceNumber;
             }
 
