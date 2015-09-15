@@ -48,6 +48,7 @@ using System.Management;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Security.Cryptography.X509Certificates;
+using Xenprep;
 
 namespace InstallWizard
 {
@@ -2077,6 +2078,9 @@ namespace InstallWizard
             {
                 string pciDeviceName = GetPciDeviceName();
                 if ((pciDeviceName != "XenServer PV Bus") // XenServer Standard drivers
+                    && (pciDeviceName != "XenServer PV Bus (0002)") // XenServer Standard drivers 8.x
+                    && (pciDeviceName != "XenServer PV Bus (0001)") // XenServer Standard drivers 8.x
+                    && (pciDeviceName != "XenServer PV Bus (C000)") // XenServer Standard drivers 8.x
                     && (pciDeviceName != "Citrix PV Bus") // Citrix XenServer Standard Drivers
                     && (pciDeviceName != "Citrix PV SCSI Host Adapter") // Legacy Drivers
                     && (pciDeviceName != "Citrix XenServer PV SCSI Host Adapter") // 5.5 Legacy Drivers
@@ -2142,7 +2146,12 @@ namespace InstallWizard
             //addcerts(installdir);
 
             workaroundSystemStartOptions();
-
+            if (driverupgrade)
+            {
+                XenPrepSupport.DontBootStartPVDrivers();
+                XenPrepSupport.RemovePVDriversFromFilters();
+                XenPrepSupport.CleanUpPVDrivers();
+            }
             Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\partmgr\Parameters", true).SetValue("SanPolicy", 0x00000001);
             base.install(args, logfile, installstate);
             enumerateBus();
@@ -2175,6 +2184,7 @@ namespace InstallWizard
                 {
                     Trace.WriteLine("NICs still scheduled to be unplugged " + e.ToString());
                 }
+                XenPrepSupport.RemoveXenVifNetworkClassKeys();
             }
         }
 
