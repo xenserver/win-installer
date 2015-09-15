@@ -709,14 +709,80 @@ namespace Xenprep
                     {
                         baseRK.DeleteSubKeyTree(service);
                     }
-                    catch { }
+                    catch(ArgumentException) { }
                 }
             }
+
+            RemoveXenVifNetworkClassKeys();
 
             // Delete driver files
             foreach (string driver in PVDrivers)
             {
                 File.Delete(driverPath + driver + ".sys");
+            }
+
+
+        }
+
+        static public void RemoveXenVifNetworkClassKeys()
+        {
+            // Remove xenvif enumerated software keys
+            using (RegistryKey enumkey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum"))
+                if (enumkey.GetSubKeyNames().Contains("XENVIF", StringComparer.InvariantCultureIgnoreCase))
+                using (RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Enum\XENVIF", false))
+                foreach (string subkey in baseRK.GetSubKeyNames())
+                using (RegistryKey pathSK = baseRK.OpenSubKey(subkey))
+                foreach (string pathsubkey in pathSK.GetSubKeyNames())
+                using (RegistryKey indexSK = pathSK.OpenSubKey(pathsubkey))
+                if ((indexSK.GetValueNames().Contains("Driver", StringComparer.InvariantCultureIgnoreCase))
+                    && (indexSK.GetValueKind("Driver") == RegistryValueKind.String))
+            {
+                string driverkey = (string)indexSK.GetValue("Driver");
+                string[] splitpath = RegistrySplitPath(driverkey);
+
+                Trace.WriteLine("Got splitpath " + splitpath[0] + " " + splitpath[1]);
+                using (RegistryKey classkeys = Registry.LocalMachine.OpenSubKey(@"System\CurrentControlSet\Control\Class"))
+                    if (classkeys.GetSubKeyNames().Contains(splitpath[0], StringComparer.InvariantCultureIgnoreCase))
+                    using (RegistryKey driverSK = classkeys.OpenSubKey(splitpath[0], true))
+                    if (driverSK.GetSubKeyNames().Contains(splitpath[1], StringComparer.InvariantCultureIgnoreCase))
+                {
+                    Trace.WriteLine("Removing key");
+                    driverSK.DeleteSubKeyTree(splitpath[1]);
+                    if (driverSK.GetSubKeyNames().Contains(splitpath[1], StringComparer.InvariantCultureIgnoreCase))
+                    {
+                        Trace.WriteLine("Key was not removed fully");
+                        try
+                        {
+                            driverSK.DeleteSubKey(splitpath[1]);
+                        }
+                        catch (Exception e)
+                        {
+                            Trace.WriteLine("Unable to delete " + splitpath[1] + " " + e.ToString());
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Trace.WriteLine("No Driver in " + pathsubkey);
+            }
+        }
+
+        static string[] RegistrySplitPath(string path)
+        {
+            for (;;) 
+            {
+                if (path.Length == 0) {
+                    throw new Exception("No path found");
+                }
+                int lastindex = path.LastIndexOf(@"\");
+                if (lastindex == (path.Length-1)) {
+                    path =  path.Substring(0,path.Length-1);
+                    continue;
+                }
+                string leaf = path.Substring(lastindex+1);
+                string parent = path.Substring(0, lastindex);
+                return (new string[] {parent, leaf});
             }
         }
 

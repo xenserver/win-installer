@@ -50,7 +50,9 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="app.manifest" />
+    <None Include="app.manifest">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="UIEvent.exe.3.5.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
