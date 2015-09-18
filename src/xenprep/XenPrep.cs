@@ -142,7 +142,7 @@ namespace Xenprep
                 Trace.WriteLine("XenPrep Failed : " + e.ToString());
                 progressWindow.SetRed();
                 SetCaption("XenPrep Failed");
-                MessageBox.Show(e.Message);
+                MessageBox.Show(e.ToString());
                 
             }
 
