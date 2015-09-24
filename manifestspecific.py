@@ -33,7 +33,7 @@ localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
        "xenbus" : r'xenbus-patchq.git\46\xenbus.tar',
-       "xenvif" : r'xenvif-patchq.git\36\xenvif.tar',
+       "xenvif" : r'xenvif-patchq.git\37\xenvif.tar',
        "xennet" : r'xennet-patchq.git\23\xennet.tar',
        "xeniface" : r'xeniface-patchq.git\12\xeniface.tar',
        "xenvbd" : r'xenvbd-patchq.git\109\xenvbd.tar',
