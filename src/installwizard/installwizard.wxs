@@ -321,6 +321,12 @@
                             Name='XenPVInstall' 
                             Wait='yes' />
                     </Component>
+                    <Component Id="DifXAPIDLL64" Guid="*">
+                        <File Id="difxapi64" Name="difxapi64.dll" Source="$(env.KIT)\Redist\DIFx\DIFxAPI\x64\difxapi.dll" />
+                    </Component>
+                    <Component Id="DifXAPIDLL32" Guid="*">
+                        <File Id="difxapi32" Name="difxapi32.dll" Source="$(env.KIT)\Redist\DIFx\DIFxAPI\x86\difxapi.dll" />
+                    </Component>
                 </Directory>
             </Directory>
          </Directory>
@@ -391,6 +397,8 @@
         <ComponentRef Id='UIEvent'/>
         <ComponentRef Id='RegEntry'/>
         <ComponentRef Id='InstallService'/>
+        <ComponentRef Id="DifXAPIDLL32" />
+        <ComponentRef Id="DifXAPIDLL64" />
         <ComponentRef Id='Msis' />
         <ComponentRef Id='LegacyInstaller' />
         <ComponentRef Id='InstallStatus' />
