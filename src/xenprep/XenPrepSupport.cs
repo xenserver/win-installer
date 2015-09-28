@@ -14,14 +14,39 @@ namespace Xenprep
 {
     class XenPrepSupport
     {
-        [DllImport("DIFxAPI.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern Int32 DriverPackageUninstall([MarshalAs(UnmanagedType.LPTStr)] string DriverPackageInfPath, Int32 Flags, IntPtr pInstallerInfo, out bool pNeedReboot);
-        const Int32 DRIVER_PACKAGE_REPAIR = 0x00000001;
-        const Int32 DRIVER_PACKAGE_SILENT = 0x00000002;
-        const Int32 DRIVER_PACKAGE_FORCE = 0x00000004;
-        const Int32 DRIVER_PACKAGE_ONLY_IF_DEVICE_PRESENT = 0x00000008;
-        const Int32 DRIVER_PACKAGE_LEGACY_MODE = 0x00000010;
-        const Int32 DRIVER_PACKAGE_DELETE_FILES = 0x00000020;
+
+        abstract class DifXAll
+        {
+            public const Int32 DRIVER_PACKAGE_REPAIR = 0x00000001;
+            public const Int32 DRIVER_PACKAGE_SILENT = 0x00000002;
+            public const Int32 DRIVER_PACKAGE_FORCE = 0x00000004;
+            public const Int32 DRIVER_PACKAGE_ONLY_IF_DEVICE_PRESENT = 0x00000008;
+            public const Int32 DRIVER_PACKAGE_LEGACY_MODE = 0x00000010;
+            public const Int32 DRIVER_PACKAGE_DELETE_FILES = 0x00000020;
+            abstract public Int32 Uninstall(string DriverPackageInfPath, Int32 Flags, IntPtr pInstallerInfo, out bool pNeedReboot);
+        }
+        class DifX32 : DifXAll
+        {
+            [DllImport("DIFxAPI32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+            static extern Int32 DriverPackageUninstall([MarshalAs(UnmanagedType.LPTStr)] string DriverPackageInfPath, Int32 Flags, IntPtr pInstallerInfo, out bool pNeedReboot);
+
+            override public Int32 Uninstall(string DriverPackageInfPath, Int32 Flags, IntPtr pInstallerInfo, out bool pNeedReboot)
+            {
+                return DriverPackageUninstall(DriverPackageInfPath, Flags, pInstallerInfo, out pNeedReboot);
+            }
+        }
+        class DifX64 : DifXAll
+        {
+            [DllImport("DIFxAPI64.dll", CharSet = CharSet.Auto, SetLastError = true)]
+            static extern Int32 DriverPackageUninstall([MarshalAs(UnmanagedType.LPTStr)] string DriverPackageInfPath, Int32 Flags, IntPtr pInstallerInfo, out bool pNeedReboot);
+            
+            override public Int32 Uninstall(string DriverPackageInfPath, Int32 Flags, IntPtr pInstallerInfo, out bool pNeedReboot)
+            {
+                return DriverPackageUninstall(DriverPackageInfPath, Flags, pInstallerInfo, out pNeedReboot);
+            }
+        
+        }
+        
         private static void pnpremove(string hwid)
         {
             Trace.WriteLine("remove " + hwid);
@@ -37,7 +62,16 @@ namespace Xenprep
                 {
                     bool needreboot;
                     Trace.WriteLine("Uninstalling");
-                    DriverPackageUninstall(oemfile, DRIVER_PACKAGE_SILENT | DRIVER_PACKAGE_FORCE | DRIVER_PACKAGE_DELETE_FILES, IntPtr.Zero, out needreboot);
+                    DifXAll difx;
+                    if (WinVersion.is64BitOS() && !WinVersion.isWOW64())
+                    {
+                        difx= new DifX64();
+                    }
+                    else
+                    {
+                        difx = new DifX32();
+                    }
+                    difx.Uninstall(oemfile, DifXAll.DRIVER_PACKAGE_SILENT | DifXAll.DRIVER_PACKAGE_FORCE | DifXAll.DRIVER_PACKAGE_DELETE_FILES, IntPtr.Zero, out needreboot);
                     Trace.WriteLine("Uninstalled");
                 }
             }
