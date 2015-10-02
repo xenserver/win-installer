@@ -1130,6 +1130,7 @@ namespace InstallWizard
         {
             failreason = reason;
             Failed = true;
+            Trace.WriteLine("Install Failure :" + reason);
         }
 
         public static void winReboot() {
@@ -2086,6 +2087,7 @@ namespace InstallWizard
                     && (pciDeviceName != "Citrix XenServer PV SCSI Host Adapter") // 5.5 Legacy Drivers
                    ) 
                 {
+                    Trace.WriteLine("Unknown device " + pciDeviceName);
                     return true;
                 }
                 return false;
