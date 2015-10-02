@@ -2084,7 +2084,6 @@ namespace InstallWizard
                     && (pciDeviceName != "Citrix PV Bus") // Citrix XenServer Standard Drivers
                     && (pciDeviceName != "Citrix PV SCSI Host Adapter") // Legacy Drivers
                     && (pciDeviceName != "Citrix XenServer PV SCSI Host Adapter") // 5.5 Legacy Drivers
-                    && (pciDeviceName != "") //No device name found (we've probably deleted it)
                    ) 
                 {
                     return true;
