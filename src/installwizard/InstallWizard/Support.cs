@@ -1130,6 +1130,7 @@ namespace InstallWizard
         {
             failreason = reason;
             Failed = true;
+            Trace.WriteLine("Install Failure :" + reason);
         }
 
         public static void winReboot() {
@@ -2087,6 +2088,7 @@ namespace InstallWizard
                     && (pciDeviceName != "") //No device name found (we've probably deleted it)
                    ) 
                 {
+                    Trace.WriteLine("Unknown device " + pciDeviceName);
                     return true;
                 }
                 return false;
