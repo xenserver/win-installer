@@ -691,7 +691,7 @@ namespace Xenprep
             }
 
         }
-        public static void CleanUpPVDrivers()
+        public static void CleanUpPVDrivers(bool workaround2k8 = false)
         {
             string[] PVDrivers = {"xen", "xenbus", "xencrsh", "xenfilt",
                                    "xeniface", "xennet", "xenvbd", "xenvif",
@@ -700,7 +700,12 @@ namespace Xenprep
             string[] services = {"XENBUS", "xenfilt", "xeniface", "xenlite",
                                  "xennet", "xenvbd", "xenvif", "xennet6",
                                  "xenutil", "xevtchn"};
-
+            // On 2k8 if you're going to reinstall straight away, don't remove
+            // xenbus or xenfilt - as 2k8 assumes their registry entries
+            // are still in place
+            string[] services2k8 = { "xeniface", "xenlite",
+                                 "xennet", "xenvbd", "xenvif", "xennet6",
+                                 "xenutil", "xevtchn"};
             string[] hwIDs = {
                 @"PCI\VEN_5853&DEV_C000&SUBSYS_C0005853&REV_01",
                 @"PCI\VEN_5853&DEV_0002",
@@ -737,7 +742,8 @@ namespace Xenprep
             // Delete services' registry entries
             using (RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services", true))
             {
-                foreach (string service in services)
+                string[] servicelist = workaround2k8 ? services2k8 : services;
+                foreach (string service in servicelist)
                 {
                     try
                     {

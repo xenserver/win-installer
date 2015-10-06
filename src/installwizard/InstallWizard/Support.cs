@@ -2153,7 +2153,18 @@ namespace InstallWizard
             {
                 XenPrepSupport.DontBootStartPVDrivers();
                 XenPrepSupport.RemovePVDriversFromFilters();
-                XenPrepSupport.CleanUpPVDrivers();
+
+                XenPrepSupport.WinVersion version = new XenPrepSupport.WinVersion();
+                if (version.GetVersionValue() <= 0x600)
+                {
+                    Trace.WriteLine("VISTA / 2K8");
+                    XenPrepSupport.CleanUpPVDrivers(true);
+                }
+                else
+                {
+                    Trace.WriteLine("NOT VISTA / 2K8 " + version.GetVersionValue().ToString() );
+                    XenPrepSupport.CleanUpPVDrivers();
+                }
             }
             Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\partmgr\Parameters", true).SetValue("SanPolicy", 0x00000001);
             base.install(args, logfile, installstate);
