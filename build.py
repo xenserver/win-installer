@@ -197,12 +197,133 @@ def make_builds(pack):
         shutil.copytree(pack+"\\xenvss", "installer\\builds\\xenvss")
         shutil.copytree(pack+"\\xenprep", "installer\\builds\\xenprep")
 
+
+driverlist= {
+        "xenbus" : 
+            {"guid" : 
+                {   "x64" : "eb49829c-a972-4aee-b2d7-762992f41f17",
+                    "x86" : "37dad919-da89-41ee-84c2-febe29585e3f"}},
+        "xenvif" :
+            {"guid" : 
+                {   "x64" : "c17cf278-3a60-4e2a-9cfc-db64a6847a85",
+                    "x86" : "0c695c6d-5c6f-4301-b6f9-b6111864f43f"}},
+        "xennet" :
+            {"guid" : 
+                {   "x64" : "c8b8b455-c77b-4678-a19f-fb83dce7de9d",
+                    "x86" : "a2791bdf-563f-40f2-8539-b387df6c77e7"}},
+        "xeniface" :
+            {"guid" : 
+                {   "x64" : "9556232c-44a3-480a-92a5-549262569c3f",
+                    "x86" : "fd6b32f6-622a-4bb4-97f3-7f607a386a8e"}},
+        "xenvbd" :
+            {"guid" : 
+                {   "x64" : "c813c967-2b82-4c7c-b784-49150df404f5",
+                    "x86" : "bd94fe86-12e1-4e26-8117-da822892c689"}}
+}
+
+def generate_driver_wxs(pack):
+    wxsfile="""
+    <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+     xmlns:difx='http://schemas.microsoft.com/wix/DifxAppExtension'>
+    """
+    
+    for driver in driverlist:
+        guid=driverlist[driver]["guid"]["x64"]
+        wxsfile+="<?define "+driver+"DriverGUIDX64 = '"+guid+"' ?>\n"
+        guid=driverlist[driver]["guid"]["x86"]
+        wxsfile+="<?define "+driver+"DriverGUIDX86 = '"+guid+"' ?>\n"
+
+
+    wxsfile += """
+    <Module Id='XenServerDriversModule' Language='1033' Version='1.0.0.0'>
+    <Package Id='245ff6be-cf5c-4da4-adbd-d2f9123af86e' Keywords='XenServerDriver' Description='XenServer Driver Installer'
+     Comments='XenServer PV Driver' Manufacturer='Citrix'
+     InstallerVersion='200' Languages='1033' 
+     SummaryCodepage='1252' />
+    """
+
+    wxsfile += """
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="Drivers" Name="Drivers">
+    """
+    for driver in driverlist:
+        wxsfile+=driverfiles_wxs(pack, driver, driverlist[driver])
+
+    wxsfile += """
+      </Directory>
+    </Directory>
+    """
+
+    wxsfile += """
+    </Module>
+    </Wix>
+    """
+    print(wxsfile)
+
+    with open("installer\\drivergen.wxs","w") as wxs:
+        wxs.write(wxsfile);
+
+
+
+def driverfiles_wxs(pack, driver, details):
+    wxsfile = ""
+    wxsfile += "    <Directory Id=\""+driver+"\" Name=\""+driver+"\">\n"
+    wxsfile += "      <Directory Id=\""+driver+"X86\" Name=\"x86\">\n"
+    wxsfile += "        <Component Id=\""+driver+"DriverX86\" Guid=\""+details["guid"]["x86"]+"\">\n"
+    wxsfile += driverarchfiles_wxs(pack, driver, "x86")
+    wxsfile += "        </Component>\n"
+    wxsfile += "      </Directory>\n"
+    wxsfile += "      <Directory Id=\""+driver+"X64\" Name=\"x64\">\n"
+    wxsfile += "        <Component Id=\""+driver+"DriverX64\" Guid=\""+details["guid"]["x64"]+"\">\n"
+    wxsfile += driverarchfiles_wxs(pack, driver, "x64")
+    wxsfile += "        </Component>\n"
+    wxsfile += "      </Directory>\n"
+    wxsfile += "    </Directory>\n"
+    return wxsfile
+
+def driverarchfiles_wxs(pack, driver, arch):
+    wxsfile=""
+    dlist = glob.glob(os.path.join(pack, driver, arch, "*.inf"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "*.sys"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "*.dll"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "liteagent.exe"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "*.cat"))
+    for dfile in dlist:
+        leaf = os.path.basename(dfile)
+        leafshort=leaf.replace(".","").replace("_","")
+        wxsfile +="          <File Id=\""+leafshort+arch+"\" Name=\""+leaf+"\" DiskId='1' Source=\""+dfile+"\" />\n"
+    return wxsfile
+
+
 def make_installers(pack):
     src = ".\\src\\drivers"
 
     wix=lambda f: os.environ['WIX']+"bin\\"+f
     bitmaps = ".\\src\\bitmaps"
+
+    generate_driver_wxs(pack)
+
+    callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x64","-darch=x64","-o", "installer\\drivergenx64.wixobj"])
+    callfn([wix("light.exe"), "installer\\drivergenx64.wixobj","-darch=x64","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx64.msm"])
+    src = ".\\src\\agent"
+    callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\managementagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
+    if signfiles:
+        sign("installer\\managementagentx64.msi", signname, signstr=signstr)
+
+    callfn([wix("light.exe"), "installer\\managementagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\managementagentx64.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+    if signfiles:
+        sign("installer\\managementagentx86.msi", signname, signstr=signstr)
     
+    callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x86","-darch=x86","-o", "installer\\drivergenx86.wixobj"])
+    callfn([wix("light.exe"), "installer\\drivergenx86.wixobj","-darch=x86","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx86.msm"])
+    src = ".\\src\\agent"
+    callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\managementagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
+
+    callfn([wix("light.exe"), "installer\\managementagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\managementagentx86.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+    if signfiles:
+        sign("installer\\managementagentx86.msi", signname, signstr=signstr)
+    
+    src = ".\\src\\drivers"
     callfn([wix("candle.exe"),src+"\\drivers.wxs","-arch","x64","-darch=x64","-ext","WixDifxAppExtension.dll", "-o", "installer\\driversx64.wixobj"])
     callfn([wix("light.exe"), "installer\\driversx64.wixobj","-darch=x64",wix("difxapp_x64.wixlib"),"-ext","WixUtilExtension.dll","-ext","WixDifxAppExtension.dll","-b",pack,"-o","installer\\driversx64.msm"])
 #
@@ -231,8 +352,8 @@ def make_installers(pack):
     if signfiles:
         sign("installer\\citrixvssx64.msi", signname, signstr=signstr)
 #
-    src = ".\\src\\agent"
 #
+    src = ".\\src\\agent"
 
     
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixguestagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
@@ -266,7 +387,7 @@ def make_installers(pack):
     f = open("installer\\xluninstallerfix.exe","w")
     f.write("DUMMY FILE")
     f.close()
-    
+   
     callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if signfiles:
