@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qnetsettings", "qnetsetting
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Setup", "..\src\setup\Setup.vcxproj", "{C7C87326-BDA6-46FC-9011-ECA10470342D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallAgent", "..\src\InstallAgent\InstallAgent.csproj", "{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -138,6 +140,18 @@ Global
 		{C7C87326-BDA6-46FC-9011-ECA10470342D}.Release|Win32.Build.0 = Release|Win32
 		{C7C87326-BDA6-46FC-9011-ECA10470342D}.Release|Win32.Deploy.0 = Release|Win32
 		{C7C87326-BDA6-46FC-9011-ECA10470342D}.Release|x64.ActiveCfg = Release|Win32
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Release|Win32.ActiveCfg = Release|Any CPU
+		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,339 @@
+<?xml version='1.0' encoding='windows-1252' ?>
+
+<!--
+ Copyright (c) Citrix Systems Inc.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, 
+ with or without modification, are permitted provided 
+ that the following conditions are met:
+
+ *   Redistributions of source code must retain the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer.
+ *   Redistributions in binary form must reproduce the above 
+     copyright notice, this list of conditions and the 
+     following disclaimer in the documentation and/or other 
+     materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND 
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, 
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR 
+ CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ SUCH DAMAGE.
+-->
+
+<Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
+    xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension"
+    >
+
+    <?include verinfo.wxi ?>
+    <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
+    <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
+    <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
+    <?define CurrentBuildVersion = '$(var.BRANDING_BUILD_NR_STR)' ?>
+    <?define CurrentToolsHotfix  = '$(var.TOOLS_HOTFIX_NR_STR)' ?>
+
+    <?define Brand = 'Citrix' ?>
+    <?define Product = 'XenServer' ?>
+    <?define Agent = 'Windows Management Agent' ?>
+    <?define Install = 'Installation and Update Agent' ?>
+
+     <?if $(var.arch)=x64 ?>
+      <?define UpgradeCode = '48e5492c-6843-452e-97a2-a5fe2d24b141' ?>
+      <?define ProductId = '*' ?>
+      <?define dn4id = 'ea3e02ec-df6c-45ae-94a4-a52c5ce39b4c' ?>
+      <?define supportid = '3da541d4-ce74-49e9-a838-0e8ad9f2a433' ?>
+      <?define XenVssComponentGUID = 'bb4ad259-a748-4a92-b265-5635cae68e42' ?>
+      <?define pf="ProgramFiles64Folder" ?>
+    <?else?>
+      <?define UpgradeCode = 'EE3B949D-C431-462b-B6DC-5BEDA078D772' ?>
+      <?define ProductId = '*' ?>
+      <?define dn4id = '5cba312f-8c09-4f2b-a6ea-bc522b5caef4' ?>
+      <?define supportid = '10f225c1-bb4e-4e2a-bef9-08ed0c297a15' ?>
+      <?define XenVssComponentGUID = 'bb4ad259-a748-4a92-b265-5635cae68e42' ?>
+      <?define pf="ProgramFilesFolder" ?>
+    <?endif?>
+
+  <Product Name='$(var.Brand) $(var.Product) $(var.Agent)' Id='$(var.ProductId)'
+           Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='$(var.Brand)'
+           UpgradeCode='$(var.UpgradeCode)' >
+    <Package Id='*' Keywords='$(var.Brand) $(var.Product) $(var.Agent)' Description='$(var.Agent)'
+             Comments='Installs $(var.Brand) $(var.Product) $(var.Agent)' Manufacturer='$(var.Brand)'
+             InstallerVersion='200' Languages='1033' Compressed='yes'
+             InstallScope='perMachine'
+             InstallPrivileges="elevated"
+             Platform='$(var.arch)'
+             SummaryCodepage='1252' />
+
+   <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
+   <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+   <Property Id='ARPSYSTEMCOMPONENT' Value='0'/>
+    <Property Id="REINSTALLMODE" Value="dmus" />
+
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />     
+    <UIRef Id="WixUI_InstallDir" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.Bitmaps)\BannrBmp.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.Bitmaps)\DlgBmp.bmp" />
+    <WixVariable Id="WixUIExclamationIco" Value="$(var.Bitmaps)\exclamic.ico" />
+    <WixVariable Id="WixUIInfoIco" Value="$(var.Bitmaps)\info.ico" />
+    <WixVariable Id="WixUINewIco" Value="$(var.Bitmaps)\New.ico" />
+    <WixVariable Id="WixUIUpIco" Value="$(var.Bitmaps)\Up.ico" />
+
+    <MajorUpgrade
+            AllowDowngrades="yes" />
+
+    <Upgrade Id='$(var.UpgradeCode)'>
+        <UpgradeVersion Minimum='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)'
+                        IncludeMinimum='no'
+                        OnlyDetect='yes'
+                        Property='UPGRADINGNEWERVERSION' />
+    </Upgrade>
+    <Property Id='FORCEINSTALL' Value='0'/>
+
+
+    <Condition Message="A later version of [ProductName] is already installed.  Setup will now exit">
+        <![CDATA[((NOT UPGRADINGNEWERVERSION) OR (FORCEINSTALL="1"))]]>
+    </Condition>
+
+    <Property Id="NETFRAMEWORK4XFULL">
+        <RegistrySearch Id="NetFramework4xFull" Root="HKLM" 
+            Key="Software\Microsoft\NET Framework Setup\NDP\v4\Full"
+            Name="Install"
+            Type="raw" />
+    </Property>
+    <Property Id="NETFRAMEWORK4XCLIENT">
+        <RegistrySearch Id="NetFramework4xClient" Root="HKLM" 
+            Key="Software\Microsoft\NET Framework Setup\NDP\v4\Client"
+            Name="Install"
+            Type="raw" />
+    </Property>
+    <Property Id="XENTOOLSEXISTS">
+        <RegistrySearch Id="XenToolsExists" Root="HKLM" 
+            Key="Software\Citrix\XenTools"
+            Name="MajorVersion"
+            Type="raw" 
+            Win64="no" />
+    </Property>
+    <Property Id="XENTOOLSISMSI">
+        <RegistrySearch Id="XenToolsIsMsi" Root="HKLM" 
+            Key="Software\Citrix\XenTools"
+            Name="MsiGuestAgent"
+            Type="raw" 
+            />
+    </Property>
+    <Property Id="NETFRAMEWORKX35">
+        <RegistrySearch Id="NetFrameworkX35" Root="HKLM" 
+            Key="Software\Microsoft\NET Framework Setup\NDP\v3.5"
+            Name="Install"
+            Type="raw" />
+    </Property>
+    <Condition Message="This version of the $(var.Brand) $(var.Product) $(var.Agent) requires Windows Vista, Windows Server 2008 or Later">
+        <![CDATA[Installed OR (VersionNT>=600)]]>
+    </Condition>
+    
+    <Condition Message="Microsoft .Net Framework Version 3.5 or 4 is required">
+        <![CDATA[Installed OR (( NETFRAMEWORK4XFULL OR NETFRAMEWORK4XCLIENT) OR NETFRAMEWORKX35 )]]>
+    </Condition>
+
+    <Property Id='HOSTTIME'>
+        <RegistrySearch Id='RememberHostTime'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='HostTime'
+                        Type='raw' 
+                        Win64='no'/>
+    </Property>
+    <Property Id='HOSTTIME64'>
+        <RegistrySearch Id='RememberHostTime64'
+                        Root='HKLM'
+                        Key='SOFTWARE\Citrix\XenTools'
+                        Name='HostTime'
+                        Type='raw' 
+                        Win64='yes'/>
+    </Property>
+
+    <CustomAction Id="SaveCmdLineHosttime"
+                  Property="CMDLINE_HOSTTIME"
+                  Value="[HOSTTIME]"
+                  Execute="firstSequence" />
+    <CustomAction Id="SetFromCmdLineHosttime"
+                  Property="HOSTTIME"
+                  Value="[CMDLINE_HOSTTIME]"
+                  Execute="firstSequence" />
+    <CustomAction Id="SetFromHosttime64"
+                  Property="HOSTTIME"
+                  Value="[HOSTTIME64]"
+                  Execute="firstSequence" />
+
+    <InstallExecuteSequence>
+        <Custom Action="SaveCmdLineHosttime" Before="AppSearch"/>
+        <Custom Action="SetFromHosttime64" After="AppSearch">
+            ((NOT HOSTTIME64="") AND (NOT CMDLINE_HOSTTIME))
+        </Custom>
+        <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
+            CMDLINE_HOSTTIME
+        </Custom>
+    </InstallExecuteSequence>
+
+
+
+    <Media Id='1' Cabinet='XenGuestAgentInstaller.cab' EmbedCab='yes' />
+    <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id='$(var.pf)'>
+        <Directory Id='Citrix' Name='Citrix'>
+          <Directory Id='INSTALLDIR' Name='XenTools'>
+            <Directory Id="netsettings" Name='netsettings'>
+                  <Component Id="NetSettingsCpy" Guid="*">
+                      <?if $(var.arch)=x86?> 
+                          <File Id="NetSettingsExe" Name="NetSettings.exe" DiskId='1' Source='installwizard\netsettings\Win32\netsettings.exe' />
+                      <?else?>
+                          <File Id="NetSettingsExe" Name="NetSettings.exe" DiskId='1' Source='installwizard\netsettings\x64\netsettings.exe' />
+                      <?endif?>
+                  </Component>
+                  <Component Id="QNetSettingsCpy" Guid="*">
+                      <?if $(var.arch)=x86?> 
+                          <File Id="QNetSettingsExe" Name="QNetSettings.exe" DiskId='1' Source='installwizard\qnetsettings\Win32\qnetsettings.exe' />
+                      <?else?>
+                          <File Id="QNetSettingsExe" Name="QNetSettings.exe" DiskId='1' Source='installwizard\qnetsettings\x64\qnetsettings.exe' />
+                      <?endif?>
+                  </Component>
+            </Directory>
+
+            <Merge Id='Drivers' Language='1033' SourceFile='drivergen$(var.arch).msm' DiskId='1' />
+
+            <Component Id='dotnetfouragent' Guid='$(var.dn4id)' >
+                <Condition>
+                    <![CDATA[Installed OR (( NETFRAMEWORK4XFULL OR NETFRAMEWORK4XCLIENT ) AND NOT NETFRAMEWORKX35) ]]>
+                </Condition>
+                <File Id='XenDprivExeConfig' Name="XenDpriv.Exe.Config" Source='xenguestagent\xendpriv\XenDpriv.Exe.Config' />
+                <File Id='XenGuestAgentExeConfig' Name="XenGuestAgent.Exe.Config" Source='xenguestagent\xenguestagent\XenGuestAgent.Exe.Config' />
+            </Component>
+            <Component Id='dotnetagentsupport' Guid='$(var.supportid)'>
+                <File Id="XenDPrivExe" Name="XenDPriv.exe" Source="xenguestagent\xendpriv\XenDPriv.exe" />
+                <File Id="XenGuestLibDll" Name="XenGuestLib.Dll" Source="xenguestagent\xenguestagent\XenGuestLib.Dll" />
+                <File Id="InteropNetFwTypeLibdll" Name="Interop.NetFwTypeLib.dll" Source="xenguestagent\xenguestagent\Interop.NetFwTypeLib.dll" />
+            </Component>
+            <Component Id='XenVssComponent' Guid='$(var.XenVssComponentGUID)'>
+                 <File Id='xenvss_dll' Name="XenVss.dll" DiskId='1' Source='xenvss\$(var.arch)\xenvss.dll' KeyPath='yes' />
+                 <File Id='vssclient_dll' Name="VssClient.dll" Source='xenvss\$(var.arch)\vssclient.dll' />
+                 <File Id='install_cmd' Name="install-XenProvider.cmd" Source='xenvss\install-XenProvider.cmd' />
+                 <File Id='uninstall_cmd' Name="uninstall-XenProvider.cmd" Source='xenvss\uninstall-XenProvider.cmd' />
+                 <File Id='regvss_vbs' Name="regvss.vbs" Source='xenvss\regvss.vbs' />
+            </Component>
+
+            <Component Id='XenService' Guid="*">
+                <File Id='XenGuestAgent.Exe' Name='XenGuestAgent.Exe' Source="xenguestagent\xenguestagent\xenguestagent.exe" />
+                <ServiceInstall Id='XenServiceInstaller'
+                      Type='ownProcess'
+                      Vital='yes'
+                      Name='XenSvc'
+                      DisplayName='$(var.Brand) $(var.Product) $(var.Agent)'
+                      Description='Monitors and provides various metrics to XenStore'
+                      Start='auto'
+                      Account='LocalSystem'
+                      ErrorControl='ignore'
+                      Interactive='no' >
+                      <ServiceDependency Id='Winmgmt' />
+               </ServiceInstall>
+
+               <ServiceControl Id='StartService' 
+                      Start='install' 
+                      Stop='both' 
+                      Remove='uninstall' 
+                      Name='XenSvc' 
+                      Wait='yes' />
+              </Component>
+
+              <Component Id="InstallService" Guid="*">
+                  <File Id='InstallAgent.exe' Name='InstallAgent.exe' Source="InstallAgent\InstallAgent.exe" />
+                  <ServiceInstall Id='InstallServiceInstaller'
+                      Type='ownProcess'
+                      Vital='yes'
+                      Name='XSInstallAgent'
+                      DisplayName='$(var.Brand) $(var.Product) $(var.Install)'
+                      Description='Installs and updates management agent'
+                      Start='auto'
+                      Account='LocalSystem'
+                      ErrorControl='ignore'
+                      Interactive='no'>
+                      <ServiceDependency Id='Winmgmt' />
+                  </ServiceInstall>
+                  
+                  <ServiceControl Id='StartInstallService' 
+                      Start='install' 
+                      Stop='both' 
+                      Remove='uninstall' 
+                      Name='XenSvc' 
+                      Wait='yes' />
+              </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+     
+      <Component Id='RegEntry' Guid="*">
+          <RegistryKey Root='HKLM'
+              Key='Software\Citrix\XenTools' >
+              <RegistryValue Type='integer' Name='MajorVersion' Value='$(var.CurrentMajorVersion)' />
+              <RegistryValue Type='integer' Name='MinorVersion' Value='$(var.CurrentMinorVersion)' />
+              <RegistryValue Type='integer' Name='MicroVersion' Value='$(var.CurrentMicroVersion)' />
+              <RegistryValue Type='integer' Name='BuildVersion' Value='$(var.CurrentToolsHotfix)' /> 
+              <!-- BuildVersion, above, is the number we report to XAPI, so we report the hardcoded tools hotfix number, not the Jenkins build number -->
+              <RegistryValue Type='string' Name='Install_Dir' Value='[INSTALLDIR]' />
+              <RegistryValue Type='integer' Name='MsiGuestAgent' Value='1' />
+              <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
+              <RegistryValue Type='string' Name='Driver_Install_Dir' Value='[INSTALLDIR]\Drivers' />
+          </RegistryKey> 
+          <RegistryKey Root='HKLM'
+              Key='SYSTEM\CurrentControlSet\Control'>
+              <RegistryValue Type='integer' Name='ServicesPipeTimeout' Value='300000' />
+          </RegistryKey>
+  
+          <RegistryKey Root='HKLM'
+              Key='SOFTWARE\Microsoft\Windows\CurrentVersion\Setup\Sysprep\Settings\sppnp'>
+              <RegistryValue Type='integer' Name='PersistAllDeviceInstalls' Value='1' />
+          </RegistryKey>
+      </Component>
+      <Component Id='RegEntry32' Guid='3a428079-00d8-4c55-b314-321e757ff988' Win64='no'>
+          <RegistryKey Root='HKLM'
+              Key='Software\Citrix\XenTools' >
+              <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
+          </RegistryKey>
+      </Component>
+
+    </Directory>
+      
+      
+    <Feature Id='Complete' Level='1'>
+        <ComponentRef Id='dotnetfouragent'/>
+        <ComponentRef Id='dotnetagentsupport'/>
+        <MergeRef Id='Drivers' />
+        <ComponentRef Id='NetSettingsCpy' />
+        <ComponentRef Id='QNetSettingsCpy' />
+        <ComponentRef Id='RegEntry'/>
+        <ComponentRef Id='XenVssComponent'/>
+        <ComponentRef Id='XenService'/>
+        <?if $(sys.BUILDARCH)=x64 ?>
+            <ComponentRef Id='RegEntry32'/>
+        <?endif ?>
+        <ComponentRef Id='InstallService' />
+    </Feature>
+    <?if $(sys.BUILDARCH)=x86 ?>
+        <Feature Id="NotUsed" Level='0'>
+            <ComponentRef Id='RegEntry32'/>
+        </Feature>
+    <?endif ?>
+  </Product>
+
+
+</Wix>
