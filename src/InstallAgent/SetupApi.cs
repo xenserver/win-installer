@@ -104,6 +104,11 @@ namespace PInvoke
         );
 
         [DllImport("setupapi.dll", SetLastError = true)]
+        public static extern bool SetupDiDestroyDeviceInfoList(
+             IntPtr deviceInfoSet
+        );
+
+        [DllImport("setupapi.dll", SetLastError = true)]
         public static extern bool SetupDiEnumDeviceInfo(
             IntPtr deviceInfoSet,
             uint memberIndex,
@@ -111,25 +116,14 @@ namespace PInvoke
         );
 
         [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern bool SetupDiGetDeviceRegistryProperty(
-            IntPtr deviceInfoSet,
-            ref SP_DEVINFO_DATA deviceInfoData,
-            uint property,
-            out UInt32 propertyRegDataType,
-            ushort[] propertyBuffer,
-            uint propertyBufferSize,
-            out UInt32 requiredSize
-        );
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool SetupDiGetDeviceRegistryProperty(
             IntPtr deviceInfoSet,
             ref SP_DEVINFO_DATA deviceInfoData,
             SetupDiGetDeviceRegistryPropertyEnum property,
-            IntPtr propertyRegDataType,
-            ushort[] propertyBuffer,
+            out UInt32 propertyRegDataType,
+            byte[] propertyBuffer,
             uint propertyBufferSize,
-            IntPtr requiredSize
+            out UInt32 requiredSize
         );
 
         [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
