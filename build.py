@@ -691,21 +691,26 @@ if __name__ == '__main__':
 
             pwd = os.getcwd()
             os.chdir(os.sep.join([location, 'guest-packages.hg']))
-            
-            with tempfile.NamedTemporaryFile(mode='w+t') as message:
+           
+            messagefilename=""
+
+            with tempfile.NamedTemporaryFile(mode='w+t',delete=False) as message:
                 print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n')
                 print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n', file=message)
-                commit=['hg','commit','-l' ,message.name,'-u','jenkins@xeniface-build']
-                push=['hg','push']
-                add=['hg','add',os.sep.join([pwd,commithashpath])]
-                print(commit)
-                print(push)
-                print(add)
-                if (os.environ['AUTOCOMMIT'] == "true"):
-                    if not hascommithash:
-                        callfn(add)
-                    callfn(commit)
-                    callfn(push)
+                messagefilename=message.name
+    
+            commit=['hg','commit','-l' ,messagefilename,'-u','jenkins@xeniface-build']
+            push=['hg','push']
+            add=['hg','add',os.sep.join([pwd,commithashpath])]
+            print(commit)
+            print(push)
+            print(add)
+            if (os.environ['AUTOCOMMIT'] == "true"):
+                if not hascommithash:
+                    callfn(add)
+                callfn(commit)
+                callfn(push)
+            os.remove(messagefilename)
             os.chdir(pwd)
             shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
 
