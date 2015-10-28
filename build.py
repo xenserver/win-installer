@@ -695,7 +695,7 @@ if __name__ == '__main__':
             with tempfile.NamedTemporaryFile(mode='w+t') as message:
                 print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n')
                 print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n', file=message)
-                commit=['hg','commit','--file=\"'+message.name+'\"','-u','jenkins@xeniface-build']
+                commit=['hg','commit','-l" ,"\"'+message.name+'\"','-u','jenkins@xeniface-build']
                 push=['hg','push']
                 add=['hg','add',os.sep.join([pwd,commithashpath])]
                 print(commit)
@@ -707,5 +707,5 @@ if __name__ == '__main__':
                     callfn(commit)
                     callfn(push)
             os.chdir(pwd)
-#            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
+            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
 
