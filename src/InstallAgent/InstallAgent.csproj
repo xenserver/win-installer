@@ -47,7 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DIFx.cs" />
-    <Compile Include="HardwareDevice.cs" />
+    <Compile Include="Device.cs" />
     <Compile Include="InstallAgent.cs">
       <SubType>Component</SubType>
     </Compile>
