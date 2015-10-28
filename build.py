@@ -686,8 +686,6 @@ if __name__ == '__main__':
             else:
                 logout+=callfnout(['git','log',"HEAD~1..HEAD"])
 
-            with open (commithashpath,'w') as temp:
-                print(os.environ['GIT_COMMIT'], file=temp)
 
             pwd = os.getcwd()
             os.chdir(os.sep.join([location, 'guest-packages.hg']))
@@ -699,6 +697,8 @@ if __name__ == '__main__':
                 push=['hg','push']
                 print(commit)
                 print(push)
+                with open (commithashpath,'w+') as temp:
+                    print(os.environ['GIT_COMMIT'], file=temp)
                 if (os.environ['AUTOCOMMIT'] == "true"):
                     if not hascommithash:
                         callfn(['hg','add',commithashpath])
