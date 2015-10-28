@@ -317,7 +317,10 @@ namespace InstallAgent
 
             try
             {
-                PInvoke.HardwareDevice.Remove(@"root\xenevtchn");
+                XSToolsInstallation.Device.RemoveFromSystem(
+                    new string[] { @"root\xenevtchn" },
+                    false
+                );
             }
             catch (Exception e)
             {
