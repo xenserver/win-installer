@@ -686,6 +686,8 @@ if __name__ == '__main__':
             else:
                 logout+=callfnout(['git','log',"HEAD~1..HEAD"])
 
+            with open (commithashpath,'w+t') as temp:
+                print(os.environ['GIT_COMMIT'], file=temp)
 
             pwd = os.getcwd()
             os.chdir(os.sep.join([location, 'guest-packages.hg']))
@@ -695,15 +697,15 @@ if __name__ == '__main__':
                 print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n', file=message)
                 commit=['hg','commit','--file=\"'+message.name+'\"','-u','jenkins@xeniface-build']
                 push=['hg','push']
+                add=['hg','add',os.sep.join([pwd,commithashpath])]
                 print(commit)
                 print(push)
-                with open (commithashpath,'w+') as temp:
-                    print(os.environ['GIT_COMMIT'], file=temp)
+                print(add)
                 if (os.environ['AUTOCOMMIT'] == "true"):
                     if not hascommithash:
-                        callfn(['hg','add',commithashpath])
+                        callfn(add)
                     callfn(commit)
                     callfn(push)
             os.chdir(pwd)
-            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
+#            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
 
