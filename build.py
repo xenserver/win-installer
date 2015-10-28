@@ -42,6 +42,7 @@ import manifestspecific
 import re
 import errno
 import stat
+import tempfile
 
 def unpack_from_jenkins(filelist, packdir):
     if ('GIT_COMMIT' in os.environ):
@@ -168,6 +169,12 @@ def callfn(cmd):
     if ret != 0:
         raise(Exception("Error %d in : %s" % (ret, cmd)))
     print("------------------------------------------------------------")
+
+def callfnret(cmd):
+    print(cmd)
+    ret = subprocess.call(cmd)
+    print("------------------------------------------------------------")
+    return ret
 
 def remove_readonly(func, path, execinfo):
     if (os.path.exists(path)):
@@ -307,18 +314,14 @@ def make_installers(pack):
     callfn([wix("light.exe"), "installer\\drivergenx64.wixobj","-darch=x64","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx64.msm"])
     src = ".\\src\\agent"
     callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\managementagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
-    if signfiles:
-        sign("installer\\managementagentx64.msi", signname, signstr=signstr)
-
     callfn([wix("light.exe"), "installer\\managementagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\managementagentx64.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
     if signfiles:
-        sign("installer\\managementagentx86.msi", signname, signstr=signstr)
+        sign("installer\\managementagentx64.msi", signname, signstr=signstr)
     
     callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x86","-darch=x86","-o", "installer\\drivergenx86.wixobj"])
     callfn([wix("light.exe"), "installer\\drivergenx86.wixobj","-darch=x86","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx86.msm"])
     src = ".\\src\\agent"
     callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\managementagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
-
     callfn([wix("light.exe"), "installer\\managementagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\managementagentx86.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
     if signfiles:
         sign("installer\\managementagentx86.msi", signname, signstr=signstr)
@@ -652,14 +655,14 @@ if __name__ == '__main__':
             os.environ['MICRO_VERSION']+"."+
             os.environ['TOOLS_HOTFIX_NUMBER'])
     f.close()
-
+  
     listfile = callfnout(['git','ls-tree','-r','--name-only','HEAD'])
     archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
     archive('installer.tar', ['installer'])
 
     if ('AUTOCOMMIT' in os.environ):
         print ("AUTOCOMMIT = ",os.environ['AUTOCOMMIT'])
-        if (os.environ['AUTOCOMMIT'] == "true"):
+        if (os.environ['AUTOCOMMIT'] == "true" or os.environ['AUTOCOMMIT'] == "test"):
             repository = os.environ['AUTOREPO']
             shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
             callfn(['hg','clone',repository+"/guest-packages.hg",os.sep.join([location, 'guest-packages.hg'])])
@@ -667,11 +670,40 @@ if __name__ == '__main__':
             print (buildlocation, file=insturl, end="")
             print (buildlocation)
             insturl.close()
+            commithashpath = os.sep.join([location,'guest-packages.hg\\win-tools-iso\\commithash'])
+            logout = "" 
+
+            hascommithash = os.path.isfile(commithashpath)
+
+            if hascommithash:
+                with open(commithashpath,'r') as temp:
+                    hashdata = temp.read().strip()
+                if (callfnret(['git','merge-base','--is-ancestor',hashdata,os.environ['GIT_COMMIT']])==1):
+                    logout+="REVERTS :\n"
+                    logout+=callfnout(['git','log',os.environ['GIT_COMMIT']+".."+hashdata])
+                    logout+="\n\nCOMMITS :\n"
+                logout+=callfnout(['git','log',hashdata+".."+os.environ['GIT_COMMIT']])
+            else:
+                logout+=callfnout(['git','log',"HEAD~1..HEAD"])
+
+            with open (commithashpath,'w') as temp:
+                print(os.environ['GIT_COMMIT'], file=temp)
+
             pwd = os.getcwd()
             os.chdir(os.sep.join([location, 'guest-packages.hg']))
-            callfn(['hg','commit','-m','Auto-update installer to '+buildlocation+' '+os.environ['GIT_COMMIT'],'-u','jenkins@xeniface-build'])
-            callfn(['hg','push'])
+            
+            with tempfile.NamedTemporaryFile(mode='w+t') as message:
+                print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n')
+                print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n', file=message)
+                commit=['hg','commit','--file=\"'+message.name+'\"','-u','jenkins@xeniface-build']
+                push=['hg','push']
+                print(commit)
+                print(push)
+                if (os.environ['AUTOCOMMIT'] == "true"):
+                    if not hascommithash:
+                        callfn(['hg','add',commithashpath])
+                    callfn(commit)
+                    callfn(push)
             os.chdir(pwd)
             shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
-
 
