@@ -8,6 +8,7 @@ namespace PInvoke
 {
     public static class SetupApi
     {
+        private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
         public const uint DIF_REMOVE = 5;
         public const uint DI_REMOVE_DEVICE_GLOBAL = 1;
 
@@ -87,6 +88,7 @@ namespace PInvoke
              ref SP_DEVINFO_DATA deviceInfoData
         );
 
+        /*
         [DllImport("setupapi.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr SetupDiGetClassDevs(
             ref Guid classGuid,
@@ -94,14 +96,62 @@ namespace PInvoke
             IntPtr hwndParent,
             uint flags
         );
+        */
 
         [DllImport("setupapi.dll", CharSet = CharSet.Auto)]
-        public static extern IntPtr SetupDiGetClassDevs(
+        private static extern IntPtr SetupDiGetClassDevs(
             IntPtr classGuid,
             IntPtr enumerator,
             IntPtr hwndParent,
             uint flags
         );
+
+        [DllImport("setupapi.dll", SetLastError = true)]
+        private static extern bool SetupDiDestroyDeviceInfoList(
+             IntPtr deviceInfoSet
+        );
+
+        public class DeviceInfoSet : IDisposable
+        {
+            private IntPtr devInfoSet;
+
+            public DeviceInfoSet(
+                IntPtr classGuid_,
+                IntPtr enumerator_,
+                IntPtr hwndParent_,
+                uint flags_)
+            {
+                devInfoSet = SetupDiGetClassDevs(
+                    classGuid_,
+                    enumerator_,
+                    hwndParent_,
+                    flags_
+                );
+            }
+
+            public void Dispose()
+            {
+                if (this.HandleIsValid() &&
+                    !SetupDiDestroyDeviceInfoList(devInfoSet))
+                {
+                    throw new Exception(
+                        "SetupDiDestroyDeviceInfoList() failed"
+                    );
+                }
+            }
+
+            public IntPtr Get() { return devInfoSet; }
+
+            public bool HandleIsValid()
+            {
+                if (devInfoSet != INVALID_HANDLE_VALUE)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+        }
 
         [DllImport("setupapi.dll", SetLastError = true)]
         public static extern bool SetupDiEnumDeviceInfo(
@@ -111,25 +161,14 @@ namespace PInvoke
         );
 
         [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern bool SetupDiGetDeviceRegistryProperty(
-            IntPtr deviceInfoSet,
-            ref SP_DEVINFO_DATA deviceInfoData,
-            uint property,
-            out UInt32 propertyRegDataType,
-            ushort[] propertyBuffer,
-            uint propertyBufferSize,
-            out UInt32 requiredSize
-        );
-
-        [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool SetupDiGetDeviceRegistryProperty(
             IntPtr deviceInfoSet,
             ref SP_DEVINFO_DATA deviceInfoData,
             SetupDiGetDeviceRegistryPropertyEnum property,
-            IntPtr propertyRegDataType,
-            ushort[] propertyBuffer,
+            out UInt32 propertyRegDataType,
+            byte[] propertyBuffer,
             uint propertyBufferSize,
-            IntPtr requiredSize
+            out UInt32 requiredSize
         );
 
         [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
