@@ -138,7 +138,7 @@ namespace XSToolsInstallation
                        IntPtr.Zero,
                        IntPtr.Zero,
                        IntPtr.Zero,
-                       (uint)PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
             {
                 if (!devInfoSet.HandleIsValid())
                 {
@@ -161,7 +161,7 @@ namespace XSToolsInstallation
                     PInvoke.SetupApi.REMOVE_PARAMS rparams =
                         new PInvoke.SetupApi.REMOVE_PARAMS();
                     rparams.cbSize = 8; // Size of cbSide & InstallFunction
-                    rparams.InstallFunction = PInvoke.SetupApi.DIF_REMOVE;
+                    rparams.InstallFunction = (uint)PInvoke.SetupApi.InstallFunctions.DIF_REMOVE;
                     rparams.HwProfile = 0;
                     rparams.Scope = PInvoke.SetupApi.DI_REMOVE_DEVICE_GLOBAL;
                     GCHandle handle1 = GCHandle.Alloc(rparams);
@@ -182,7 +182,7 @@ namespace XSToolsInstallation
                     }
 
                     if (!PInvoke.SetupApi.SetupDiCallClassInstaller(
-                            PInvoke.SetupApi.DIF_REMOVE,
+                            PInvoke.SetupApi.InstallFunctions.DIF_REMOVE,
                             devInfoSet.Get(),
                             ref devices[i]))
                     {
@@ -198,6 +198,52 @@ namespace XSToolsInstallation
                     Trace.WriteLine("Remove should have worked");
                 }
             }
+        }
+
+        public static bool ChildrenInstalled(string enumName)
+        {
+            UInt32 devStatus;
+            UInt32 devProblemCode;
+
+            PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData =
+                new PInvoke.SetupApi.SP_DEVINFO_DATA();
+            devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
+
+            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
+                       new PInvoke.SetupApi.DeviceInfoSet(
+                       IntPtr.Zero,
+                       enumName,
+                       IntPtr.Zero,
+                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT |
+                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+            {
+                for (uint i = 0;
+                     PInvoke.SetupApi.SetupDiEnumDeviceInfo(
+                         devInfoSet.Get(),
+                         i,
+                         ref devInfoData);
+                     ++i)
+                {
+                    PInvoke.SetupApi.CM_Get_DevNode_Status(
+                        out devStatus,
+                        out devProblemCode,
+                        devInfoData.devInst,
+                        0
+                    );
+
+                    if ((devStatus & (uint)PInvoke.SetupApi.DNFlags.DN_STARTED) == 0)
+                    {
+                        Trace.WriteLine(
+                            enumName +
+                            " child not started " +
+                            devStatus.ToString()
+                        );
+
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
     }
 }
