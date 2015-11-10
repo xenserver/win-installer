@@ -47,9 +47,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AdvApi32.cs" />
-    <Compile Include="CfgMgr32.cs" />
-    <Compile Include="DIFx.cs" />
+    <Compile Include="PInvoke\AdvApi32.cs" />
+    <Compile Include="PInvoke\CfgMgr32.cs" />
+    <Compile Include="PInvoke\DIFx.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="InstallAgent.cs">
@@ -59,8 +59,8 @@
       <DependentUpon>InstallAgent.cs</DependentUpon>
     </Compile>
     <Compile Include="InstallerState.cs" />
-    <Compile Include="Kernel32.cs" />
-    <Compile Include="Msi.cs" />
+    <Compile Include="PInvoke\Kernel32.cs" />
+    <Compile Include="PInvoke\Msi.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
@@ -75,10 +75,10 @@
     <Compile Include="PVDevice\XenNet.cs" />
     <Compile Include="PVDevice\XenVbd.cs" />
     <Compile Include="PVDevice\XenVif.cs" />
-    <Compile Include="SetupApi.cs" />
+    <Compile Include="PInvoke\SetupApi.cs" />
     <Compile Include="SimpleParse.cs" />
     <Compile Include="TimeDateTraceListener.cs" />
-    <Compile Include="User32.cs" />
+    <Compile Include="PInvoke\User32.cs" />
     <Compile Include="WinVersion.cs" />
   </ItemGroup>
   <ItemGroup>
