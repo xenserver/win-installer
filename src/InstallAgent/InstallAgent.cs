@@ -50,7 +50,7 @@ namespace InstallAgent
             MsiInstaller AgentMsi;
             string installdir;
             */
-            if (WinVersion.isWOW64())
+            if (WinVersion.IsWOW64())
             {
                 // FAIL
             }
@@ -296,7 +296,7 @@ namespace InstallAgent
             }
             catch { }
 
-            if (WinVersion.is64BitOS())
+            if (WinVersion.Is64BitOS())
             {
                 try
                 {
@@ -453,7 +453,7 @@ namespace InstallAgent
 
                     PInvoke.DIFxAll difx;
 
-                    if (WinVersion.is64BitOS())
+                    if (WinVersion.Is64BitOS())
                     {
                         difx = new PInvoke.DIFx64();
                     }

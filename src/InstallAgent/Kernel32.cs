@@ -19,12 +19,5 @@ namespace PInvoke
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr GetModuleHandle(string moduleName);
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool IsWow64Process(
-            IntPtr hProcess,
-            out bool wow64Process
-        );
     }
 }
