@@ -61,6 +61,7 @@
     <Compile Include="InstallerState.cs" />
     <Compile Include="PInvoke\Kernel32.cs" />
     <Compile Include="PInvoke\Msi.cs" />
+    <Compile Include="PInvoke\NewDev.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>

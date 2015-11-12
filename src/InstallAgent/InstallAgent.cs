@@ -11,6 +11,7 @@ using System.Collections;
 using System.IO;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 
 namespace InstallAgent
@@ -209,6 +210,150 @@ namespace InstallAgent
                 String.Format(
                     "\'{0}\' driver staging success", driver
                 )
+            );
+
+            return true;
+        }
+
+        // Searches an .inf file for a hardware device ID that is
+        // either a XenBus device itself or is a device enumerated
+        // under one. User has to supply which of the 3 XenBus IDs
+        // to look for. Function assumes there can be at most 1 such
+        // string in an .inf file. If not found, an empty string is
+        // returned.
+        public static string GetHardwareIdFromInf(
+            PVDevice.XenBus.XenBusDevs xenBusDev,
+            string infPath)
+        {
+            if (!File.Exists(infPath))
+            {
+                throw new Exception(
+                    String.Format("\'{0}\' does not exist", infPath)
+                );
+            }
+
+            string xenBusDevStr;
+
+            switch (xenBusDev)
+            {
+                case PVDevice.XenBus.XenBusDevs.DEV_0001:
+                    xenBusDevStr = "0001";
+                    break;
+                case PVDevice.XenBus.XenBusDevs.DEV_0002:
+                    xenBusDevStr = "0002";
+                    break;
+                case PVDevice.XenBus.XenBusDevs.DEV_C000:
+                    xenBusDevStr = "C000";
+                    break;
+                default:
+                    throw new Exception("Not a valid XenBus device");
+            }
+
+            string hwID = "";
+            string suffix = WinVersion.Is64BitOS() ? "amd64" : "x86";
+
+            string hwIDPattern =
+                @"((?:PCI|XENBUS|XENVIF)\\VEN_(?:5853|XS" +
+                xenBusDevStr + @")\&DEV_(?:" + xenBusDevStr +
+                @"|IFACE|VIF|VBD|NET)[A-Z\d\&_]*)";
+
+            using (System.IO.StreamReader infFile =
+                       new System.IO.StreamReader(infPath))
+            {
+                string line;
+                bool sectionFound = false;
+
+                while ((line = infFile.ReadLine()) != null)
+                {
+                    if (line.Equals("[Inst.NT" + suffix + "]"))
+                    {
+                        sectionFound = true;
+                        continue;
+                    }
+
+                    if (!sectionFound)
+                    {
+                        continue;
+                    }
+
+                    // When we reach the next section, break the loop
+                    if (line.StartsWith("["))
+                    {
+                        break;
+                    }
+
+                    foreach (Match m in Regex.Matches(line, hwIDPattern))
+                    {
+                        hwID = m.Value;
+                        break;
+                    }
+                }
+            }
+
+            return hwID;
+        }
+
+        // Full path to driver .inf files is expected to be:
+        // "{driverRootDir}\{driver}\{x64|x86}\{driver}.inf"
+        public static bool InstallDriver(
+            PVDevice.XenBus.XenBusDevs xenBusDev,
+            string driverRootDir,
+            string driver,
+            PInvoke.NewDev.INSTALLFLAG installFlags =
+                PInvoke.NewDev.INSTALLFLAG.NONINTERACTIVE)
+        {
+            bool reboot;
+
+            string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
+
+            string infPath = Path.Combine(
+                driverRootDir,
+                driver + build + driver + ".inf"
+            );
+
+            if (!File.Exists(infPath))
+            {
+                throw new Exception(
+                    String.Format("\'{0}\' does not exist", infPath)
+                );
+            }
+
+            string hwID = GetHardwareIdFromInf(
+                xenBusDev,
+                infPath
+            );
+
+            if (String.IsNullOrEmpty(hwID))
+            {
+                throw new Exception(
+                    String.Format("Hardware ID found for \'{0}\'", driver)
+                );
+            }
+
+            Trace.WriteLine(
+                String.Format("Installing {0} on {1}", driver, hwID)
+            );
+
+            if (!PInvoke.NewDev.UpdateDriverForPlugAndPlayDevices(
+                    IntPtr.Zero,
+                    hwID,
+                    infPath,
+                    installFlags,
+                    out reboot))
+            {
+                Trace.WriteLine(
+                    String.Format("Driver \'{0}\' install failed: {1}",
+                        driver,
+                        new Win32Exception(
+                            Marshal.GetLastWin32Error()
+                        ).Message
+                    )
+                );
+                return false;
+            }
+
+            Trace.WriteLine(
+                String.Format("Driver \'{0}\' install success", driver)
             );
 
             return true;
