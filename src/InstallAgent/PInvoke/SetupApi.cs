@@ -398,5 +398,51 @@ namespace PInvoke
             UInt32 devInst,
             int flags
         );
+
+        // Originally: SPOST_NONE, etc..
+        public enum SPOST : uint
+        {
+            NONE = 0,
+            PATH = 1,
+            URL = 2,
+            MAX = 3
+        }
+
+        [Flags]
+        // Originally: SP_COPY_DELETESOURCE, etc..
+        public enum SP_COPY : uint
+        {
+            DEFAULT = 0x0000000,  // just to privide a 0 value
+            DELETESOURCE = 0x0000001,   // delete source file on successful copy
+            REPLACEONLY = 0x0000002,   // copy only if target file already present
+            NEWER = 0x0000004,   // copy only if source newer than or same as target
+            NEWER_OR_SAME = NEWER,
+            NOOVERWRITE = 0x0000008,   // copy only if target doesn't exist
+            NODECOMP = 0x0000010,   // don't decompress source file while copying
+            LANGUAGEAWARE = 0x0000020,   // don't overwrite file of different language
+            SOURCE_ABSOLUTE = 0x0000040,   // SourceFile is a full source path
+            SOURCEPATH_ABSOLUTE = 0x0000080,   // SourcePathRoot is the full path
+            IN_USE_NEEDS_REBOOT = 0x0000100,   // System needs reboot if file in use
+            FORCE_IN_USE = 0x0000200,   // Force target-in-use behavior
+            NOSKIP = 0x0000400,   // Skip is disallowed for this file or section
+            CABINETCONTINUATION = 0x0000800,   // Used with need media notification
+            FORCE_NOOVERWRITE = 0x0001000,   // like NOOVERWRITE but no callback nofitication
+            FORCE_NEWER = 0x0002000,   // like NEWER but no callback nofitication
+            WARNIFSKIP = 0x0004000,   // system critical file: warn if user tries to skip
+            NOBROWSE = 0x0008000,   // Browsing is disallowed for this file or section
+            NEWER_ONLY = 0x0010000   // copy only if source file newer than target
+        }
+
+        [DllImport("setupapi.dll", SetLastError = true)]
+        public static extern bool SetupCopyOEMInf(
+            string SourceInfFileName,
+            string OEMSourceMediaLocation,
+            SPOST OEMSourceMediaType,
+            SP_COPY CopyStyle,
+            IntPtr DestinationInfFileName, // == IntPtr.Zero
+            int DestinationInfFileNameSize, // == 0
+            IntPtr RequiredSize, // == IntPtr.Zero
+            IntPtr DestinationInfFileNameComponent // == IntPtr.Zero
+        );
     }
 }

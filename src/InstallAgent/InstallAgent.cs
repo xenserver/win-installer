@@ -10,6 +10,7 @@ using Microsoft.Win32;
 using System.Collections;
 using System.IO;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 
 namespace InstallAgent
@@ -119,6 +120,9 @@ namespace InstallAgent
      */
     static class DriverHandler
     {
+        private static readonly string[] driverNames =
+            { "xenbus", "xeniface", "xenvif", "xenvbd", "xennet" };
+
         public static void SystemClean()
         {
             if (!InstallerState.GetFlag(InstallerState.States.RemovedFromFilters))
@@ -150,6 +154,66 @@ namespace InstallAgent
                 //CleanUpPVDrivers();
                 InstallerState.SetFlag(InstallerState.States.CleanedUp);
             }
+        }
+
+        // Driver will not install on device, until next reboot
+        public static bool StageToDriverStore(
+            string driverRootDir,
+            string driver,
+            PInvoke.SetupApi.SP_COPY copyStyle =
+                PInvoke.SetupApi.SP_COPY.NEWER_ONLY)
+        {
+            string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
+
+            string infDir = Path.Combine(
+                driverRootDir,
+                driver + build
+            );
+
+            string infPath = Path.Combine(
+                infDir,
+                driver + ".inf"
+            );
+
+            if (!File.Exists(infPath))
+            {
+                throw new Exception(
+                    String.Format("\'{0}\' does not exist", infPath)
+                );
+            }
+
+            Trace.WriteLine(
+                String.Format("Staging \'{0}\' to DriverStore", driver)
+            );
+
+            if (!PInvoke.SetupApi.SetupCopyOEMInf(
+                    infPath,
+                    infDir,
+                    PInvoke.SetupApi.SPOST.PATH,
+                    copyStyle,
+                    IntPtr.Zero,
+                    0,
+                    IntPtr.Zero,
+                    IntPtr.Zero))
+            {
+                Trace.WriteLine(
+                    String.Format("\'{0}\' driver staging failed: {1}",
+                        driver,
+                        new Win32Exception(
+                            Marshal.GetLastWin32Error()
+                        ).Message
+                    )
+                );
+                return false;
+            }
+
+            Trace.WriteLine(
+                String.Format(
+                    "\'{0}\' driver staging success", driver
+                )
+            );
+
+            return true;
         }
 
         private static void RemovePVDriversFromFilters()
