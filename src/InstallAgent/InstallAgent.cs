@@ -56,8 +56,6 @@ namespace InstallAgent
                 // FAIL
             }
 
-            InstallerState.Initialize();
-
             /* NO MSI INSTALLING WILL TAKE PLACE
              * WILL NEED TO PUT DRIVERS IN DRIVER STORE
              * Populate
