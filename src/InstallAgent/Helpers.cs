@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
 
 namespace XSToolsInstallation
 {
@@ -80,6 +82,42 @@ namespace XSToolsInstallation
                     IntPtr.Zero))
             {
                 throw new Exception("AdjustTokenPrivileges"); ;
+            }
+        }
+
+        public static void InstallCertificates(string certDir)
+        {
+            string[] certificateNames = {
+                "eapcitrix.cer",
+                "eapcodesign.cer",
+                "eaproot.cer"
+            };
+
+            foreach (string certName in certificateNames)
+            {
+                string fullCertPath = Path.Combine(
+                    certDir, certName
+                );
+
+                if (!File.Exists(fullCertPath))
+                {
+                    Trace.WriteLine(
+                        String.Format("\'{0}\' does not exist", fullCertPath)
+                    );
+                    continue;
+                }
+
+                X509Store store = new X509Store(
+                    StoreName.TrustedPublisher,
+                    StoreLocation.LocalMachine
+                );
+
+                X509Certificate2 cert =
+                    new X509Certificate2(fullCertPath);
+
+                store.Open(OpenFlags.ReadWrite);
+                store.Add(cert);
+                store.Close();
             }
         }
     }
