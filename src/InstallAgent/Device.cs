@@ -12,7 +12,7 @@ namespace XSToolsInstallation
         // Use to create a list of strings from the
         // "byte[] propertyBuffer" variable returned
         // by SetupDiGetDeviceRegistryProperty()
-        private static List<string> MultiByteStringSplit(byte[] mbstr)
+        private static string[] MultiByteStringSplit(byte[] mbstr)
         {
             List<string> strList = new List<string>();
             int strStart = 0;
@@ -39,7 +39,35 @@ namespace XSToolsInstallation
                 }
             }
 
-            return strList;
+            return strList.ToArray();
+        }
+
+        // Returns an array of all the Hardware ID strings
+        // available for an SP_DEVINFO_DATA object
+        public static string[] GetHardwareIDs(
+            PInvoke.SetupApi.DeviceInfoSet devInfoSet,
+            PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData)
+        {
+            uint propertyRegDataType = 0;
+            uint requiredSize = 0;
+
+            // 'buffer' is 4KB  but Unicode chars are 2 bytes,
+            // hence 'buffer' can hold up to 2K chars
+            const uint BUFFER_SIZE = 4096;
+            byte[] buffer = new byte[BUFFER_SIZE];
+
+            // Get the device's HardwareID multistring
+            PInvoke.SetupApi.SetupDiGetDeviceRegistryProperty(
+                devInfoSet.Get(),
+                ref devInfoData,
+                PInvoke.SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
+                out propertyRegDataType,
+                buffer,
+                BUFFER_SIZE,
+                out requiredSize
+            );
+
+            return MultiByteStringSplit(buffer);
         }
 
         // The function takes as input an initialized 'deviceInfoSet' object,
@@ -58,14 +86,6 @@ namespace XSToolsInstallation
             PInvoke.SetupApi.DeviceInfoSet devInfoSet,
             bool strictSearch)
         {
-            uint propertyRegDataType = 0;
-            uint requiredSize = 0;
-
-            // 'buffer' is 4KB  but Unicode chars are 2 bytes,
-            // hence 'buffer' can hold up to 2K chars
-            const uint BUFFER_SIZE = 4096;
-            byte[] buffer = new byte[BUFFER_SIZE];
-
             devInfoData = new PInvoke.SetupApi.SP_DEVINFO_DATA();
             devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
 
@@ -90,18 +110,7 @@ namespace XSToolsInstallation
                      ref devInfoData);
                  ++i)
             {
-                // Get the device's HardwareID multistring
-                PInvoke.SetupApi.SetupDiGetDeviceRegistryProperty(
-                    devInfoSet.Get(),
-                    ref devInfoData,
-                    PInvoke.SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
-                    out propertyRegDataType,
-                    buffer,
-                    BUFFER_SIZE,
-                    out requiredSize
-                );
-
-                foreach (string id in MultiByteStringSplit(buffer))
+                foreach (string id in GetHardwareIDs(devInfoSet, devInfoData))
                 {
                     if (hwIDFound(id, hwID))
                     {
