@@ -43,45 +43,31 @@ namespace XSToolsInstallation
         }
 
         // The function takes as input an initialized 'deviceInfoSet' object,
-        // a string array with the hardware IDs we want to search the system
-        // for and an 'SP_DEVINFO_DATA' array of the same size as 'hwIDs'.
-        // if 'strictSearch' is true, a device needs to exactly match one
-        // of the supplied hwIDs to be returned. Otherwise, the device's
-        // name needs to start with one of the supplied hwIDs.
-        // When the function returns, if 'hwIDs[i]' exists in the system,
-        // 'devices[i]' will be populated. To test for the device's existence,
-        // check 'devices[i].cbSize'; if 0, the device doesn't exist.
-        // Initialized 'devices[i]' objects can be used with any function
-        // that takes an 'SP_DEVINFO_DATA' object as input.
+        // a hardware ID string we want to search the system for and a
+        // reference to an 'SP_DEVINFO_DATA' object. If 'strictSearch' is true,
+        // the device needs to exactly match the hwID to be returned. Otherwise,
+        // the device's name needs to start with the supplied hwID string.
+        // When the function returns, if 'hwID' exists in the system,
+        // 'devInfoData' will be populated. To test for the device's existence,
+        // check 'devInfoData.cbSize'; if 0, the device doesn't exist. The
+        // initialized 'devInfoData' object can be used with any function that
+        // takes an 'SP_DEVINFO_DATA' object as input.
         public static int FindInSystem(
-            ref PInvoke.SetupApi.SP_DEVINFO_DATA[] devices,
-            string[] hwIDs,
+            out PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData,
+            string hwID,
             PInvoke.SetupApi.DeviceInfoSet devInfoSet,
             bool strictSearch)
         {
-            if (devices.Length != hwIDs.Length)
-            {
-                throw new Exception(
-                    String.Format(
-                        "devices.Length != hwIDs.Length: {0} != {1}",
-                        devices.Length,
-                        hwIDs.Length
-                    )
-                );
-            }
-
             uint propertyRegDataType = 0;
             uint requiredSize = 0;
-            int j;
 
             // 'buffer' is 4KB  but Unicode chars are 2 bytes,
             // hence 'buffer' can hold up to 2K chars
             const uint BUFFER_SIZE = 4096;
             byte[] buffer = new byte[BUFFER_SIZE];
 
-            PInvoke.SetupApi.SP_DEVINFO_DATA tmpDevInfoData =
-                new PInvoke.SetupApi.SP_DEVINFO_DATA();
-            tmpDevInfoData.cbSize = (uint)Marshal.SizeOf(tmpDevInfoData);
+            devInfoData = new PInvoke.SetupApi.SP_DEVINFO_DATA();
+            devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
 
             // Select which string comparison function
             // to use, depending on 'strictSearch'
@@ -101,13 +87,13 @@ namespace XSToolsInstallation
                  PInvoke.SetupApi.SetupDiEnumDeviceInfo(
                      devInfoSet.Get(),
                      i,
-                     ref tmpDevInfoData);
+                     ref devInfoData);
                  ++i)
             {
                 // Get the device's HardwareID multistring
                 PInvoke.SetupApi.SetupDiGetDeviceRegistryProperty(
                     devInfoSet.Get(),
-                    ref tmpDevInfoData,
+                    ref devInfoData,
                     PInvoke.SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
                     out propertyRegDataType,
                     buffer,
@@ -117,17 +103,17 @@ namespace XSToolsInstallation
 
                 foreach (string id in MultiByteStringSplit(buffer))
                 {
-                    // if 'id' exists in hwIDs, return its index
-                    if ((j = Array.FindIndex(hwIDs, hwid => hwIDFound(id, hwid))) != -1)
+                    if (hwIDFound(id, hwID))
                     {
-                        devices[j] = tmpDevInfoData;
-                        tmpDevInfoData = new PInvoke.SetupApi.SP_DEVINFO_DATA();
-                        tmpDevInfoData.cbSize = (uint)Marshal.SizeOf(tmpDevInfoData);
-                        break;
+                        goto Exit; // to break out of 2 loops
                     }
                 }
             }
 
+            // Return to 0 if we don't find the device
+            devInfoData.cbSize = 0;
+
+        Exit:
             return Marshal.GetLastWin32Error();
         }
 
@@ -145,14 +131,18 @@ namespace XSToolsInstallation
                     return;
                 }
 
-                PInvoke.SetupApi.SP_DEVINFO_DATA[] devices =
-                    new PInvoke.SetupApi.SP_DEVINFO_DATA[hwIDs.Length];
-
-                FindInSystem(ref devices, hwIDs, devInfoSet, strictSearch);
-
-                for (int i = 0; i < devices.Length; ++i)
+                for (int i = 0; i < hwIDs.Length; ++i)
                 {
-                    if (devices[i].cbSize == 0)
+                    PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData;
+
+                    FindInSystem(
+                        out devInfoData,
+                        hwIDs[i],
+                        devInfoSet,
+                        strictSearch
+                    );
+
+                    if (devInfoData.cbSize == 0)
                     {
                         continue;
                     }
@@ -161,14 +151,15 @@ namespace XSToolsInstallation
                     PInvoke.SetupApi.REMOVE_PARAMS rparams =
                         new PInvoke.SetupApi.REMOVE_PARAMS();
                     rparams.cbSize = 8; // Size of cbSide & InstallFunction
-                    rparams.InstallFunction = (uint)PInvoke.SetupApi.InstallFunctions.DIF_REMOVE;
+                    rparams.InstallFunction =
+                        (uint)PInvoke.SetupApi.InstallFunctions.DIF_REMOVE;
                     rparams.HwProfile = 0;
                     rparams.Scope = PInvoke.SetupApi.DI_REMOVE_DEVICE_GLOBAL;
                     GCHandle handle1 = GCHandle.Alloc(rparams);
 
                     if (!PInvoke.SetupApi.SetupDiSetClassInstallParams(
                             devInfoSet.Get(),
-                            ref devices[i],
+                            ref devInfoData,
                             ref rparams,
                             Marshal.SizeOf(rparams)))
                     {
@@ -184,7 +175,7 @@ namespace XSToolsInstallation
                     if (!PInvoke.SetupApi.SetupDiCallClassInstaller(
                             PInvoke.SetupApi.InstallFunctions.DIF_REMOVE,
                             devInfoSet.Get(),
-                            ref devices[i]))
+                            ref devInfoData))
                     {
                         throw new Exception(
                             String.Format(

@@ -77,10 +77,11 @@ namespace PVDevice
         {
             using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
                        new PInvoke.SetupApi.DeviceInfoSet(
-                       IntPtr.Zero,
-                       IntPtr.Zero,
-                       IntPtr.Zero,
-                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+                           IntPtr.Zero,
+                           "PCI",
+                           IntPtr.Zero,
+                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
+                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT))
             {
                 if (!devInfoSet.HandleIsValid())
                 {
@@ -89,21 +90,20 @@ namespace PVDevice
                     );
                 }
 
-                PInvoke.SetupApi.SP_DEVINFO_DATA[] devices =
-                    new PInvoke.SetupApi.SP_DEVINFO_DATA[hwIDs.Length];
-
-                XSToolsInstallation.Device.FindInSystem(
-                    ref devices,
-                    hwIDs,
-                    devInfoSet,
-                    false
-                );
-
                 xenBusDevsPresent = 0;
 
                 for (int i = 0; i < hwIDs.Length; ++i)
                 {
-                    if (devices[i].cbSize != 0)
+                    PInvoke.SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
+
+                    XSToolsInstallation.Device.FindInSystem(
+                        out xenBusDevInfoData,
+                        hwIDs[i],
+                        devInfoSet,
+                        false
+                    );
+
+                    if (xenBusDevInfoData.cbSize != 0)
                     {
                         xenBusDevsPresent |= (uint)(1 << i);
                     }
