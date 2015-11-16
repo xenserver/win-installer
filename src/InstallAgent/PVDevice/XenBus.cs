@@ -8,16 +8,11 @@ namespace PVDevice
 {
     static class XenBus
     {
-        private static uint xenBusDevsPresent;
-
-        // The actual hardware IDs for the XenBus devices might
-        // be longer, but these will do just fine for checking
-        // their existence in the system.
-        private static readonly string[] hwIDs = {
-            @"PCI\VEN_5853&DEV_0001",
-            @"PCI\VEN_5853&DEV_0002",
-            @"PCI\VEN_5853&DEV_C000",
-        };
+        // Is populated in the static constructor
+        // If the device exists, hwIDs[i] will be the
+        // device's Hardware ID string; if not it will
+        // be the empty string.
+        public static readonly string[] hwIDs;
 
         [Flags]
         public enum XenBusDevs : uint
@@ -30,12 +25,59 @@ namespace PVDevice
         // Static constructor
         static XenBus()
         {
-            FindDevs();
+            hwIDs = new string[3];
+
+            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
+                       new PInvoke.SetupApi.DeviceInfoSet(
+                           IntPtr.Zero,
+                           "PCI",
+                           IntPtr.Zero,
+                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
+                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT))
+            {
+                if (!devInfoSet.HandleIsValid())
+                {
+                    throw new Exception(
+                        "XenBus static constructor: \'devInfoSet\' is INVALID"
+                    );
+                }
+
+                for (int i = 0; i < hwIDs.Length; ++i)
+                {
+                    PInvoke.SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
+
+                    XSToolsInstallation.Device.FindInSystem(
+                        out xenBusDevInfoData,
+                        @"PCI\VEN_5853&" +
+                            Enum.GetName(typeof(XenBusDevs), 1 << i),
+                        devInfoSet,
+                        false
+                    );
+
+                    if (xenBusDevInfoData.cbSize != 0)
+                    {
+                        // Just get the first string returned.
+                        // Should be the most explicit.
+                        hwIDs[i] = XSToolsInstallation.Device.GetHardwareIDs(
+                            devInfoSet,
+                            xenBusDevInfoData
+                        )[0];
+                    }
+                    else
+                    {
+                        hwIDs[i] = "";
+                    }
+                }
+            }
         }
 
         public static bool IsFunctioning()
         {
-            if (xenBusDevsPresent == 0)
+            if (!IsPresent(
+                    XenBusDevs.DEV_0001 |
+                    XenBusDevs.DEV_0002 |
+                    XenBusDevs.DEV_C000,
+                    false))
             {
                 return false;
             }
@@ -59,56 +101,30 @@ namespace PVDevice
             return true;
         }
 
-        // Returns true if either DEV_0001 or DEV_0002 is present
-        public static bool IsDev000XPresent()
+        // Check the existence of any combination of XenBus devices.
+        // If 'strict' == true, all the devices queried need to exist
+        // (bitwise AND). Else, at least one of the devices queried
+        // needs to exist (bitwise OR).
+        public static bool IsPresent(XenBusDevs xenBusDevQuery, bool strict)
         {
-            return (
-                (xenBusDevsPresent & (uint)XenBusDevs.DEV_0001) |
-                (xenBusDevsPresent & (uint)XenBusDevs.DEV_0002)
-            ) != 0;
-        }
+            bool result = strict ? true : false;
 
-        public static bool IsDevC000Present()
-        {
-            return (xenBusDevsPresent & (uint)XenBusDevs.DEV_C000) != 0;
-        }
-
-        private static void FindDevs()
-        {
-            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
-                       new PInvoke.SetupApi.DeviceInfoSet(
-                           IntPtr.Zero,
-                           "PCI",
-                           IntPtr.Zero,
-                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
-                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT))
+            for (int i = 0; i < hwIDs.Length; ++i)
             {
-                if (!devInfoSet.HandleIsValid())
+                if (((uint)xenBusDevQuery & (1 << i)) != 0)
                 {
-                    throw new Exception(
-                        "\'devInfoSet\' is INVALID in XenBus.FindDevs()"
-                    );
-                }
-
-                xenBusDevsPresent = 0;
-
-                for (int i = 0; i < hwIDs.Length; ++i)
-                {
-                    PInvoke.SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
-
-                    XSToolsInstallation.Device.FindInSystem(
-                        out xenBusDevInfoData,
-                        hwIDs[i],
-                        devInfoSet,
-                        false
-                    );
-
-                    if (xenBusDevInfoData.cbSize != 0)
+                    if (strict)
                     {
-                        xenBusDevsPresent |= (uint)(1 << i);
+                        result &= !String.IsNullOrEmpty(hwIDs[i]);
+                    }
+                    else if (!String.IsNullOrEmpty(hwIDs[i]))
+                    {
+                        return true;
                     }
                 }
             }
+
+            return result;
         }
     }
 }
