@@ -7,6 +7,8 @@ using Microsoft.Win32;
 using System.Security.AccessControl;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Reflection;
+using System.IO;
 
 namespace PVDevice
 {
@@ -42,7 +44,7 @@ namespace PVDevice
                 try
                 {
                     FixupAliases();
-                    RestoreNetSettings();
+                    NetworkSettingsSaveRestore(false); // Restore
                 }
                 catch (Exception e)
                 {
@@ -63,20 +65,41 @@ namespace PVDevice
             return true;
         }
 
-        public static void RestoreNetSettings()
+        public static void NetworkSettingsSaveRestore(bool save)
         {
-            Trace.WriteLine("Restoring network settings");
-            ProcessStartInfo start = new ProcessStartInfo();
-            start.Arguments = "/log /restore";
+            // Combined the 2 functions since they
+            // only differ in these 3 words
+            string[] function = save ?
+                new string[] { "Saving", "/save", "saved" } :
+                new string[] { "Restoring", "/restore", "restored" };
 
-            string driverInstallDir = (string)Registry.GetValue(
+            string path = (string)Registry.GetValue(
                 @"HKEY_LOCAL_MACHINE\Software\Citrix\XenTools",
                 "Driver_Install_Dir",
-                System.IO.Path.GetDirectoryName(Application.ExecutablePath) + @"\.."
+                ""
             );
 
-            start.FileName = driverInstallDir + @"\netsettings\QNetSettings.exe";
-            Trace.WriteLine("Using: " + start.FileName);
+            if (String.IsNullOrEmpty(path))
+            {
+                throw new Exception(
+                    "Could not get full path to QNetSettings.exe"
+                );
+            }
+
+            path = Path.Combine(path, @"netsettings\QNetSettings.exe");
+
+            if (!File.Exists(path))
+            {
+                throw new Exception(
+                    String.Format("\'{0}\' does not exist", path)
+                );
+            }
+
+            Trace.WriteLine(function[0] + " network settings");
+
+            ProcessStartInfo start = new ProcessStartInfo();
+            start.Arguments = "/log " + function[1];
+            start.FileName = path;
             start.WindowStyle = ProcessWindowStyle.Hidden;
             start.CreateNoWindow = true;
 
@@ -88,7 +111,7 @@ namespace PVDevice
             VifDisableEnable(false);
             VifDisableEnable(true);
 
-            Trace.WriteLine("Done restoring net settings.");
+            Trace.WriteLine("Network settings " + function[2]);
         }
 
         public static void FixupAliases()
