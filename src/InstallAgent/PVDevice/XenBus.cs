@@ -261,5 +261,32 @@ namespace PVDevice
 
             return true;
         }
+
+        public static bool HasChildren(XenBusDevs xenBusDev)
+        {
+            PInvoke.SetupApi.CR err;
+            int xenBusNode = GetDevNode(xenBusDev);
+            int xenBusChild;
+
+            if (xenBusNode == -1)
+            {
+                Trace.WriteLine("Could not get XenBus DevNode");
+                return false;
+            }
+
+            err = PInvoke.SetupApi.CM_Get_Child(
+                out xenBusChild, xenBusNode, 0
+            );
+
+            if (err != PInvoke.SetupApi.CR.SUCCESS)
+            {
+                Trace.WriteLine(
+                    String.Format("CM_Get_Child() error: {0}", err)
+                );
+                return false;
+            }
+
+            return true;
+        }
     }
 }

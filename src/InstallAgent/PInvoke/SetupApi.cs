@@ -390,6 +390,13 @@ namespace PInvoke
         );
 
         [DllImport("setupapi.dll", SetLastError = true)]
+        public static extern CR CM_Get_Child(
+            out int pdnDevInst,
+            int dnDevInst,
+            int ulFlags // always 0
+        );
+
+        [DllImport("setupapi.dll", SetLastError = true)]
         public static extern CR CM_Reenumerate_DevNode(
             int pdnDevInst,
             CM_REENUMERATE ulFlags
