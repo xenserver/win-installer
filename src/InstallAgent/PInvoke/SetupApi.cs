@@ -16,9 +16,14 @@ namespace PInvoke
             SUCCESS = 0,
         }
 
+        [Flags]
         public enum CM_REENUMERATE
         {
-            SYNCHRONOUS = 1,
+            NORMAL = 0x00000000,
+            SYNCHRONOUS = 0x00000001,
+            RETRY_INSTALLATION = 0x00000002,
+            ASYNCHRONOUS = 0x00000004,
+            BITS = 0x00000007
         }
 
         public enum CM_LOCATE_DEVNODE
@@ -378,11 +383,10 @@ namespace PInvoke
         );
 
         [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern CR CM_Locate_DevNodeA(
-            ref int pdnDevInst,
+        public static extern CR CM_Locate_DevNode(
+            out int pdnDevInst,
             string pDeviceID,
-            CM_LOCATE_DEVNODE
-            ulFlags
+            CM_LOCATE_DEVNODE ulFlags
         );
 
         [DllImport("setupapi.dll", SetLastError = true)]
@@ -443,6 +447,15 @@ namespace PInvoke
             int DestinationInfFileNameSize, // == 0
             IntPtr RequiredSize, // == IntPtr.Zero
             IntPtr DestinationInfFileNameComponent // == IntPtr.Zero
+        );
+
+        [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern bool SetupDiGetDeviceInstanceId(
+            IntPtr DeviceInfoSet,
+            ref SP_DEVINFO_DATA deviceInfoData,
+            StringBuilder deviceInstanceId,
+            int deviceInstanceIdSize,
+            out int requiredSize
         );
     }
 }

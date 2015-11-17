@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace PVDevice
 {
@@ -125,6 +127,139 @@ namespace PVDevice
             }
 
             return result;
+        }
+
+        public static string GetDeviceInstanceId(XenBusDevs xenBusDev)
+        {
+            const int BUFFER_SIZE = 4096;
+            string xenBusDevStr;
+            StringBuilder xenBusDeviceInstanceId =
+                new StringBuilder(BUFFER_SIZE);
+
+            // If this is true, 'xenBusDev' is not a power of 2,
+            // and hence, has more than one flag specified
+            if ((xenBusDev & (xenBusDev - 1)) != 0 ||
+                 xenBusDev == 0)
+            {
+                throw new Exception("Not single XenBus device specified");
+            }
+
+            xenBusDevStr = XenBus.hwIDs[
+                (int)Math.Log((double)xenBusDev, 2.0)
+            ];
+
+            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
+                       new PInvoke.SetupApi.DeviceInfoSet(
+                           IntPtr.Zero,
+                           "PCI",
+                           IntPtr.Zero,
+                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
+                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT))
+            {
+                PInvoke.SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
+                int reqSize;
+
+                XSToolsInstallation.Device.FindInSystem(
+                    out xenBusDevInfoData,
+                    xenBusDevStr,
+                    devInfoSet,
+                    true
+                );
+
+                if (xenBusDevInfoData.cbSize == 0)
+                {
+                    Trace.WriteLine(
+                        String.Format(
+                            "XenBus \'{0}\' not present",
+                            xenBusDev.ToString()
+                        )
+                    );
+                    return "";
+                }
+
+                if (!PInvoke.SetupApi.SetupDiGetDeviceInstanceId(
+                        devInfoSet.Get(),
+                        ref xenBusDevInfoData,
+                        xenBusDeviceInstanceId,
+                        BUFFER_SIZE,
+                        out reqSize))
+                {
+                    Trace.WriteLine(
+                        String.Format(
+                            "SetupDiGetDeviceInstanceId() failed: {0}",
+                            new Win32Exception(
+                                Marshal.GetLastWin32Error()
+                            ).Message
+                        )
+                    );
+                    return "";
+                }
+            }
+
+            return xenBusDeviceInstanceId.ToString();
+        }
+
+        public static int GetDevNode(XenBusDevs xenBusDev)
+        {
+            PInvoke.SetupApi.CR err;
+            int xenBusNode;
+            string xenBusDeviceInstanceId = GetDeviceInstanceId(xenBusDev);
+
+            if (String.IsNullOrEmpty(xenBusDeviceInstanceId))
+            {
+                Trace.WriteLine("Could not retrieve XenBus Instance ID");
+                return -1;
+            }
+
+            err = PInvoke.SetupApi.CM_Locate_DevNode(
+                out xenBusNode,
+                xenBusDeviceInstanceId,
+                PInvoke.SetupApi.CM_LOCATE_DEVNODE.NORMAL
+            );
+
+            if (err != PInvoke.SetupApi.CR.SUCCESS)
+            {
+                Trace.WriteLine(
+                    String.Format("CM_Locate_DevNode() error: {0}", err)
+                );
+                return -1;
+            }
+
+            return xenBusNode;
+        }
+
+        // Enumerates the specified XenBus device and searches
+        // DriverStore for compatible drivers to install to the
+        // new devices it finds.
+        public static bool Enumerate(XenBusDevs xenBusDev)
+        {
+            PInvoke.SetupApi.CR err;
+            int xenBusNode = GetDevNode(xenBusDev);
+
+            if (xenBusNode == -1)
+            {
+                Trace.WriteLine("Could not get XenBus DevNode");
+                return false;
+            }
+
+            XSToolsInstallation.Helpers.AcquireSystemPrivilege(
+                PInvoke.AdvApi32.SE_LOAD_DRIVER_NAME);
+
+            err = PInvoke.SetupApi.CM_Reenumerate_DevNode(
+                xenBusNode,
+                PInvoke.SetupApi.CM_REENUMERATE.SYNCHRONOUS |
+                PInvoke.SetupApi.CM_REENUMERATE.RETRY_INSTALLATION
+            );
+
+            if (err != PInvoke.SetupApi.CR.SUCCESS)
+            {
+                Trace.WriteLine(
+                    String.Format("CM_Reenumerate_DevNode() error: {0}", err)
+                );
+                return false;
+            }
+
+            return true;
         }
     }
 }

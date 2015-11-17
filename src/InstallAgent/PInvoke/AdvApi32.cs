@@ -33,8 +33,8 @@ namespace PInvoke
 
         // The place/naming of the following constants
         // may not be the best, but will do for now.
-
         public const string SE_SHUTDOWN_NAME = "SeShutdownPrivilege";
+        public const string SE_LOAD_DRIVER_NAME = "SeLoadDriverPrivilege";
 
         [Flags]
         public enum AccessRights : uint

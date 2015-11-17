@@ -81,28 +81,6 @@ namespace PVDevice
             return false;
         }
 
-        public static bool EnumerateBus()
-        {
-            int rootnode = 0;
-
-            if (PInvoke.SetupApi.CM_Locate_DevNodeA(
-                    ref rootnode,
-                    null,
-                    PInvoke.SetupApi.CM_LOCATE_DEVNODE.NORMAL
-                ) != PInvoke.SetupApi.CR.SUCCESS)
-            {
-                Trace.WriteLine("Unable to find bus to reenumerate");
-                return false;
-            }
-
-            PInvoke.SetupApi.CM_Reenumerate_DevNode(
-                rootnode,
-                PInvoke.SetupApi.CM_REENUMERATE.SYNCHRONOUS
-            );
-
-            return true;
-        }
-
         public static bool NeedsReboot(string emulatedDevice)
         {
             Trace.WriteLine(emulatedDevice + ": checking if reboot needed");
