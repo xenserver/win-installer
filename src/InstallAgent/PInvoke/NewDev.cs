@@ -17,6 +17,13 @@ namespace PInvoke
             BITS = 0x00000007
         }
 
+        [Flags]
+        public enum DIIRFLAG
+        {
+            ZERO = 0x00000000,
+            FORCE_INF = 0x00000002
+        }
+
         [DllImport("newdev.dll", SetLastError = true)]
         public static extern bool UpdateDriverForPlugAndPlayDevices(
             IntPtr hWndParent,
@@ -24,6 +31,14 @@ namespace PInvoke
             string fullInfPath,
             INSTALLFLAG installFlags,
             out bool rebootRequired
+        );
+
+        [DllImport("newdev.dll", SetLastError = true)]
+        public static extern bool DiInstallDriver(
+            IntPtr hwndParent,
+            string FullInfPath,
+            DIIRFLAG Flags, // either ZERO or FORCE_INF
+            out bool NeedReboot
         );
     }
 }

@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DriverHandler.cs" />
     <Compile Include="PInvoke\AdvApi32.cs" />
     <Compile Include="PInvoke\CfgMgr32.cs" />
     <Compile Include="PInvoke\DIFx.cs" />
