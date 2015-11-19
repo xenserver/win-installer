@@ -42,67 +42,95 @@ namespace InstallAgent
 
         public void InstallThreadHandler()
         {
-            /*
-            DriverPackage DriversMsi;
-            MsiInstaller VssProvMsi;
-            MsiInstaller AgentMsi;
-            string installdir;
-            */
             if (WinVersion.IsWOW64())
             {
-                // FAIL
+                throw new Exception("WOW64: Do not do that.");
             }
 
-            /* NO MSI INSTALLING WILL TAKE PLACE
-             * WILL NEED TO PUT DRIVERS IN DRIVER STORE
-             * Populate
-             *  -DriversMSI
-             *  -VssMSI
-             *  -AgentMSI
-             *  -installdir
-             */
-            /*
-            CreateInstallerObjects(
-                is64bitOS(),
-                out DriversMsi,
-                out VssProvMsi,
-                out AgentMsi,
-                out installdir
-            );*/
+            if (InstallerState.Complete())
+            {
+                Trace.WriteLine("Everything is complete!!");
+                return;
+            }
 
             //RegisterWMI();
 
-            InstallerState.GetFlag(InstallerState.States.NoDriverInstalling);
-
-            if (!InstallerState.GetFlag(InstallerState.States.NetworkSettingsStored))
+            if (!InstallerState.GetFlag(InstallerState.States.NetworkSettingsSaved))
             {
-                //StoreNetworkSettings();
-                InstallerState.SetFlag(InstallerState.States.NetworkSettingsStored);
+                Trace.WriteLine("NetSettings not saved..");
+                PVDevice.XenVif.NetworkSettingsSaveRestore(true);
+                InstallerState.SetFlag(InstallerState.States.NetworkSettingsSaved);
+                Trace.WriteLine("NetSettings saved!");
             }
 
-            // Ask if this is needed
-            /*
-            if (InstallerState.Complete())
+            if (!InstallerState.SystemCleaned())
             {
-                this.Stop();
-                return;
+                if ((PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_0001, true) &&
+                         PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_0001)) ||
+                    (PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_0002, true) &&
+                         PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_0002)))
+                {
+                    Trace.WriteLine("PV Tools found on 0001 or 0002; xenprepping..");
+                    DriverHandler.SystemClean();
+                    Trace.WriteLine("xenprepping done!");
+                }
+                else // "XenPrepping" not needed, so just flip all relevant flags
+                {
+                    InstallerState.SetFlag(InstallerState.States.RemovedFromFilters);
+                    InstallerState.SetFlag(InstallerState.States.BootStartDisabled);
+                    InstallerState.SetFlag(InstallerState.States.MSIsUninstalled);
+                    InstallerState.SetFlag(InstallerState.States.XenLegacyUninstalled);
+                    InstallerState.SetFlag(InstallerState.States.CleanedUp);
+                    Trace.WriteLine("xenprepping not needed; flip relevant flags");
+                }
             }
-             * */
 
-            while (!InstallerState.Complete())
+            if (!InstallerState.EverythingInstalled())
             {
-                // Handles state flags internally
-                DriverHandler.SystemClean();
+                if (!InstallerState.GetFlag(InstallerState.States.CertificatesInstalled))
+                {
+                    Trace.WriteLine("Installing certificates..");
+                    XSToolsInstallation.Helpers.InstallCertificates(
+                        Directory.GetCurrentDirectory() + @"\certs");
+                    InstallerState.SetFlag(InstallerState.States.CertificatesInstalled);
+                    Trace.WriteLine("Certificates installed");
+                }
 
-                // AgentInstallHandler();
+                string driverRootDir = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "Drivers"
+                );
 
-                // Polling(); // ??
+                var drivers = new[] {
+                    new { name = "xennet", flag = InstallerState.States.XenNetInstalled },
+                    new { name = "xenvif", flag = InstallerState.States.XenVifInstalled },
+                    new { name = "xenvbd", flag = InstallerState.States.XenVbdInstalled },
+                    new { name = "xeniface", flag = InstallerState.States.XenIfaceInstalled },
+                    new { name = "xenbus", flag = InstallerState.States.XenBusInstalled }
+                };
+
+                foreach (var driver in drivers)
+                {
+                    if (!InstallerState.GetFlag(driver.flag))
+                    {
+                        if (DriverHandler.InstallDriver_2(driverRootDir, driver.name))
+                        {
+                            InstallerState.SetFlag(driver.flag);
+                        }
+                        else
+                        {
+                            // Maybe keep number of failed times?
+                        }
+                    }
+                }
             }
 
-            if (!InstallerState.GetFlag(InstallerState.States.NetworkSettingsRestored))
+            if (!PVDevice.XenBus.IsFunctioning() ||
+                !PVDevice.XenIface.IsFunctioning() ||
+                !PVDevice.XenVif.IsFunctioning() || // Restores Net Settings internally
+                !PVDevice.XenVbd.IsFunctioning())
             {
-                // RestoreNetworkSettings();
-                InstallerState.SetFlag(InstallerState.States.NetworkSettingsRestored);
+                XSToolsInstallation.Helpers.Reboot();
             }
         }
     }
