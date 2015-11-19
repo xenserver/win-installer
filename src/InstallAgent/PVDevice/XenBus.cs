@@ -134,16 +134,8 @@ namespace PVDevice
             StringBuilder xenBusDeviceInstanceId =
                 new StringBuilder(BUFFER_SIZE);
 
-            // If this is true, 'xenBusDev' is not a power of 2,
-            // and hence, has more than one flag specified
-            if ((xenBusDev & (xenBusDev - 1)) != 0 ||
-                 xenBusDev == 0)
-            {
-                throw new Exception("Not single XenBus device specified");
-            }
-
             xenBusDevStr = XenBus.hwIDs[
-                (int)Math.Log((double)xenBusDev, 2.0)
+                XSToolsInstallation.Helpers.BitIdxFromFlag((uint)xenBusDev)
             ];
 
             using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =

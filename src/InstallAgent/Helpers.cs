@@ -120,5 +120,21 @@ namespace XSToolsInstallation
                 store.Close();
             }
         }
+
+        public static int BitIdxFromFlag(uint flag)
+        {
+            if (flag == 0)
+            {
+                throw new Exception("\'flag\' is empty");
+            }
+            else if ((flag & (flag - 1)) != 0)
+            // If this is true, 'flag' is not a power of 2,
+            // and hence, has more than one bit set
+            {
+                throw new Exception("\'flag\' has more than one bits set");
+            }
+
+            return (int)Math.Log((double)flag, 2.0);
+        }
     }
 }

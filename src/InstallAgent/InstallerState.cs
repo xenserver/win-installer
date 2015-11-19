@@ -128,7 +128,7 @@ namespace InstallAgent
 
         public static void SetFlag(States flag)
         {
-            int i = (int) Math.Log((double)flag, 2.0);
+            int i = XSToolsInstallation.Helpers.BitIdxFromFlag((uint)flag);
             string flagName = statesDefault[i].Name;
 
             using (RegistryKey installStateRK =
@@ -141,7 +141,7 @@ namespace InstallAgent
 
         public static void UnsetFlag(States flag)
         {
-            int i = (int)Math.Log((double)flag, 2.0);
+            int i = XSToolsInstallation.Helpers.BitIdxFromFlag((uint)flag);
             string flagName = statesDefault[i].Name;
 
             using (RegistryKey installStateRK =
