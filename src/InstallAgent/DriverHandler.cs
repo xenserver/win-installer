@@ -427,8 +427,11 @@ namespace InstallAgent
                 // For some unknown reason, XenServer Tools Installer
                 // doesn't like the '/norestart' option and doesn't get
                 // removed if it's there.
-                startInfo.Arguments = "/x " + product.Key + " /qn" +
-                    (product.Value.Equals(msiNameList[4]) ? "" : " /norestart");
+                startInfo.Arguments =
+                    "/x " + product.Key + " /qn" +
+                    (product.Value.Equals(msiNameList[msiNameList.Length - 1]) ?
+                        "" : " /norestart"
+                    );
                 process.StartInfo = startInfo;
                 process.Start();
                 process.WaitForExit();
