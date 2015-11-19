@@ -95,6 +95,8 @@ namespace PVDevice
 
         public static bool NeedsReboot(string emulatedDevice)
         {
+            bool reboot;
+
             Trace.WriteLine(emulatedDevice + ": checking if reboot needed");
 
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey(
@@ -104,11 +106,20 @@ namespace PVDevice
                 if (key != null &&
                     key.GetValueNames().Contains("NeedReboot"))
                 {
-                    return true;
+                    reboot = true;
+                }
+                else
+                {
+                    reboot = false;
                 }
             }
 
-            return false;
+            InstallAgent.InstallerState.LogicalORFlag(
+                InstallAgent.InstallerState.States.RebootNeeded,
+                reboot
+            );
+
+            return reboot;
         }
     }
 }
