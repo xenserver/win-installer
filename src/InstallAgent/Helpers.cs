@@ -18,7 +18,7 @@ namespace XSToolsInstallation
             );
 
             if (InstallAgent.InstallerState.GetFlag(
-                    InstallAgent.InstallerState.States.NoDriverInstalling))
+                    InstallAgent.InstallerState.States.DriverInstalling))
             {
                 PInvoke.CfgMgr32.CMP_WaitNoPendingInstallEvents(
                     PInvoke.CfgMgr32.INFINITE

@@ -13,21 +13,29 @@ namespace InstallAgent
         private static readonly string stateRegKey =
             InstallAgent.rootRegKey + @"State\";
 
-        private static readonly int complete = (int) (
-            States.NoDriverInstalling |
-            States.NetworkSettingsStored |
+        private static readonly int systemCleaned = (int)(
             States.RemovedFromFilters |
             States.BootStartDisabled |
             States.MSIsUninstalled |
             States.XenLegacyUninstalled |
-            States.CleanedUp |
-            States.DriversStaged |
+            States.CleanedUp
+        );
+
+        private static readonly int everythingInstalled = (int)(
+            States.CertificatesInstalled |
             States.XenBusInstalled |
             States.XenIfaceInstalled |
             States.XenVifInstalled |
             States.XenNetInstalled |
             States.XenVbdInstalled
         );
+
+        private static readonly int complete =
+            (int) (
+                States.NetworkSettingsSaved |
+                States.NetworkSettingsRestored) |
+            systemCleaned |
+            everythingInstalled;
 
         private struct StateInfo
         {
@@ -45,20 +53,21 @@ namespace InstallAgent
         };
 
         private static readonly StateInfo[] statesDefault = {
-            new StateInfo("NoDriverInstalling", 1),
-            new StateInfo("NetworkSettingsStored", 0),
+            new StateInfo("DriverInstalling", 0),
+            new StateInfo("NetworkSettingsSaved", 0),
             new StateInfo("NetworkSettingsRestored", 0),
             new StateInfo("RemovedFromFilters", 0),
             new StateInfo("BootStartDisabled", 0),
             new StateInfo("MSIsUninstalled", 0),
             new StateInfo("XenLegacyUninstalled", 0),
             new StateInfo("CleanedUp", 0),
-            new StateInfo("DriversStaged", 0),
+            new StateInfo("CertificatesInstalled", 0),
             new StateInfo("XenBusInstalled", 0),
             new StateInfo("XenIfaceInstalled", 0),
             new StateInfo("XenVifInstalled", 0),
             new StateInfo("XenNetInstalled", 0),
             new StateInfo("XenVbdInstalled", 0),
+            new StateInfo("RebootNeeded", 0),
         };
 
         [Flags]
@@ -66,8 +75,8 @@ namespace InstallAgent
         // the task is complete or no action required.
         public enum States
         {
-            NoDriverInstalling = 1 << 0,
-            NetworkSettingsStored = 1 << 1,
+            DriverInstalling = 1 << 0,
+            NetworkSettingsSaved = 1 << 1,
             NetworkSettingsRestored = 1 << 2,
 
             // ---- PV Drivers Removal States ----
@@ -78,7 +87,7 @@ namespace InstallAgent
             CleanedUp = 1 << 7,
             // --------------- End ---------------
 
-            DriversStaged = 1 << 8,
+            CertificatesInstalled = 1 << 8,
 
             // ------- PV Drivers Installed -------
             XenBusInstalled = 1 << 9,
@@ -87,6 +96,8 @@ namespace InstallAgent
             XenNetInstalled = 1 << 12,
             XenVbdInstalled = 1 << 13,
             // ---------------- End ---------------
+
+            RebootNeeded = 1 << 14,
         }
 
         // Static constructor: queries the Registry for the
@@ -153,9 +164,43 @@ namespace InstallAgent
             }
         }
 
+        public static void LogicalANDFlag(States flag, bool value)
+        {
+            if (GetFlag(flag) & value)
+            {
+                SetFlag(flag);
+            }
+            else
+            {
+                UnsetFlag(flag);
+            }
+        }
+
+        public static void LogicalORFlag(States flag, bool value)
+        {
+            if (GetFlag(flag) | value)
+            {
+                SetFlag(flag);
+            }
+            else
+            {
+                UnsetFlag(flag);
+            }
+        }
+
         public static bool GetFlag(States flag)
         {
             return (currentState & (int) flag) != 0;
+        }
+
+        public static bool SystemCleaned()
+        {
+            return currentState == systemCleaned;
+        }
+
+        public static bool EverythingInstalled()
+        {
+            return currentState == everythingInstalled;
         }
 
         public static bool Complete()
