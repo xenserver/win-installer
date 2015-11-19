@@ -41,6 +41,11 @@ import manifestlatest
 import manifestspecific
 import re
 import errno
+import imp
+
+(brandingFile, brandingPath, brandingDesc) = imp.find_module("branding",["src\\branding"])
+branding = imp.load_module("branding",brandingFile,brandingPath,brandingDesc)
+
 
 def unpack_from_jenkins(filelist, packdir):
     if ('GIT_COMMIT' in os.environ):
@@ -53,6 +58,7 @@ def unpack_from_jenkins(filelist, packdir):
 
 
 header = "verinfo.wxi"
+brandingheader = "branding.wxi"
 include ="include"
 
 signtool=os.environ['KIT']+"\\bin\\x86\\signtool.exe"
@@ -146,6 +152,20 @@ def make_header():
     file.write("</Include>")
     file.close();
 
+    file = open(include+"\\"+brandingheader, 'w')
+    file.write("<?xml version='1.0' ?>\n");
+    file.write("<Include xmlns = 'http://schemas.microsoft.com/wix/2006/wi'>\n")
+    for key, value in branding.branding.items():
+        file.write("<?define BRANDING_"+key+" =\t\""+value+"\"?>\n")
+    for key, value in branding.filenames.items():
+        file.write("<?define FILENAME_"+key+" =\t\""+value+"\"?>\n")
+    for key, value in branding.resources.items():
+        file.write("<?define RESOURCE_"+key+" =\t\""+value+"\"?>\n")
+    
+    file.write("<?define RESOURCES_Bitmaps =\t\""+branding.bitmaps+"\"?>\n")
+    
+    file.write("</Include>")
+    file.close();
 def callfnout(cmd):
     print(cmd)
 
@@ -201,14 +221,14 @@ def make_installers(pack):
     callfn([wix("light.exe"), "installer\\driversx86.wixobj","-darch=x86",wix("difxapp_x86.wixlib"),"-ext","WixUtilExtension.dll","-ext","WixDifxAppExtension.dll","-b",pack,"-o","installer\\driversx86.msm"])
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x64","-b", ".\\installer", "-o", "installer\\citrixxendriversx64.msi","-b",pack, "-sw1076"])
+    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x64","-b", ".\\installer", "-o", "installer\\"+branding.filenames['driversmsix64'],"-b",pack, "-sw1076"])
     if signfiles:
-        sign("installer\\citrixxendriversx64.msi", signname, signstr=signstr)
+        sign("installer\\"+branding.filenames['driversmsix64'], signname, signstr=signstr)
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-darch=x86", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x86","-b", ".\\installer", "-o", "installer\\citrixxendriversx86.msi","-b",pack, "-sw1076"])
+    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x86","-b", ".\\installer", "-o", "installer\\"+branding.filenames['driversmsix86'],"-b",pack, "-sw1076"])
     if signfiles:
-        sign("installer\\citrixxendriversx86.msi", signname, signstr=signstr)
+        sign("installer\\"+branding.filenames['driversmsix86'], signname, signstr=signstr)
 #
     src = ".\\src\\vss"
 #    

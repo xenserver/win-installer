@@ -37,6 +37,7 @@
     >
 
     <?include verinfo.wxi ?>
+    <?include branding.wxi ?>
     <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
     <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
     <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
@@ -57,17 +58,17 @@
       <?define certs= 'f056d833-6b1f-4c9d-9636-f26ff3a75292' ?>
       <?define pf="ProgramFilesFolder" ?>
 
-  <Product Name='Citrix XenServer Tools Installer' Id='$(var.ProductId)'
-           Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='Citrix'
+  <Product Name='$(var.BRANDING_installerProductName)' Id='$(var.ProductId)'
+           Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='$(var.BRANDING_manufacturer)'
            UpgradeCode='$(var.UpgradeCode)' >
-    <Package Id='*' Keywords='Citrix XenServer Windows Installer' Description='PV Tools Install Wizard'
-             Comments='Installs Citrix XenServer Tools' Manufacturer='Citrix'
+    <Package Id='*' Keywords='$(var.BRANDING_installerKeyWords)' Description='PV Tools Install Wizard'
+             Comments='Installs $(var.BRANDING_toolsName)' Manufacturer='$(var.BRANDING_manufacturer)'
              InstallerVersion='200' Languages='1033' Compressed='yes'
              InstallScope='perMachine'
              SummaryCodepage='1252' />
 
-    <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
-    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+    <Icon Id="icon.ico" SourceFile="$(var.RESOURCES_Bitmaps)\$(var.RESOURCE_icon)"/>
+    <Property Id="ARPPRODUCTICON" Value="$(var.RESOURCE_icon)" />
     <Property Id="ARPNOREPAIR" Value="1" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />     
     <Property Id="REINSTALLMODE"  Value="dmus" />
@@ -137,15 +138,15 @@
                 <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="370" Height="234" TabSkip="no" Text="!(loc.ExitDialogBitmap)" />
                 <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Disabled="yes" Text="!(loc.WixUIBack)" />
                 <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
-                <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Bigger}You have set up the Citrix XenServer Tools Installer">  
+                <Control Id="Title" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Bigger}You have set up the $(var.BRANDING_installerProductName)">  
                     <Condition Action="show">NOT Installed</Condition>
                     <Condition Action="hide">Installed</Condition>
                 </Control>
-                <Control Id="AltTitle" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Bigger}You have removed the Citrix XenServer Tools Installer">  
+                <Control Id="AltTitle" Type="Text" X="135" Y="20" Width="220" Height="60" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Bigger}You have removed the $(var.BRANDING_installerProductName)">  
                     <Condition Action="hide">NOT Installed</Condition>
                     <Condition Action="show">Installed</Condition>
                 </Control>
-                <Control Id="OptionalText" Type="Text" X="135" Y="70" Width="220" Height="80" Transparent="yes" NoPrefix="yes"  Text="Click 'Install Tools' to launch the Citrix Xenserver Tools Installer and begin installing the Citrix Xenserver Tools on ths VM">
+                <Control Id="OptionalText" Type="Text" X="135" Y="70" Width="220" Height="80" Transparent="yes" NoPrefix="yes"  Text="Click 'Install Tools' to launch the $(var.BRANDING_installerProductName) and begin installing the $(var.BRANDING_toolsName) on ths VM">
                     <Condition Action="show">NOT Installed</Condition>
                     <Condition Action="hide">Installed</Condition>
                 </Control>
@@ -176,12 +177,12 @@
     <UIRef Id="WixUI_Common" />
 
     <SetProperty Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Before="CostFinalize" Sequence="ui" Value="1">VersionNT>600</SetProperty>
-    <WixVariable Id="WixUIBannerBmp" Value="$(var.Bitmaps)\BannrBmp.bmp" />
-    <WixVariable Id="WixUIDialogBmp" Value="$(var.Bitmaps)\DlgBmp.bmp" />
-    <WixVariable Id="WixUIExclamationIco" Value="$(var.Bitmaps)\exclamic.ico" />
-    <WixVariable Id="WixUIInfoIco" Value="$(var.Bitmaps)\info.ico" />
-    <WixVariable Id="WixUINewIco" Value="$(var.Bitmaps)\New.ico" />
-    <WixVariable Id="WixUIUpIco" Value="$(var.Bitmaps)\Up.ico" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.RESOURCES_Bitmaps)\BannrBmp.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.RESOURCES_Bitmaps)\DlgBmp.bmp" />
+    <WixVariable Id="WixUIExclamationIco" Value="$(var.RESOURCES_Bitmaps)\exclamic.ico" />
+    <WixVariable Id="WixUIInfoIco" Value="$(var.RESOURCES_Bitmaps)\info.ico" />
+    <WixVariable Id="WixUINewIco" Value="$(var.RESOURCES_Bitmaps)\New.ico" />
+    <WixVariable Id="WixUIUpIco" Value="$(var.RESOURCES_Bitmaps)\Up.ico" />
 
 
     <MajorUpgrade
@@ -256,16 +257,16 @@
     <Media Id='2' />
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='$(var.pf)'>
-        <Directory Id='CitrixDir' Name='Citrix'>
-            <Directory Id='INSTALLDIR' Name='XenTools'>
+        <Directory Id='CitrixDir' Name='$(var.BRANDING_manufacturer)'>
+            <Directory Id='INSTALLDIR' Name='$(var.BRANDING_shortTools)'>
                 <Directory Id='INSTALLER' Name = 'Installer'>
                     <Component Id="LegacyInstaller" Guid="$(var.legacyid)">
-                        <File Id="LegacyExe" Compressed="no" DiskId='2' Source="XenLegacy.Exe"/> 
-                        <File Id="UninstallerFix" Compressed="no" DiskId='2' Source="xluninstallerfix.exe"/> 
+                        <File Id="LegacyExe" Compressed="no" DiskId='2' Source="$(var.FILENAME_legacy)"/> 
+                        <File Id="UninstallerFix" Compressed="no" DiskId='2' Source="$(var.FILENAME_legacyuninstallerfix)"/> 
                     </Component>
                     <Component Id="Msis" Guid="$(var.msiid)" >
-                        <File Id="Drivers32MSI" Compressed="no" DiskId="2" Source="CitrixXenDriversX86.msi" />
-                        <File Id="Drivers64MSI" Compressed="no" DiskId="2" Source="CitrixXenDriversX64.msi" />
+                        <File Id="Drivers32MSI" Compressed="no" DiskId="2" Source="$(var.FILENAME_driversmsix86)" />
+                        <File Id="Drivers64MSI" Compressed="no" DiskId="2" Source="$(var.FILENAME_driversmsix64)" />
                         <File Id="Agent32MSI" Compressed="no" DiskId="2" Source="CitrixGuestAgentX86.msi" />
                         <File Id="Agent64MSI" Compressed="no" DiskId="2" Source="CitrixGuestAgentX64.msi" />
                         <File Id="VssProv32MSI" Compressed="no" DiskId="2" Source="CitrixVssX86.msi" />
@@ -273,9 +274,9 @@
                     </Component>
                     <?if $(var.usecerts)=yes ?>
                     <Component Id="Certs" Guid="$(var.certs)">
-                        <File Id="EapCitrix" Name="EapCitrix.cer" Source="$(var.Bitmaps)\eapcitrix.cer" />
-                        <File Id="EapCodeSign" Name="EapCodeSign.cer" Source="$(var.Bitmaps)\eapcodesign.cer" />
-                        <File Id="EapRoot" Name="EapRoot.cer" Source="$(var.Bitmaps)\eaproot.cer" />
+                        <File Id="EapCitrix" Name="EapCitrix.cer" Source="$(var.RESOURCES_Bitmaps)\eapcitrix.cer" />
+                        <File Id="EapCodeSign" Name="EapCodeSign.cer" Source="$(var.RESOURCES_Bitmaps)\eapcodesign.cer" />
+                        <File Id="EapRoot" Name="EapRoot.cer" Source="$(var.RESOURCES_Bitmaps)\eaproot.cer" />
                     </Component>
                     <?endif?>
                     <Component Id='dotnetthreefiveagent' Guid='$(var.dn35id)' >
@@ -305,8 +306,8 @@
                             Type='ownProcess'
                             Vital='yes'
                             Name='XenPVInstall'
-                            DisplayName='Citrix XenServer Windows Installer'
-                            Description='Manages Citrix XenServer Tools Installation'
+                            DisplayName='$(var.BRANDING_installerProductName)'
+                            Description='Manages $(var.BRANDING_toolsName) Installation'
                             Start='auto'
                             Account='LocalSystem'
                             ErrorControl='ignore'
