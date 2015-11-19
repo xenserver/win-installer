@@ -25,7 +25,9 @@ namespace PVDevice
                 return false;
             }
 
-            try
+            // This part is currently not needed. It will be kept
+            // in place for a while, just in case..
+            /*try
             {
                 XenIface.CreateSession();
             }
@@ -65,7 +67,7 @@ namespace PVDevice
 
                     return false;
                 }
-            }
+            }*/
 
             Trace.WriteLine("IFACE: device installed");
             // textOut += "  XenServer Interface Device Installed\n";
