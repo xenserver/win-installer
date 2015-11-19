@@ -86,8 +86,6 @@ namespace PVDevice
 
             if (!PVDevice.IsServiceRunning(("xenbus")))
             {
-                Trace.WriteLine("BUS: service not running");
-                //textOut += "  Bus Device Initializing\n";
                 return false;
             }
 

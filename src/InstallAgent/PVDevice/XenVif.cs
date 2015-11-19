@@ -22,8 +22,6 @@ namespace PVDevice
             {
                 if (!PVDevice.IsServiceRunning("xenvif"))
                 {
-                    Trace.WriteLine("VIF: service not running");
-                    //textOut += "  Virtual Network Interface Device Initializing\n";
                     return false;
                 }
 

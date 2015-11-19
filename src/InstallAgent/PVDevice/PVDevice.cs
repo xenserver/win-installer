@@ -14,20 +14,32 @@ namespace PVDevice
         {
             ServiceController sc;
 
-            Trace.WriteLine("Checking service: " + name);
+            Trace.WriteLine("Checking service: \'" + name + "\'");
 
             try
             {
                 sc = new ServiceController(name);
             }
-            catch (ArgumentException)
+            catch (ArgumentException e)
             {
-                Trace.WriteLine("Service \'" + name + "\' not found");
+                Trace.WriteLine(e.Message);
                 return false;
             }
 
-            if (sc.Status != ServiceControllerStatus.Running)
+            try
             {
+                if (sc.Status != ServiceControllerStatus.Running)
+                {
+                    Trace.WriteLine(
+                        "Service \'" + name + "\' not running; Status: " +
+                        sc.Status
+                    );
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.Message);
                 return false;
             }
 

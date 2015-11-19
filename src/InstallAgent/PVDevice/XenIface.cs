@@ -22,8 +22,6 @@ namespace PVDevice
         {
             if (!PVDevice.IsServiceRunning("xeniface"))
             {
-                Trace.WriteLine("IFACE: service not running");
-                // textOut += "  XenServer Interface Device Initializing\n";
                 return false;
             }
 

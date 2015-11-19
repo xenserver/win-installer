@@ -12,8 +12,6 @@ namespace PVDevice
         {
             if (!PVDevice.IsServiceRunning("xenvbd"))
             {
-                Trace.WriteLine("VBD: service not running");
-                //textOut += "  Virtual Block Device Support Initializing\n";
                 return false;
             }
 
