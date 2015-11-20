@@ -14,16 +14,44 @@ namespace InstallAgent
 {
     public partial class InstallAgent : ServiceBase
     {
-        public int InstallOption { get; set; }
-        public int RebootOption { get; set; }
-
         public static string rootRegKey =
             @"SOFTWARE\Citrix\InstallAgent\";
+
+        public enum RebootType
+        {
+            NOREBOOT,
+            AUTOREBOOT,
+            DEFAULT
+        }
+
+        public readonly RebootType rebootOption;
+        public readonly int pvToolsVer;
 
         private Thread installThread = null;
 
         public InstallAgent()
         {
+            this.pvToolsVer = this.GetPVToolsVersionOnFirstRun();
+
+            using (RegistryKey tmpRK = Registry.LocalMachine.CreateSubKey(
+                           InstallAgent.rootRegKey))
+            {
+                this.rebootOption = this.GetTrueRebootType(
+                    (RebootType)Enum.Parse(
+                        typeof(RebootType),
+                        (string)tmpRK.GetValue("RebootOption", "DEFAULT"),
+                        true
+                    )
+                );
+            }
+
+            InitializeComponent();
+        }
+
+        public InstallAgent(RebootType rebootOption_)
+        {
+            this.pvToolsVer = this.GetPVToolsVersionOnFirstRun();
+            this.rebootOption = GetTrueRebootType(rebootOption_);
             InitializeComponent();
         }
 
@@ -52,8 +80,6 @@ namespace InstallAgent
                 Trace.WriteLine("Everything is complete!!");
                 return;
             }
-
-            int pvToolsVer = GetPVToolsVersionOnFirstRun();
 
             //RegisterWMI();
 
@@ -187,6 +213,27 @@ namespace InstallAgent
             }
 
             return pvToolsVer;
+        }
+
+        private RebootType GetTrueRebootType(RebootType rt)
+        // If 'rebootOption = DEFAULT', the function returns one of the 2
+        // other options, depending on the system's state on first run
+        {
+            if (rt != RebootType.DEFAULT)
+            {
+                return rt;
+            }
+
+            switch (this.pvToolsVer)
+            {
+                case 0:
+                case 7:
+                    return RebootType.AUTOREBOOT;
+                case 8:
+                    return RebootType.NOREBOOT;
+                default:
+                    throw new Exception("Cannot get RebootType");
+            }
         }
     }
 }
