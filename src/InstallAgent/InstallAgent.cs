@@ -53,6 +53,8 @@ namespace InstallAgent
                 return;
             }
 
+            int pvToolsVer = GetPVToolsVersionOnFirstRun();
+
             //RegisterWMI();
 
             if (!InstallerState.GetFlag(InstallerState.States.NetworkSettingsSaved))
@@ -65,10 +67,7 @@ namespace InstallAgent
 
             if (!InstallerState.SystemCleaned())
             {
-                if ((PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_0001, true) &&
-                         PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_0001)) ||
-                    (PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_0002, true) &&
-                         PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_0002)))
+                if (pvToolsVer == 7)
                 {
                     Trace.WriteLine("PV Tools found on 0001 or 0002; xenprepping..");
                     DriverHandler.SystemClean();
@@ -132,6 +131,62 @@ namespace InstallAgent
             {
                 XSToolsInstallation.Helpers.Reboot();
             }
+        }
+
+        private void SetPVToolsVersionOnFirstRun()
+        // Should run only on first run of the InstallAgent.
+        // Writes a registry key with the system's state;
+        // '0' - system is clean; no drivers installed
+        // '7' - system has drivers other than 8.x installed
+        // '8' - system has drivers 8.x installed
+        {
+            int pvToolsVer;
+
+            if ((PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_0001, true) &&
+                     PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_0001)) ||
+                (PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_0002, true) &&
+                     PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_0002)))
+            {
+                pvToolsVer = 7;
+            }
+            else if (PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_C000, true) &&
+                     PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_C000))
+            {
+                pvToolsVer = 8;
+            }
+            else
+            {
+                pvToolsVer = 0;
+            }
+
+            using (RegistryKey rk = Registry.LocalMachine.CreateSubKey(
+                       InstallAgent.rootRegKey))
+            {
+                rk.SetValue(
+                    "PVToolsVersionOnFirstRun",
+                    pvToolsVer,
+                    RegistryValueKind.DWord
+                );
+            }
+        }
+
+        private int GetPVToolsVersionOnFirstRun()
+        {
+            int pvToolsVer;
+
+            using (RegistryKey rk = Registry.LocalMachine.CreateSubKey(
+                       InstallAgent.rootRegKey))
+            {
+                pvToolsVer = (int)rk.GetValue("PVToolsVersionOnFirstRun", -1);
+
+                if (pvToolsVer == -1)
+                {
+                    SetPVToolsVersionOnFirstRun();
+                    pvToolsVer = (int)rk.GetValue("PVToolsVersionOnFirstRun");
+                }
+            }
+
+            return pvToolsVer;
         }
     }
 }
