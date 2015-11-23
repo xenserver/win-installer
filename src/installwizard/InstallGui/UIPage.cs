@@ -45,6 +45,9 @@ using Microsoft.Win32;
 using System.Diagnostics;
 using System.ServiceProcess;
 using System.Security.Principal;
+using System.Reflection;
+using System.IO;
+using System.Resources;
 
 [assembly: Instrumented(@"root\citrix\xenserver\agent")]
 
@@ -54,9 +57,19 @@ namespace InstallGui
  
     public partial class UIPage : Form
     {
+        ResourceManager branding;
         public UIPage()
         {
             InitializeComponent();
+            
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string brandsatpath = Path.GetDirectoryName(assembly.Location) + "\\brandsat.dll";
+            Assembly sat = Assembly.LoadFile(brandsatpath);
+            string[] resl = sat.GetManifestResourceNames();
+            Stream imagestream = sat.GetManifestResourceStream("DlgBmp.bmp");
+            pictureBox1.Image = new Bitmap(imagestream);
+            branding = new ResourceManager("textstrings", sat);
+            this.Text = branding.GetString("BRANDING_installerProductName");
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -375,7 +388,7 @@ namespace InstallGui
                         AddMessage("Installation Service Not Found");
                         break;
                     case "Installing":
-                        SetProgressing(new string[] { "Installing Citrix XenServer Tools", service.DisplayText() }, service.Progress, service.MaxProgress);
+                        SetProgressing(new string[] { "Installing "+branding.GetString("BRANDING_toolsName"), service.DisplayText() }, service.Progress, service.MaxProgress);
                         break;
                     case "Success":
                         SetDone(true, "You have successfully installed the Citrix XenServer Tools.");

@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UIPage));
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.Default = new System.Windows.Forms.Button();
             this.Next = new System.Windows.Forms.Button();
@@ -42,7 +41,6 @@
             // pictureBox1
             // 
             this.pictureBox1.BackColor = System.Drawing.SystemColors.Window;
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Margin = new System.Windows.Forms.Padding(0);
             this.pictureBox1.MaximumSize = new System.Drawing.Size(493, 312);
@@ -118,7 +116,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(482, 340);
+            this.ClientSize = new System.Drawing.Size(482, 339);
             this.Controls.Add(this.Extra);
             this.Controls.Add(this.Title);
             this.Controls.Add(this.progressBar1);

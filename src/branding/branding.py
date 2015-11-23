@@ -5,6 +5,8 @@ branding = {
         "manufacturer" : "Citrix",
         "installerKeyWords" : "Citrix XenServer Windows Installer",
         "shortTools" : "XenTools",
+        "installerServiceName" : "Citrix Xen Installer",
+        "installWizardName" : "Citrix Xen Install Wizard"
 }
 
 filenames = {

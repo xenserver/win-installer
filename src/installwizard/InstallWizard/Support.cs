@@ -48,9 +48,50 @@ using System.Management;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Security.Cryptography.X509Certificates;
+using System.Resources;
+using System.Reflection;
 
 namespace InstallWizard
 {
+
+    public class Branding
+    {
+        private ResourceManager resources;
+        private static Branding instance;
+        private Branding()
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string brandsatpath = Path.GetDirectoryName(assembly.Location) + "\\brandsat.dll";
+            Assembly sat = Assembly.LoadFile(brandsatpath);
+            resources = new ResourceManager("textstrings", sat);
+            Trace.WriteLine("Resource manager created");
+        }
+        public static string getString(string key)
+        {
+            try
+            {
+                return Instance.resources.GetString(key);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("Unknown Branding : " + key);
+                Trace.WriteLine(e.ToString());
+                return "Unknown Branding " + key;
+            }
+        }
+        public static Branding Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new Branding();
+                }
+                return instance;
+            }
+        }
+    }
+
     class setupapi {
         [DllImport("setupapi.dll", CharSet = CharSet.Auto)]     // 2nd form uses an Enumerator only, with null ClassGUID 
         public static extern IntPtr SetupDiGetClassDevs(
@@ -1917,7 +1958,7 @@ namespace InstallWizard
                 throw new Exception("Xen Interface Base Not Found"); ;
 
             ManagementBaseObject inparam = bse.GetMethodParameters("AddSession");
-            inparam["ID"] = "Citrix Xen Install Wizard";
+            inparam["ID"] = Branding.getString("BRANDING_installWizardName");
             ManagementBaseObject outparam = bse.InvokeMethod("AddSession", inparam, null);
             UInt32 sessionid = (UInt32)outparam["SessionId"];
             ManagementObjectSearcher objects = new ManagementObjectSearcher(@"root\wmi", "SELECT * From CitrixXenStoreSession WHERE SessionId=" + sessionid.ToString());

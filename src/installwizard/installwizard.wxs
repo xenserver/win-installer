@@ -322,6 +322,9 @@
                             Name='XenPVInstall' 
                             Wait='yes' />
                     </Component>
+                    <Component Id="brandsat" Guid="*">
+                        <File Id="brandsatdll" Name="brandsat.dll" Source="proj\brandsat.dll" />
+                    </Component>
                 </Directory>
             </Directory>
          </Directory>
@@ -395,6 +398,7 @@
         <ComponentRef Id='LegacyInstaller' />
         <ComponentRef Id='InstallStatus' />
         <ComponentRef Id='HostTime' />
+        <ComponentRef Id='brandsat' />
     </Feature>
     
     <Feature Id="NoReboot" Level="0">
