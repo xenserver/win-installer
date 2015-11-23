@@ -114,11 +114,6 @@ namespace PVDevice
                 }
             }
 
-            InstallAgent.InstallerState.LogicalORFlag(
-                InstallAgent.InstallerState.States.RebootNeeded,
-                reboot
-            );
-
             return reboot;
         }
     }

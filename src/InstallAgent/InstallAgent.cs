@@ -155,7 +155,18 @@ namespace InstallAgent
                 !PVDevice.XenVif.IsFunctioning() || // Restores Net Settings internally
                 !PVDevice.XenVbd.IsFunctioning())
             {
-                XSToolsInstallation.Helpers.Reboot();
+                if (this.rebootOption == RebootType.AUTOREBOOT)
+                {
+                    XSToolsInstallation.Helpers.Reboot();
+                }
+                else
+                {
+                    InstallerState.SetFlag(InstallerState.States.RebootNeeded);
+                }
+            }
+            else
+            {
+                InstallerState.UnsetFlag(InstallerState.States.RebootNeeded);
             }
         }
 
