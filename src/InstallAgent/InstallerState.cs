@@ -195,12 +195,14 @@ namespace InstallAgent
 
         public static bool SystemCleaned()
         {
-            return currentState == systemCleaned;
+            // (currentState & systemCleaned) clears all other bits
+            // so we can check just the ones we need
+            return (currentState & systemCleaned) == systemCleaned;
         }
 
         public static bool EverythingInstalled()
         {
-            return currentState == everythingInstalled;
+            return (currentState & everythingInstalled) == everythingInstalled;
         }
 
         public static bool Complete()
