@@ -308,8 +308,8 @@ def make_installers(pack):
         sign("installer\\installwizard.msi", signname, signstr=signstr)
 
     # Remove XenLegacy.Exe so that we don't archive the dummy file
-    os.remove("installer\\XenLegacy.Exe")    
-    os.remove("installer\\xluninstallerfix.exe")    
+    os.remove("installer\\"+branding.filenames['legacy'])    
+    os.remove("installer\\"+branding.filenames['legacyuninstallerfix'])    
 
 def archive(filename, files, tgz=False):
     access='w'
@@ -572,7 +572,7 @@ if __name__ == '__main__':
     if archiveSrc == True:
         listfile = callfnout(['git','ls-tree','-r','--name-only','HEAD'])
         archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
-        archive('installer.tar', ['installer'])
+    archive('installer.tar', ['installer'])
 
     if ('AUTOCOMMIT' in os.environ):
         print ("AUTOCOMMIT = ",os.environ['AUTOCOMMIT'])
