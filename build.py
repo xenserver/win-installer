@@ -295,10 +295,10 @@ def make_installers(pack):
     # into the installer, but it is needed to keep light happy (XenLegacy.exe
     # will exentually be sourced from the original build tree)
 
-    f = open("installer\\XenLegacy.Exe","w")
+    f = open("installer\\"+branding.filenames['legacy'],"w")
     f.write("DUMMY FILE")
     f.close()
-    f = open("installer\\xluninstallerfix.exe","w")
+    f = open("installer\\"+branding.filenames['legacyuninstallerfix'],"w")
     f.write("DUMMY FILE")
     f.close()
     
