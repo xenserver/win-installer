@@ -167,6 +167,11 @@ namespace InstallAgent
             else
             {
                 InstallerState.UnsetFlag(InstallerState.States.RebootNeeded);
+
+                XSToolsInstallation.Helpers.ChangeServiceStartMode(
+                    this.ServiceName,
+                    ServiceStartMode.Manual
+                );
             }
         }
 

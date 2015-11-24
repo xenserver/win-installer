@@ -5,6 +5,9 @@ using System.Text;
 using System.Diagnostics;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
+using System.ServiceProcess;
+using System.Runtime.InteropServices;
+using System.ComponentModel;
 
 namespace XSToolsInstallation
 {
@@ -135,6 +138,71 @@ namespace XSToolsInstallation
             }
 
             return (int)Math.Log((double)flag, 2.0);
+        }
+
+        public static bool ChangeServiceStartMode(
+            string serviceName,
+            ServiceStartMode mode)
+        {
+            Trace.WriteLine(
+                "Changing Start Mode of service: \'" + serviceName + "\'"
+            );
+
+            IntPtr scManagerHandle = PInvoke.AdvApi32.OpenSCManager(
+                null,
+                null,
+                PInvoke.AdvApi32.SC_MANAGER_ALL_ACCESS
+            );
+
+            if (scManagerHandle == IntPtr.Zero)
+            {
+                Trace.WriteLine("Open Service Manager Error");
+                return false;
+            }
+
+            IntPtr serviceHandle = PInvoke.AdvApi32.OpenService(
+                scManagerHandle,
+                serviceName,
+                PInvoke.AdvApi32.SERVICE_QUERY_CONFIG |
+                    PInvoke.AdvApi32.SERVICE_CHANGE_CONFIG
+            );
+
+            if (serviceHandle == IntPtr.Zero)
+            {
+                Trace.WriteLine("Open Service Error");
+                return false;
+            }
+
+            if (!PInvoke.AdvApi32.ChangeServiceConfig(
+                    serviceHandle,
+                    PInvoke.AdvApi32.SERVICE_NO_CHANGE,
+                    (uint)mode,
+                    PInvoke.AdvApi32.SERVICE_NO_CHANGE,
+                    null,
+                    null,
+                    IntPtr.Zero,
+                    null,
+                    null,
+                    null,
+                    null))
+            {
+                Trace.WriteLine(
+                    "Could not change service's Start Mode: " +
+                    new Win32Exception(
+                        Marshal.GetLastWin32Error()
+                    ).Message);
+                return false;
+            }
+
+            PInvoke.AdvApi32.CloseServiceHandle(serviceHandle);
+            PInvoke.AdvApi32.CloseServiceHandle(scManagerHandle);
+
+            Trace.WriteLine(
+                "Start Mode successfully changed to: \'" +
+                mode.ToString() + "\'"
+            );
+
+            return true;
         }
     }
 }
