@@ -16,6 +16,9 @@ namespace PVDevice
         // be the empty string.
         public static readonly string[] hwIDs;
 
+        // The XenBus device we care about
+        public static readonly XenBusDevs preferredXenBus;
+
         [Flags]
         public enum XenBusDevs : uint
         {
@@ -69,6 +72,20 @@ namespace PVDevice
                     {
                         hwIDs[i] = "";
                     }
+                }
+
+                // In descending order of preference
+                if (IsPresent(XenBusDevs.DEV_C000, true))
+                {
+                    preferredXenBus = XenBusDevs.DEV_C000;
+                }
+                else if (IsPresent(XenBusDevs.DEV_0001, true))
+                {
+                    preferredXenBus = XenBusDevs.DEV_0001;
+                }
+                else if (IsPresent(XenBusDevs.DEV_0002, true))
+                {
+                    preferredXenBus = XenBusDevs.DEV_0002;
                 }
             }
         }
