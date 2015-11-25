@@ -260,7 +260,7 @@
                   <ServiceInstall Id='InstallServiceInstaller'
                       Type='ownProcess'
                       Vital='yes'
-                      Name='XSInstallAgent'
+                      Name='InstallAgent'
                       DisplayName='$(var.Brand) $(var.Product) $(var.Install)'
                       Description='Installs and updates management agent'
                       Start='auto'
@@ -274,7 +274,7 @@
                       Start='install' 
                       Stop='both' 
                       Remove='uninstall' 
-                      Name='XenSvc' 
+                      Name='InstallAgent'
                       Wait='yes' />
               </Component>
           </Directory>
