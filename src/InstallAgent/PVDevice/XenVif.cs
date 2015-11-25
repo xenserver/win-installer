@@ -39,17 +39,24 @@ namespace PVDevice
                     return false;
                 }
 
-                try
+                if (!InstallAgent.InstallerState.GetFlag(
+                        InstallAgent.InstallerState.States.NetworkSettingsRestored))
                 {
-                    FixupAliases();
-                    NetworkSettingsSaveRestore(false); // Restore
-                }
-                catch (Exception e)
-                {
-                    Trace.WriteLine(
-                        "VIF: Restoring network config triggered " +
-                        "an exception: " + e.ToString()
-                    );
+                    try
+                    {
+                        FixupAliases();
+                        NetworkSettingsSaveRestore(false); // Restore
+                        InstallAgent.InstallerState.SetFlag(
+                            InstallAgent.InstallerState.States.NetworkSettingsRestored
+                        );
+                    }
+                    catch (Exception e)
+                    {
+                        Trace.WriteLine(
+                            "VIF: Restoring network config triggered " +
+                            "an exception: " + e.ToString()
+                        );
+                    }
                 }
 
                 Trace.WriteLine("VIF: device installed");
