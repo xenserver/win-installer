@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using System.Collections;
 using System.IO;
 using System.Threading;
+using System.Reflection;
 
 namespace InstallAgent
 {
@@ -26,8 +27,16 @@ namespace InstallAgent
 
         public readonly RebootType rebootOption;
         public readonly int pvToolsVer;
+        public static readonly string exeDir;
 
         private Thread installThread = null;
+
+        static InstallAgent()
+        {
+            exeDir = new DirectoryInfo(
+                Assembly.GetExecutingAssembly().Location
+            ).Parent.FullName;
+        }
 
         public InstallAgent()
         {
@@ -122,7 +131,7 @@ namespace InstallAgent
                 }
 
                 string driverRootDir = Path.Combine(
-                    Directory.GetCurrentDirectory(),
+                    InstallAgent.exeDir,
                     "Drivers"
                 );
 

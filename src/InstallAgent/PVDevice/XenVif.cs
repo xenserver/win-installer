@@ -71,25 +71,15 @@ namespace PVDevice
                 new string[] { "Saving", "/save", "saved" } :
                 new string[] { "Restoring", "/restore", "restored" };
 
-            string path = (string)Registry.GetValue(
-                @"HKEY_LOCAL_MACHINE\Software\Citrix\XenTools",
-                "Driver_Install_Dir",
-                ""
+            string qNetExe = Path.Combine(
+                InstallAgent.InstallAgent.exeDir,
+                @"netsettings\QNetSettings.exe"
             );
 
-            if (String.IsNullOrEmpty(path))
+            if (!File.Exists(qNetExe))
             {
                 throw new Exception(
-                    "Could not get full path to QNetSettings.exe"
-                );
-            }
-
-            path = Path.Combine(path, @"netsettings\QNetSettings.exe");
-
-            if (!File.Exists(path))
-            {
-                throw new Exception(
-                    String.Format("\'{0}\' does not exist", path)
+                    String.Format("\'{0}\' does not exist", qNetExe)
                 );
             }
 
@@ -97,7 +87,7 @@ namespace PVDevice
 
             ProcessStartInfo start = new ProcessStartInfo();
             start.Arguments = "/log " + function[1];
-            start.FileName = path;
+            start.FileName = qNetExe;
             start.WindowStyle = ProcessWindowStyle.Hidden;
             start.CreateNoWindow = true;
 
