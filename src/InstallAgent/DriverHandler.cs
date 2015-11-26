@@ -22,6 +22,51 @@ namespace InstallAgent
     {
         private static readonly string[] driverNames = { "xenbus", "xeniface", "xenvif", "xenvbd", "xennet" };
 
+        public static PInvoke.CfgMgr32.Wait DriversInstalling(uint tries)
+        {
+            PInvoke.CfgMgr32.Wait result = PInvoke.CfgMgr32.Wait.FAILED;
+
+            if (tries == 0)
+            {
+                tries = 1;
+            }
+            else if (tries > 12)
+            {
+                tries = 12;
+            }
+
+            Trace.WriteLine("Checking if drivers are currently installing");
+
+            for (int i = 0; i < tries; ++i)
+            {
+                uint secs = (uint)(1 << i);
+
+                Trace.WriteLine("Blocking for " + secs + " seconds..");
+
+                result = PInvoke.CfgMgr32.CMP_WaitNoPendingInstallEvents(
+                    secs * 1000
+                );
+
+                if (result == PInvoke.CfgMgr32.Wait.OBJECT_0)
+                {
+                    Trace.WriteLine("No drivers installing");
+                    break;
+                }
+                else if (result == PInvoke.CfgMgr32.Wait.FAILED)
+                {
+                    Trace.WriteLine(
+                        "CMP_WaitNoPendingInstallEvents failed: " +
+                        new Win32Exception(
+                            Marshal.GetLastWin32Error()
+                        ).Message
+                    );
+                    break;
+                }
+            }
+
+            return result;
+        }
+
         public static void SystemClean()
         {
             if (!InstallerState.GetFlag(InstallerState.States.RemovedFromFilters))

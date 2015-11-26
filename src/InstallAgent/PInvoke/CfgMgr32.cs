@@ -24,6 +24,6 @@ namespace PInvoke
             SetLastError = true,
             EntryPoint = "CMP_WaitNoPendingInstallEvents",
             CharSet = CharSet.Auto)]
-        public static extern uint CMP_WaitNoPendingInstallEvents(uint timeOut);
+        public static extern Wait CMP_WaitNoPendingInstallEvents(uint timeOut);
     }
 }
