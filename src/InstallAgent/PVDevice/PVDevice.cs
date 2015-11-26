@@ -116,5 +116,48 @@ namespace PVDevice
 
             return reboot;
         }
+
+        public static bool AllFunctioning()
+        {
+            Func<bool>[] pvDevIsFunctioning = {
+                XenBus.IsFunctioning,
+                XenIface.IsFunctioning,
+                XenVif.IsFunctioning, // <= Restores Net Settings internally
+                XenVbd.IsFunctioning
+            };
+
+            bool busEnumerated = false;
+
+            Trace.WriteLine(
+                "Checking if all PV Devices are functioning properly"
+            );
+
+            for (int i = 0; i < pvDevIsFunctioning.Length; ++i)
+            {
+                if (!pvDevIsFunctioning[i]())
+                {
+                    if (!busEnumerated)
+                    {
+                        XenBus.Enumerate(XenBus.preferredXenBus);
+
+                        // 8 tries arbitrarilly chosen to be
+                        // close to 5 minutes (4 min 15 secs)
+                        if (InstallAgent.DriverHandler.DriversInstalling(8) ==
+                                PInvoke.CfgMgr32.Wait.FAILED)
+                        {
+                            return false;
+                        }
+
+                        busEnumerated = true;
+                        --i;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
     }
 }

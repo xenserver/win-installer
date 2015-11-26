@@ -159,10 +159,16 @@ namespace InstallAgent
                 }
             }
 
-            if (!PVDevice.XenBus.IsFunctioning() ||
-                !PVDevice.XenIface.IsFunctioning() ||
-                !PVDevice.XenVif.IsFunctioning() || // Restores Net Settings internally
-                !PVDevice.XenVbd.IsFunctioning())
+            if (PVDevice.PVDevice.AllFunctioning())
+            {
+                InstallerState.UnsetFlag(InstallerState.States.RebootNeeded);
+
+                XSToolsInstallation.Helpers.ChangeServiceStartMode(
+                    this.ServiceName,
+                    ServiceStartMode.Manual
+                );
+            }
+            else
             {
                 if (this.rebootOption == RebootType.AUTOREBOOT)
                 {
@@ -172,15 +178,6 @@ namespace InstallAgent
                 {
                     InstallerState.SetFlag(InstallerState.States.RebootNeeded);
                 }
-            }
-            else
-            {
-                InstallerState.UnsetFlag(InstallerState.States.RebootNeeded);
-
-                XSToolsInstallation.Helpers.ChangeServiceStartMode(
-                    this.ServiceName,
-                    ServiceStartMode.Manual
-                );
             }
         }
 
