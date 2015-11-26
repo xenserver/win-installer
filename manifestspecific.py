@@ -33,12 +33,12 @@ localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
        "xenbus" : r'xenbus.git.whql\51-w10\xenbus-7-2-0-51-w10.tar',
-       "xenvif" : r'xenvif.git\57\xenvif.tar',
+       "xenvif" : r'xenvif.git.whql\57\xenvif-7-2-0-57.tar',
        "xennet" : r'xennet.git.whql\17-w10\xennet-7-2-0-17-w10.tar',
        "xeniface" : r'xeniface.git.whql\14-w10\xeniface-7-2-0-14-w10.tar',
        "xenvbd" : r'xenvbd.git.whql\40-w10\xenvbd-7-2-0-40-w10.tar',
-       "xenguestagent" : r'xenguestagent.git.locked\135\xenguestagent.tar',
+       "xenguestagent" : r'xenguestagent.git.locked\157\xenguestagent.tar',
        "xenvss" : r'standard-lcm\16\xenvss-7.tar',
 }
 
-all_drivers_signed = False
+all_drivers_signed = True
