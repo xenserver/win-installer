@@ -28,6 +28,8 @@ namespace InstallAgent
         public readonly RebootType rebootOption;
         public readonly int pvToolsVer;
         public static readonly string exeDir;
+        public static readonly int rebootsSoFar;
+        public const int REBOOTS_MAX = 5;
 
         private Thread installThread = null;
 
@@ -36,6 +38,18 @@ namespace InstallAgent
             exeDir = new DirectoryInfo(
                 Assembly.GetExecutingAssembly().Location
             ).Parent.FullName;
+
+            using (RegistryKey rk = Registry.LocalMachine.CreateSubKey(
+                       rootRegKey))
+            {
+                int rsf = (int)rk.GetValue("RebootsSoFar", -1);
+
+                if (rsf == -1)
+                {
+                    rk.SetValue("RebootsSoFar", 0, RegistryValueKind.DWord);
+                    rsf = 0;
+                }
+            }
         }
 
         public InstallAgent()
@@ -172,7 +186,26 @@ namespace InstallAgent
             {
                 if (this.rebootOption == RebootType.AUTOREBOOT)
                 {
-                    XSToolsInstallation.Helpers.Reboot();
+                    if (InstallAgent.rebootsSoFar < InstallAgent.REBOOTS_MAX)
+                    {
+                        using (RegistryKey rk = Registry.LocalMachine.CreateSubKey(
+                                   InstallAgent.rootRegKey))
+                        {
+                            rk.SetValue(
+                                "RebootsSoFar",
+                                InstallAgent.rebootsSoFar + 1,
+                                RegistryValueKind.DWord
+                            );
+                        }
+                        XSToolsInstallation.Helpers.Reboot();
+                    }
+                    else
+                    {
+                        Trace.WriteLine(
+                            "VM should reboot, but maximum number of " +
+                            "reboots reached: " + InstallAgent.REBOOTS_MAX
+                        );
+                    }
                 }
                 else
                 {
