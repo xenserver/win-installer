@@ -68,7 +68,7 @@
              SummaryCodepage='1252' />
 
     <Icon Id="icon.ico" SourceFile="$(var.RESOURCES_Bitmaps)\$(var.RESOURCE_icon)"/>
-    <Property Id="ARPPRODUCTICON" Value="$(var.RESOURCE_icon)" />
+    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
     <Property Id="ARPNOREPAIR" Value="1" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />     
     <Property Id="REINSTALLMODE"  Value="dmus" />
@@ -267,10 +267,10 @@
                     <Component Id="Msis" Guid="$(var.msiid)" >
                         <File Id="Drivers32MSI" Compressed="no" DiskId="2" Source="$(var.FILENAME_driversmsix86)" />
                         <File Id="Drivers64MSI" Compressed="no" DiskId="2" Source="$(var.FILENAME_driversmsix64)" />
-                        <File Id="Agent32MSI" Compressed="no" DiskId="2" Source="CitrixGuestAgentX86.msi" />
-                        <File Id="Agent64MSI" Compressed="no" DiskId="2" Source="CitrixGuestAgentX64.msi" />
-                        <File Id="VssProv32MSI" Compressed="no" DiskId="2" Source="CitrixVssX86.msi" />
-                        <File Id="VssProv4MSI" Compressed="no" DiskId="2" Source="CitrixVssX64.msi" />
+                        <File Id="Agent32MSI" Compressed="no" DiskId="2" Source="$(var.FILENAME_guestagentmsix86)" />
+                        <File Id="Agent64MSI" Compressed="no" DiskId="2" Source="$(var.FILENAME_guestagentmsix64)" />
+                        <File Id="VssProv32MSI" Compressed="no" DiskId="2" Source="$(var.FILENAME_vssmsix86)" />
+                        <File Id="VssProv4MSI" Compressed="no" DiskId="2" Source="$(var.FILENAME_vssmsix64)" />
                     </Component>
                     <?if $(var.usecerts)=yes ?>
                     <Component Id="Certs" Guid="$(var.certs)">
@@ -305,7 +305,7 @@
                         <ServiceInstall Id='XenInstallerInstaller'
                             Type='ownProcess'
                             Vital='yes'
-                            Name='XenPVInstall'
+                            Name='$(var.BRANDING_shortInstallerServiceName)'
                             DisplayName='$(var.BRANDING_installerProductName)'
                             Description='Manages $(var.BRANDING_toolsName) Installation'
                             Start='auto'
@@ -319,7 +319,7 @@
                             Start='install' 
                             Stop='both' 
                             Remove='uninstall' 
-                            Name='XenPVInstall' 
+                            Name='$(var.BRANDING_shortInstallerServiceName)' 
                             Wait='yes' />
                     </Component>
                     <Component Id="brandsat" Guid="*">
@@ -444,7 +444,7 @@
     <CustomAction Id="LaunchApplication" FileKey="InstallguiExe" Impersonate="yes" ExeCommand="[LaunchApplication]" Return="asyncNoWait" />
 
 
-    <CustomAction Id='SetLegacy' Property="LegacyExeProp" Value="[INSTALLER]\XenLegacy.exe" Execute="immediate" />
+    <CustomAction Id='SetLegacy' Property="LegacyExeProp" Value="[INSTALLER]\$(var.FILENAME_legacy)" Execute="immediate" />
     <CustomAction Id='LegacySilent' Property="LaunchLegacy" Value="/norestart /AllowLegacyInstall /S /D=[INSTALLDIR]" Execute="immediate" />
 
 
@@ -472,7 +472,7 @@
         </ScheduleReboot>
     </InstallExecuteSequence>
 
-    <CustomAction Id='CA_Set_ExitText' Property='WIXUI_EXITDIALOGOPTIONALTEXT' Value="When the Setup Wizard exits, the install wizard will begin and install the XenServer Windows PV Tools" />
+    <CustomAction Id='CA_Set_ExitText' Property='WIXUI_EXITDIALOGOPTIONALTEXT' Value="When the Setup Wizard exits, the install wizard will begin and install the $(var.BRANDING_pvtoolsLong)" />
     <CustomAction Id='CA_Set_ExitTextLegacy' Property='WIXUI_EXITDIALOGOPTIONALTEXT' Value="" />
 
     <InstallUISequence>

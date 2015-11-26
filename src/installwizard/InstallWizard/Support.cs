@@ -1835,9 +1835,9 @@ namespace InstallWizard
             Trace.WriteLine("Updating NSIS Driver");
             Process installer;
             DriverPackage.EnsureMsiMutexAvailable(new TimeSpan(0, 2, 0)); // Don't try to install while installer MSI is still running
-            ProcessStartInfo si = new ProcessStartInfo(path+"xenlegacy.exe", "/S /AllowLegacyInstall");
+            ProcessStartInfo si = new ProcessStartInfo(path+Branding.getString("FILENAME_legacy"), "/S /AllowLegacyInstall");
             si.CreateNoWindow = true;
-            Trace.WriteLine("Start updating via " + path + "xenlegacy.exe");
+            Trace.WriteLine("Start updating via " + path + Branding.getString("FILENAME_legacy"));
             installer = Process.Start(si);
             while (!installer.HasExited)
             {
@@ -1860,9 +1860,9 @@ namespace InstallWizard
 
         public void uninstallerfix()
         {
-            if (File.Exists(path + "xluninstallerfix.exe"))
+            if (File.Exists(path + Branding.getString("FILENAME_legacyuninstallerfix")))
             {
-                ProcessStartInfo si = new ProcessStartInfo(path + "xluninstallerfix.exe", "/S");
+                ProcessStartInfo si = new ProcessStartInfo(path + Branding.getString("FILENAME_legacyuninstallerfix"), "/S");
                 Process fix = Process.Start(si);
                 while (!fix.HasExited)
                 {
@@ -2230,10 +2230,10 @@ namespace InstallWizard
                 if (!checkservicerunning("xeniface"))
                 {
                     Trace.WriteLine("Interface device not ready");
-                    textout = textout + "  XenServer Interface Device Initializing\n";
+                    textout = textout + "  "+Branding.getString("BRANDING_hypervisorProduct")+" Interface Device Initializing\n";
                     return false;
                 }
-                textout = textout+"  XenServer Interface Device Installed\n";
+                textout = textout + "  " + Branding.getString("BRANDING_hypervisorProduct") + " Interface Device Installed\n";
 
                 // If there are no vifs for the VM, xenbus dose not enumerate a device for xenvif 
                 if (checkserviceneeded("VIF")) {

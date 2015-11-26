@@ -257,30 +257,30 @@ def make_installers(pack):
     src = ".\\src\\vss"
 #    
     callfn([wix("candle.exe"), src+"\\citrixvss.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixvssx86.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixvssx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\citrixvssx86.msi", "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\citrixvssx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['vssmsix86'], "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
     if signfiles:
-        sign("installer\\citrixvssx86.msi", signname, signstr=signstr)
+        sign("installer\\"+branding.filenames['vssmsix86'], signname, signstr=signstr)
 #
     callfn([wix("candle.exe"), src+"\\citrixvss.wxs", "-arch","x86", "-darch=x64", "-o", "installer\\citrixvssx64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixvssx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\citrixvssx64.msi", "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\citrixvssx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['vssmsix64'], "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
     if signfiles:
-        sign("installer\\citrixvssx64.msi", signname, signstr=signstr)
+        sign("installer\\"+branding.filenames['vssmsix64'], signname, signstr=signstr)
 #
     src = ".\\src\\agent"
 #
 
     
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixguestagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixguestagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\citrixguestagentx86.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\citrixguestagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['guestagentmsix86'], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
     if signfiles:
-        sign("installer\\citrixguestagentx86.msi", signname, signstr=signstr)
+        sign("installer\\"+branding.filesnames['guestagentmsix86'], signname, signstr=signstr)
 #
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixguestagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
 
 
-    callfn([wix("light.exe"), "installer\\citrixguestagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\citrixguestagentx64.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\citrixguestagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['guestagentmsix64'], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
     if signfiles:
-        sign("installer\\citrixguestagentx64.msi", signname, signstr=signstr)
+        sign("installer\\"+branding.filenames['guestagentmsix64'], signname, signstr=signstr)
     src = ".\\src\\installwizard"
     bitmaps = ".\\src\\bitmaps"
     
@@ -302,7 +302,7 @@ def make_installers(pack):
     f.write("DUMMY FILE")
     f.close()
     
-    callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if signfiles:
         sign("installer\\installwizard.msi", signname, signstr=signstr)

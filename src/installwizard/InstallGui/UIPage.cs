@@ -384,18 +384,18 @@ namespace InstallGui
                         SetNext("Installation paused", new CitrixXenServerInstallEvent("UnPause"));
                         break;
                     case "Disconnected":
-                        SetDone(false, "The installation of Citrix XenServer Tools has failed");
+                        SetDone(false, "The installation of "+branding.GetString("BRANDING_toolsName")+" has failed");
                         AddMessage("Installation Service Not Found");
                         break;
                     case "Installing":
                         SetProgressing(new string[] { "Installing "+branding.GetString("BRANDING_toolsName"), service.DisplayText() }, service.Progress, service.MaxProgress);
                         break;
                     case "Success":
-                        SetDone(true, "You have successfully installed the Citrix XenServer Tools.");
+                        SetDone(true, "You have successfully installed the " + branding.GetString("BRANDING_toolsName") + ".");
                         AddMessage("Click 'Done' to exit the installer");
                         break;
                     case "Failed":
-                        SetDone(false, "The installation of Citrix XenServer Tools has failed");
+                        SetDone(false, "The installation of " + branding.GetString("BRANDING_toolsName") + " has failed");
                         AddMessage(service.FailMsg());
                         break;
                     case "RequestReboot":

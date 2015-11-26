@@ -39,6 +39,7 @@
     
 
     <?include verinfo.wxi ?>
+    <?include branding.wxi ?>
     <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
     <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
     <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
@@ -59,17 +60,17 @@
       <?define pf="ProgramFilesFolder" ?>
     <?endif?>
 
-  <Product Name='Citrix XenServer Windows Guest Agent' Id='$(var.ProductId)'
-           Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='Citrix'
+  <Product Name='$(var.BRANDING_guestAgentLong)' Id='$(var.ProductId)'
+           Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='$(var.BRANDING_manufacturer)'
            UpgradeCode='$(var.UpgradeCode)' >
-    <Package Id='*' Keywords='Citrix XenServer Windows Guest Agent' Description='Windows Guest Agent'
-             Comments='Installs Citrix XenServer Windows Guest Agent' Manufacturer='Citrix'
+    <Package Id='*' Keywords='$(var.BRANDING_guestAgentLong)' Description='Windows Guest Agent'
+             Comments='Installs $(var.BRANDING_guestAgentLong)' Manufacturer='$(var.BRANDING_manufacturer)'
              InstallerVersion='200' Languages='1033' Compressed='yes'
              InstallScope='perMachine'
              Platform='$(var.arch)'
              SummaryCodepage='1252' />
 
-   <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
+   <Icon Id="icon.ico" SourceFile="$(var.RESOURCES_Bitmaps)\$(var.RESOURCE_icon)"/>
    <Property Id="ARPPRODUCTICON" Value="icon.ico" />
    <Property Id='ARPSYSTEMCOMPONENT' Value='0'/>
     <Property Id="REINSTALLMODE" Value="dmus" />
@@ -132,10 +133,10 @@
             Name="Install"
             Type="raw" />
     </Property>
-    <Condition Message="This version of the Citrix XenServer Windows Guest Agent requires Windows Vista, Windows Server 2008 or Later">
+    <Condition Message="This version of the $(var.BRANDING_guestAgentLong) requires Windows Vista, Windows Server 2008 or Later">
         <![CDATA[Installed OR (VersionNT>=600)]]>
     </Condition>
-    <Condition Message="Existing Citrix Xen PV Tools Must be uninstalled before installing the Citrix Xen Guest Agent">
+    <Condition Message="Existing $(var.BRANDING_pvTools) Must be uninstalled before installing the $(var.BRANDING_guestAgent)">
         <![CDATA[Installed OR ( ( NOT XENTOOLSEXISTS ) OR ( XENTOOLSISMSI ))]]>
     </Condition>
     <Condition Message="Microsoft .Net Framework Version 3.5 or 4 is required">
@@ -145,8 +146,8 @@
     <Media Id='1' Cabinet='XenGuestAgentInstaller.cab' EmbedCab='yes' />
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='$(var.pf)'>
-        <Directory Id='Citrix' Name='Citrix'>
-          <Directory Id='INSTALLDIR' Name='XenTools'>
+        <Directory Id='Citrix' Name='$(var.BRANDING_manufacturer)'>
+          <Directory Id='INSTALLDIR' Name='$(var.BRANDING_shortTools)'>
               <Component Id='dotnetfouragent' Guid='$(var.dn4id)' >
                   <Condition>
                       <![CDATA[Installed OR (( NETFRAMEWORK4XFULL OR NETFRAMEWORK4XCLIENT ) AND NOT NETFRAMEWORKX35) ]]>
@@ -164,9 +165,9 @@
                   <ServiceInstall Id='XenServiceInstaller'
                         Type='ownProcess'
                         Vital='yes'
-                        Name='XenSvc'
-                        DisplayName='Citrix Xen Guest Agent'
-                        Description='Monitors and provides various metrics to XenStore'
+                        Name='$(var.BRANDING_guestServiceShort)'
+                        DisplayName='$(var.BRANDING_guestAgent)'
+                        Description='$(var.BRANDING_guestServiceDesc)'
                         Start='auto'
                         Account='LocalSystem'
                         ErrorControl='ignore'
@@ -178,7 +179,7 @@
                         Start='install' 
                         Stop='both' 
                         Remove='uninstall' 
-                        Name='XenSvc' 
+                        Name='$(var.BRANDING_guestServiceShort)' 
                         Wait='yes' />
                 </Component>
           </Directory>
