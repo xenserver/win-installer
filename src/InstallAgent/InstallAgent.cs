@@ -1,22 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using Microsoft.Win32;
+using PInvoke;
+using PVDevice;
+using State;
+using System;
 using System.Diagnostics;
-using System.Linq;
-using System.ServiceProcess;
-using System.Text;
-using Microsoft.Win32;
-using System.Collections;
 using System.IO;
-using System.Threading;
 using System.Reflection;
+using System.ServiceProcess;
+using System.Threading;
 
 namespace InstallAgent
 {
     public partial class InstallAgent : ServiceBase
     {
-        public static string rootRegKey =
-            @"SOFTWARE\Citrix\InstallAgent\";
+        public static string rootRegKeyName =
+            @"SOFTWARE\Citrix\InstallAgent";
 
         public enum RebootType
         {

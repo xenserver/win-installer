@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
+using System;
 
 namespace InstallAgent
 {
@@ -11,7 +8,7 @@ namespace InstallAgent
         private static int currentState;
 
         private static readonly string stateRegKey =
-            InstallAgent.rootRegKey + @"State\";
+            InstallAgent.rootRegKeyName + @"\InstallerState";
 
         private static readonly int systemCleaned = (int)(
             States.RemovedFromFilters |
