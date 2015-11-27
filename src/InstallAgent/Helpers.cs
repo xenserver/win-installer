@@ -15,19 +15,6 @@ namespace XSToolsInstallation
     {
         public static void Reboot()
         {
-            Trace.WriteLine(
-                "One last attempt not to shutdown " +
-                "if something is still installing"
-            );
-
-            if (InstallAgent.InstallerState.GetFlag(
-                    InstallAgent.InstallerState.States.DriverInstalling))
-            {
-                PInvoke.CfgMgr32.CMP_WaitNoPendingInstallEvents(
-                    PInvoke.CfgMgr32.INFINITE
-                );
-            }
-
             Trace.WriteLine("OK - shutting down");
             AcquireSystemPrivilege(PInvoke.AdvApi32.SE_SHUTDOWN_NAME);
 
