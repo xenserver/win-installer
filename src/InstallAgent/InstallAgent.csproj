@@ -81,6 +81,7 @@
     <Compile Include="PInvoke\SetupApi.cs" />
     <Compile Include="TimeDateTraceListener.cs" />
     <Compile Include="PInvoke\User32.cs" />
+    <Compile Include="VM.cs" />
     <Compile Include="WinVersion.cs" />
   </ItemGroup>
   <ItemGroup>

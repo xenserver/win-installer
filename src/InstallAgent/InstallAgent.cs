@@ -23,11 +23,8 @@ namespace InstallAgent
             DEFAULT
         }
 
-        public readonly RebootType rebootOption;
-        public readonly int pvToolsVer;
+        public static /* readonly */ RebootType rebootOption;
         public static readonly string exeDir;
-        public static readonly int rebootsSoFar;
-        public const int REBOOTS_MAX = 5;
 
         private Thread installThread = null;
 
@@ -37,27 +34,17 @@ namespace InstallAgent
                 Assembly.GetExecutingAssembly().Location
             ).Parent.FullName;
 
-            using (RegistryKey rk = Registry.LocalMachine.CreateSubKey(
-                       rootRegKey))
-            {
-                int rsf = (int)rk.GetValue("RebootsSoFar", -1);
-
-                if (rsf == -1)
-                {
-                    rk.SetValue("RebootsSoFar", 0, RegistryValueKind.DWord);
-                    rsf = 0;
-                }
-            }
+            // Just to kick off the static constructor
+            // before we start messing with the VM
+            VM.GetOtherDriverInstallingOnFirstRun();
         }
 
         public InstallAgent()
         {
-            this.pvToolsVer = this.GetPVToolsVersionOnFirstRun();
-
             using (RegistryKey tmpRK = Registry.LocalMachine.CreateSubKey(
-                           InstallAgent.rootRegKey))
+                           rootRegKeyName))
             {
-                this.rebootOption = this.GetTrueRebootType(
+                rebootOption = GetTrueRebootType(
                     (RebootType)Enum.Parse(
                         typeof(RebootType),
                         (string)tmpRK.GetValue("RebootOption", "DEFAULT"),
@@ -71,8 +58,7 @@ namespace InstallAgent
 
         public InstallAgent(RebootType rebootOption_)
         {
-            this.pvToolsVer = this.GetPVToolsVersionOnFirstRun();
-            this.rebootOption = GetTrueRebootType(rebootOption_);
+            rebootOption = GetTrueRebootType(rebootOption_);
             InitializeComponent();
         }
 
@@ -107,14 +93,14 @@ namespace InstallAgent
             if (!InstallerState.GetFlag(InstallerState.States.NetworkSettingsSaved))
             {
                 Trace.WriteLine("NetSettings not saved..");
-                PVDevice.XenVif.NetworkSettingsSaveRestore(true);
+                XenVif.NetworkSettingsSaveRestore(true);
                 InstallerState.SetFlag(InstallerState.States.NetworkSettingsSaved);
                 Trace.WriteLine("NetSettings saved!");
             }
 
             if (!InstallerState.SystemCleaned())
             {
-                if (pvToolsVer == 7)
+                if (VM.GetPVToolsVersionOnFirstRun() == VM.PVToolsVersion.NotEight)
                 {
                     Trace.WriteLine("PV Tools found on 0001 or 0002; xenprepping..");
                     DriverHandler.SystemClean();
@@ -173,7 +159,7 @@ namespace InstallAgent
 
             if (PVDevice.PVDevice.AllFunctioning())
             {
-                InstallerState.UnsetFlag(InstallerState.States.RebootNeeded);
+                VM.UnsetRebootNeeded();
 
                 XSToolsInstallation.Helpers.ChangeServiceStartMode(
                     this.ServiceName,
@@ -182,93 +168,32 @@ namespace InstallAgent
             }
             else
             {
-                if (this.rebootOption == RebootType.AUTOREBOOT)
+                if (rebootOption == RebootType.AUTOREBOOT)
                 {
-                    if (InstallAgent.rebootsSoFar < InstallAgent.REBOOTS_MAX)
+                    if (VM.AllowedToReboot())
                     {
-                        using (RegistryKey rk = Registry.LocalMachine.CreateSubKey(
-                                   InstallAgent.rootRegKey))
-                        {
-                            rk.SetValue(
-                                "RebootsSoFar",
-                                InstallAgent.rebootsSoFar + 1,
-                                RegistryValueKind.DWord
-                            );
-                        }
+                        CfgMgr32.CMP_WaitNoPendingInstallEvents(
+                            GetTimeoutToReboot()
+                        );
+
+                        VM.IncrementRebootCount();
                         XSToolsInstallation.Helpers.Reboot();
                     }
                     else
                     {
                         Trace.WriteLine(
-                            "VM should reboot, but maximum number of " +
-                            "reboots reached: " + InstallAgent.REBOOTS_MAX
+                            "VM reached maximum number of allowed reboots"
                         );
                     }
                 }
                 else
                 {
-                    InstallerState.SetFlag(InstallerState.States.RebootNeeded);
+                    VM.SetRebootNeeded();
                 }
             }
         }
 
-        private void SetPVToolsVersionOnFirstRun()
-        // Should run only on first run of the InstallAgent.
-        // Writes a registry key with the system's state;
-        // '0' - system is clean; no drivers installed
-        // '7' - system has drivers other than 8.x installed
-        // '8' - system has drivers 8.x installed
-        {
-            int pvToolsVer;
-
-            if ((PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_0001, true) &&
-                     PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_0001)) ||
-                (PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_0002, true) &&
-                     PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_0002)))
-            {
-                pvToolsVer = 7;
-            }
-            else if (PVDevice.XenBus.IsPresent(PVDevice.XenBus.XenBusDevs.DEV_C000, true) &&
-                     PVDevice.XenBus.HasChildren(PVDevice.XenBus.XenBusDevs.DEV_C000))
-            {
-                pvToolsVer = 8;
-            }
-            else
-            {
-                pvToolsVer = 0;
-            }
-
-            using (RegistryKey rk = Registry.LocalMachine.CreateSubKey(
-                       InstallAgent.rootRegKey))
-            {
-                rk.SetValue(
-                    "PVToolsVersionOnFirstRun",
-                    pvToolsVer,
-                    RegistryValueKind.DWord
-                );
-            }
-        }
-
-        private int GetPVToolsVersionOnFirstRun()
-        {
-            int pvToolsVer;
-
-            using (RegistryKey rk = Registry.LocalMachine.CreateSubKey(
-                       InstallAgent.rootRegKey))
-            {
-                pvToolsVer = (int)rk.GetValue("PVToolsVersionOnFirstRun", -1);
-
-                if (pvToolsVer == -1)
-                {
-                    SetPVToolsVersionOnFirstRun();
-                    pvToolsVer = (int)rk.GetValue("PVToolsVersionOnFirstRun");
-                }
-            }
-
-            return pvToolsVer;
-        }
-
-        private RebootType GetTrueRebootType(RebootType rt)
+        private static RebootType GetTrueRebootType(RebootType rt)
         // If 'rebootOption = DEFAULT', the function returns one of the 2
         // other options, depending on the system's state on first run
         {
@@ -277,16 +202,44 @@ namespace InstallAgent
                 return rt;
             }
 
-            switch (this.pvToolsVer)
+            switch (VM.GetPVToolsVersionOnFirstRun())
             {
-                case 0:
-                case 7:
+                case VM.PVToolsVersion.None:
+                case VM.PVToolsVersion.NotEight:
                     return RebootType.AUTOREBOOT;
-                case 8:
+                case VM.PVToolsVersion.Eight:
                     return RebootType.NOREBOOT;
                 default:
                     throw new Exception("Cannot get RebootType");
             }
+        }
+
+        private static uint GetTimeoutToReboot()
+        {
+            uint timeout;
+
+            if (VM.GetOtherDriverInstallingOnFirstRun())
+            {
+                timeout = 20; // arbitrarily chosen;
+
+                Trace.WriteLine(
+                    "Something was installing before Install " +
+                    "Agent's first run. Timeout: " + timeout +
+                    " minutes"
+                );
+
+                timeout *= 60 * 1000; // minutes to milliseconds
+            }
+            else
+            {
+                Trace.WriteLine(
+                    "Will wait until active (if any) PV Tools " +
+                    "driver installations have finished"
+                );
+                timeout = CfgMgr32.INFINITE;
+            }
+
+            return timeout;
         }
     }
 }
