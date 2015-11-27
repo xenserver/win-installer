@@ -19,12 +19,12 @@ namespace InstallAgent
         );
 
         private static readonly int everythingInstalled = (int)(
-            States.CertificatesInstalled |
             States.XenBusInstalled |
             States.XenIfaceInstalled |
             States.XenVifInstalled |
             States.XenNetInstalled |
-            States.XenVbdInstalled
+            States.XenVbdInstalled |
+            States.CertificatesInstalled
         );
 
         private static readonly int complete =
@@ -50,7 +50,6 @@ namespace InstallAgent
         };
 
         private static readonly StateInfo[] statesDefault = {
-            new StateInfo("DriverInstalling", 0),
             new StateInfo("NetworkSettingsSaved", 0),
             new StateInfo("NetworkSettingsRestored", 0),
             new StateInfo("RemovedFromFilters", 0),
@@ -58,13 +57,12 @@ namespace InstallAgent
             new StateInfo("MSIsUninstalled", 0),
             new StateInfo("XenLegacyUninstalled", 0),
             new StateInfo("CleanedUp", 0),
-            new StateInfo("CertificatesInstalled", 0),
             new StateInfo("XenBusInstalled", 0),
             new StateInfo("XenIfaceInstalled", 0),
             new StateInfo("XenVifInstalled", 0),
             new StateInfo("XenNetInstalled", 0),
             new StateInfo("XenVbdInstalled", 0),
-            new StateInfo("RebootNeeded", 0),
+            new StateInfo("CertificatesInstalled", 0),
         };
 
         [Flags]
@@ -72,29 +70,26 @@ namespace InstallAgent
         // the task is complete or no action required.
         public enum States
         {
-            DriverInstalling = 1 << 0,
-            NetworkSettingsSaved = 1 << 1,
-            NetworkSettingsRestored = 1 << 2,
+            NetworkSettingsSaved = 1 << 0,
+            NetworkSettingsRestored = 1 << 1,
 
             // ---- PV Drivers Removal States ----
-            RemovedFromFilters = 1 << 3,
-            BootStartDisabled = 1 << 4,
-            MSIsUninstalled = 1 << 5,
-            XenLegacyUninstalled = 1 << 6,
-            CleanedUp = 1 << 7,
+            RemovedFromFilters = 1 << 2,
+            BootStartDisabled = 1 << 3,
+            MSIsUninstalled = 1 << 4,
+            XenLegacyUninstalled = 1 << 5,
+            CleanedUp = 1 << 6,
             // --------------- End ---------------
 
-            CertificatesInstalled = 1 << 8,
-
             // ------- PV Drivers Installed -------
-            XenBusInstalled = 1 << 9,
-            XenIfaceInstalled = 1 << 10,
-            XenVifInstalled = 1 << 11,
-            XenNetInstalled = 1 << 12,
-            XenVbdInstalled = 1 << 13,
+            XenBusInstalled = 1 << 7,
+            XenIfaceInstalled = 1 << 8,
+            XenVifInstalled = 1 << 9,
+            XenNetInstalled = 1 << 10,
+            XenVbdInstalled = 1 << 11,
             // ---------------- End ---------------
 
-            RebootNeeded = 1 << 14,
+            CertificatesInstalled = 1 << 12,
         }
 
         // Static constructor: queries the Registry for the
