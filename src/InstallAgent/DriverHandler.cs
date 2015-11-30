@@ -1,15 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
+﻿using Microsoft.Win32;
+using PInvoke;
+using PVDevice;
+using State;
+using System;
+using System.Collections;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Collections;
-using Microsoft.Win32;
-using System.ComponentModel;
-using State;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
+using XSToolsInstallation;
 
 namespace InstallAgent
 {
@@ -23,9 +25,9 @@ namespace InstallAgent
     {
         private static readonly string[] driverNames = { "xenbus", "xeniface", "xenvif", "xenvbd", "xennet" };
 
-        public static PInvoke.CfgMgr32.Wait DriversInstalling(uint tries)
+        public static CfgMgr32.Wait DriversInstalling(uint tries)
         {
-            PInvoke.CfgMgr32.Wait result = PInvoke.CfgMgr32.Wait.FAILED;
+            CfgMgr32.Wait result = CfgMgr32.Wait.FAILED;
 
             if (tries == 0)
             {
@@ -44,16 +46,16 @@ namespace InstallAgent
 
                 Trace.WriteLine("Blocking for " + secs + " seconds..");
 
-                result = PInvoke.CfgMgr32.CMP_WaitNoPendingInstallEvents(
+                result = CfgMgr32.CMP_WaitNoPendingInstallEvents(
                     secs * 1000
                 );
 
-                if (result == PInvoke.CfgMgr32.Wait.OBJECT_0)
+                if (result == CfgMgr32.Wait.OBJECT_0)
                 {
                     Trace.WriteLine("No drivers installing");
                     break;
                 }
-                else if (result == PInvoke.CfgMgr32.Wait.FAILED)
+                else if (result == CfgMgr32.Wait.FAILED)
                 {
                     Trace.WriteLine(
                         "CMP_WaitNoPendingInstallEvents failed: " +
@@ -105,8 +107,8 @@ namespace InstallAgent
         public static bool StageToDriverStore(
             string driverRootDir,
             string driver,
-            PInvoke.SetupApi.SP_COPY copyStyle =
-                PInvoke.SetupApi.SP_COPY.NEWER_ONLY)
+            SetupApi.SP_COPY copyStyle =
+                SetupApi.SP_COPY.NEWER_ONLY)
         {
             string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
 
@@ -131,10 +133,10 @@ namespace InstallAgent
                 String.Format("Staging \'{0}\' to DriverStore", driver)
             );
 
-            if (!PInvoke.SetupApi.SetupCopyOEMInf(
+            if (!SetupApi.SetupCopyOEMInf(
                     infPath,
                     infDir,
-                    PInvoke.SetupApi.SPOST.PATH,
+                    SetupApi.SPOST.PATH,
                     copyStyle,
                     IntPtr.Zero,
                     0,
@@ -168,7 +170,7 @@ namespace InstallAgent
         // string in an .inf file. If not found, an empty string is
         // returned.
         public static string GetHardwareIdFromInf(
-            PVDevice.XenBus.XenBusDevs xenBusDev,
+            XenBus.XenBusDevs xenBusDev,
             string infPath)
         {
             if (!File.Exists(infPath))
@@ -182,13 +184,13 @@ namespace InstallAgent
 
             switch (xenBusDev)
             {
-                case PVDevice.XenBus.XenBusDevs.DEV_0001:
+                case XenBus.XenBusDevs.DEV_0001:
                     xenBusDevStr = "0001";
                     break;
-                case PVDevice.XenBus.XenBusDevs.DEV_0002:
+                case XenBus.XenBusDevs.DEV_0002:
                     xenBusDevStr = "0002";
                     break;
-                case PVDevice.XenBus.XenBusDevs.DEV_C000:
+                case XenBus.XenBusDevs.DEV_C000:
                     xenBusDevStr = "C000";
                     break;
                 default:
@@ -242,8 +244,8 @@ namespace InstallAgent
         public static bool InstallDriver_2(
             string driverRootDir,
             string driver,
-            PInvoke.NewDev.DIIRFLAG flags =
-                PInvoke.NewDev.DIIRFLAG.ZERO)
+            NewDev.DIIRFLAG flags =
+                NewDev.DIIRFLAG.ZERO)
         {
             bool reboot;
 
@@ -265,7 +267,7 @@ namespace InstallAgent
                 String.Format("Installing \'{0}\' driver...", driver)
             );
 
-            if (!PInvoke.NewDev.DiInstallDriver(
+            if (!NewDev.DiInstallDriver(
                     IntPtr.Zero,
                     infPath,
                     flags,
@@ -291,11 +293,11 @@ namespace InstallAgent
         // Full path to driver .inf files is expected to be:
         // "{driverRootDir}\{driver}\{x64|x86}\{driver}.inf"
         public static bool InstallDriver(
-            PVDevice.XenBus.XenBusDevs xenBusDev,
+            XenBus.XenBusDevs xenBusDev,
             string driverRootDir,
             string driver,
-            PInvoke.NewDev.INSTALLFLAG installFlags =
-                PInvoke.NewDev.INSTALLFLAG.NONINTERACTIVE)
+            NewDev.INSTALLFLAG installFlags =
+                NewDev.INSTALLFLAG.NONINTERACTIVE)
         {
             bool reboot;
 
@@ -329,7 +331,7 @@ namespace InstallAgent
                 String.Format("Installing {0} on {1}", driver, hwID)
             );
 
-            if (!PInvoke.NewDev.UpdateDriverForPlugAndPlayDevices(
+            if (!NewDev.UpdateDriverForPlugAndPlayDevices(
                     IntPtr.Zero,
                     hwID,
                     infPath,
@@ -437,16 +439,16 @@ namespace InstallAgent
             };
 
             // ERROR_SUCCESS = 0
-            while (PInvoke.Msi.MsiEnumProducts(i, productCode) == 0)
+            while (Msi.MsiEnumProducts(i, productCode) == 0)
             {
                 string tmpCode = productCode.ToString();
 
                 len = BUF_LEN;
 
                 // Get ProductName from Product GUID
-                err = PInvoke.Msi.MsiGetProductInfo(
+                err = Msi.MsiGetProductInfo(
                     tmpCode,
-                    PInvoke.Msi.INSTALLPROPERTY.INSTALLEDPRODUCTNAME,
+                    Msi.INSTALLPROPERTY.INSTALLEDPRODUCTNAME,
                     productName,
                     ref len
                 );
@@ -522,7 +524,7 @@ namespace InstallAgent
 
             try
             {
-                XSToolsInstallation.Device.RemoveFromSystem(
+                Device.RemoveFromSystem(
                     new string[] { @"root\xenevtchn" },
                     false
                 );
@@ -656,22 +658,22 @@ namespace InstallAgent
                     bool needreboot;
                     Trace.WriteLine("Uninstalling");
 
-                    PInvoke.DIFxAll difx;
+                    DIFxAll difx;
 
                     if (WinVersion.Is64BitOS())
                     {
-                        difx = new PInvoke.DIFx64();
+                        difx = new DIFx64();
                     }
                     else
                     {
-                        difx = new PInvoke.DIFx32();
+                        difx = new DIFx32();
                     }
 
                     difx.Uninstall(
                         oemfile,
-                        (int)(PInvoke.DIFxAll.DRIVER_PACKAGE.SILENT |
-                              PInvoke.DIFxAll.DRIVER_PACKAGE.FORCE |
-                              PInvoke.DIFxAll.DRIVER_PACKAGE.DELETE_FILES),
+                        (int)(DIFxAll.DRIVER_PACKAGE.SILENT |
+                              DIFxAll.DRIVER_PACKAGE.FORCE |
+                              DIFxAll.DRIVER_PACKAGE.DELETE_FILES),
                         IntPtr.Zero,
                         out needreboot
                     );

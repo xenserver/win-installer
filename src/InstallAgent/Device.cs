@@ -1,9 +1,8 @@
-﻿using System;
+﻿using PInvoke;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace XSToolsInstallation
 {
@@ -45,8 +44,8 @@ namespace XSToolsInstallation
         // Returns an array of all the Hardware ID strings
         // available for an SP_DEVINFO_DATA object
         public static string[] GetHardwareIDs(
-            PInvoke.SetupApi.DeviceInfoSet devInfoSet,
-            PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData)
+            SetupApi.DeviceInfoSet devInfoSet,
+            SetupApi.SP_DEVINFO_DATA devInfoData)
         {
             uint propertyRegDataType = 0;
             uint requiredSize = 0;
@@ -57,10 +56,10 @@ namespace XSToolsInstallation
             byte[] buffer = new byte[BUFFER_SIZE];
 
             // Get the device's HardwareID multistring
-            PInvoke.SetupApi.SetupDiGetDeviceRegistryProperty(
+            SetupApi.SetupDiGetDeviceRegistryProperty(
                 devInfoSet.Get(),
                 ref devInfoData,
-                PInvoke.SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
+                SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
                 out propertyRegDataType,
                 buffer,
                 BUFFER_SIZE,
@@ -81,12 +80,12 @@ namespace XSToolsInstallation
         // initialized 'devInfoData' object can be used with any function that
         // takes an 'SP_DEVINFO_DATA' object as input.
         public static int FindInSystem(
-            out PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData,
+            out SetupApi.SP_DEVINFO_DATA devInfoData,
             string hwID,
-            PInvoke.SetupApi.DeviceInfoSet devInfoSet,
+            SetupApi.DeviceInfoSet devInfoSet,
             bool strictSearch)
         {
-            devInfoData = new PInvoke.SetupApi.SP_DEVINFO_DATA();
+            devInfoData = new SetupApi.SP_DEVINFO_DATA();
             devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
 
             // Select which string comparison function
@@ -104,7 +103,7 @@ namespace XSToolsInstallation
             }
 
             for (uint i = 0;
-                 PInvoke.SetupApi.SetupDiEnumDeviceInfo(
+                 SetupApi.SetupDiEnumDeviceInfo(
                      devInfoSet.Get(),
                      i,
                      ref devInfoData);
@@ -128,12 +127,12 @@ namespace XSToolsInstallation
 
         public static void RemoveFromSystem(string[] hwIDs, bool strictSearch)
         {
-            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
-                       new PInvoke.SetupApi.DeviceInfoSet(
+            using (SetupApi.DeviceInfoSet devInfoSet =
+                       new SetupApi.DeviceInfoSet(
                        IntPtr.Zero,
                        IntPtr.Zero,
                        IntPtr.Zero,
-                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+                       SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
             {
                 if (!devInfoSet.HandleIsValid())
                 {
@@ -142,7 +141,7 @@ namespace XSToolsInstallation
 
                 for (int i = 0; i < hwIDs.Length; ++i)
                 {
-                    PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData;
+                    SetupApi.SP_DEVINFO_DATA devInfoData;
 
                     FindInSystem(
                         out devInfoData,
@@ -157,16 +156,16 @@ namespace XSToolsInstallation
                     }
 
                     Trace.WriteLine("Trying to remove " + hwIDs[i]);
-                    PInvoke.SetupApi.REMOVE_PARAMS rparams =
-                        new PInvoke.SetupApi.REMOVE_PARAMS();
+                    SetupApi.REMOVE_PARAMS rparams =
+                        new SetupApi.REMOVE_PARAMS();
                     rparams.cbSize = 8; // Size of cbSide & InstallFunction
                     rparams.InstallFunction =
-                        (uint)PInvoke.SetupApi.InstallFunctions.DIF_REMOVE;
+                        (uint)SetupApi.InstallFunctions.DIF_REMOVE;
                     rparams.HwProfile = 0;
-                    rparams.Scope = PInvoke.SetupApi.DI_REMOVE_DEVICE_GLOBAL;
+                    rparams.Scope = SetupApi.DI_REMOVE_DEVICE_GLOBAL;
                     GCHandle handle1 = GCHandle.Alloc(rparams);
 
-                    if (!PInvoke.SetupApi.SetupDiSetClassInstallParams(
+                    if (!SetupApi.SetupDiSetClassInstallParams(
                             devInfoSet.Get(),
                             ref devInfoData,
                             ref rparams,
@@ -181,8 +180,8 @@ namespace XSToolsInstallation
                         );
                     }
 
-                    if (!PInvoke.SetupApi.SetupDiCallClassInstaller(
-                            PInvoke.SetupApi.InstallFunctions.DIF_REMOVE,
+                    if (!SetupApi.SetupDiCallClassInstaller(
+                            SetupApi.InstallFunctions.DIF_REMOVE,
                             devInfoSet.Get(),
                             ref devInfoData))
                     {
@@ -205,33 +204,33 @@ namespace XSToolsInstallation
             UInt32 devStatus;
             UInt32 devProblemCode;
 
-            PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData =
-                new PInvoke.SetupApi.SP_DEVINFO_DATA();
+            SetupApi.SP_DEVINFO_DATA devInfoData =
+                new SetupApi.SP_DEVINFO_DATA();
             devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
 
-            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
-                       new PInvoke.SetupApi.DeviceInfoSet(
+            using (SetupApi.DeviceInfoSet devInfoSet =
+                       new SetupApi.DeviceInfoSet(
                        IntPtr.Zero,
                        enumName,
                        IntPtr.Zero,
-                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT |
-                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+                       SetupApi.DiGetClassFlags.DIGCF_PRESENT |
+                       SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
             {
                 for (uint i = 0;
-                     PInvoke.SetupApi.SetupDiEnumDeviceInfo(
+                     SetupApi.SetupDiEnumDeviceInfo(
                          devInfoSet.Get(),
                          i,
                          ref devInfoData);
                      ++i)
                 {
-                    PInvoke.SetupApi.CM_Get_DevNode_Status(
+                    SetupApi.CM_Get_DevNode_Status(
                         out devStatus,
                         out devProblemCode,
                         devInfoData.devInst,
                         0
                     );
 
-                    if ((devStatus & (uint)PInvoke.SetupApi.DNFlags.DN_STARTED) == 0)
+                    if ((devStatus & (uint)SetupApi.DNFlags.DN_STARTED) == 0)
                     {
                         Trace.WriteLine(
                             enumName +

@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
-using Microsoft.Win32;
-using System.Security.AccessControl;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using System.Reflection;
-using System.IO;
+﻿using Microsoft.Win32;
+using PInvoke;
 using State;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.AccessControl;
+using XSToolsInstallation;
 
 namespace PVDevice
 {
@@ -26,7 +25,7 @@ namespace PVDevice
                     return false;
                 }
 
-                if ((!XSToolsInstallation.Device.ChildrenInstalled("xenvif")))
+                if ((!Device.ChildrenInstalled("xenvif")))
                 {
                     //textOut += "  Virtual Network Interface Children Initializing\n";
                     Trace.WriteLine("VIF: children not installed");
@@ -455,43 +454,43 @@ namespace PVDevice
 
         private static void VifDisableEnable(bool enable)
         {
-            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
-                       new PInvoke.SetupApi.DeviceInfoSet(
+            using (SetupApi.DeviceInfoSet devInfoSet =
+                       new SetupApi.DeviceInfoSet(
                        IntPtr.Zero,
                        "XENVIF",
                        IntPtr.Zero,
-                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT |
-                       PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+                       SetupApi.DiGetClassFlags.DIGCF_PRESENT |
+                       SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
             {
-                PInvoke.SetupApi.SP_DEVINFO_DATA devInfoData =
-                    new PInvoke.SetupApi.SP_DEVINFO_DATA();
+                SetupApi.SP_DEVINFO_DATA devInfoData =
+                    new SetupApi.SP_DEVINFO_DATA();
 
                 devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
 
                 Trace.WriteLine("DevInfoData Size " + devInfoData.cbSize.ToString());
 
                 for (uint i = 0;
-                     PInvoke.SetupApi.SetupDiEnumDeviceInfo(
+                     SetupApi.SetupDiEnumDeviceInfo(
                          devInfoSet.Get(),
                          i,
                          ref devInfoData);
                      ++i)
                 {
                     Trace.WriteLine("dev inst: " + devInfoData.devInst.ToString());
-                    PInvoke.SetupApi.PropertyChangeParameters pcParams =
-                        new PInvoke.SetupApi.PropertyChangeParameters();
+                    SetupApi.PropertyChangeParameters pcParams =
+                        new SetupApi.PropertyChangeParameters();
 
                     pcParams.size = 8;
-                    pcParams.diFunction = PInvoke.SetupApi.InstallFunctions.DIF_PROPERTYCHANGE;
-                    pcParams.scope = PInvoke.SetupApi.Scopes.Global;
+                    pcParams.diFunction = SetupApi.InstallFunctions.DIF_PROPERTYCHANGE;
+                    pcParams.scope = SetupApi.Scopes.Global;
 
                     if (enable)
                     {
-                        pcParams.stateChange = PInvoke.SetupApi.StateChangeAction.Enable;
+                        pcParams.stateChange = SetupApi.StateChangeAction.Enable;
                     }
                     else
                     {
-                        pcParams.stateChange = PInvoke.SetupApi.StateChangeAction.Disable;
+                        pcParams.stateChange = SetupApi.StateChangeAction.Disable;
                     }
 
                     pcParams.hwProfile = 0;
@@ -516,7 +515,7 @@ namespace PVDevice
 
                     Trace.WriteLine(
                         "InstallPaarams " +
-                        PInvoke.SetupApi.SetupDiSetClassInstallParams(
+                        SetupApi.SetupDiSetClassInstallParams(
                             devInfoSet.Get(),
                             pdd.AddrOfPinnedObject(),
                             pinned.AddrOfPinnedObject(),
@@ -528,8 +527,8 @@ namespace PVDevice
 
                     Trace.WriteLine(
                         "CallClassInstaller " +
-                        PInvoke.SetupApi.SetupDiCallClassInstaller(
-                            PInvoke.SetupApi.InstallFunctions.DIF_PROPERTYCHANGE,
+                        SetupApi.SetupDiCallClassInstaller(
+                            SetupApi.InstallFunctions.DIF_PROPERTYCHANGE,
                             devInfoSet.Get(),
                             pdd.AddrOfPinnedObject()
                         ).ToString() + " " +

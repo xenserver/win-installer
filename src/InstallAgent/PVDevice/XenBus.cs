@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Diagnostics;
+﻿using PInvoke;
+using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
+using XSToolsInstallation;
 
 namespace PVDevice
 {
@@ -32,13 +32,13 @@ namespace PVDevice
         {
             hwIDs = new string[3];
 
-            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
-                       new PInvoke.SetupApi.DeviceInfoSet(
+            using (SetupApi.DeviceInfoSet devInfoSet =
+                       new SetupApi.DeviceInfoSet(
                            IntPtr.Zero,
                            "PCI",
                            IntPtr.Zero,
-                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
-                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT))
+                           SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
+                           SetupApi.DiGetClassFlags.DIGCF_PRESENT))
             {
                 if (!devInfoSet.HandleIsValid())
                 {
@@ -49,9 +49,9 @@ namespace PVDevice
 
                 for (int i = 0; i < hwIDs.Length; ++i)
                 {
-                    PInvoke.SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
+                    SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
 
-                    XSToolsInstallation.Device.FindInSystem(
+                    Device.FindInSystem(
                         out xenBusDevInfoData,
                         @"PCI\VEN_5853&" +
                             Enum.GetName(typeof(XenBusDevs), 1 << i),
@@ -63,7 +63,7 @@ namespace PVDevice
                     {
                         // Just get the first string returned.
                         // Should be the most explicit.
-                        hwIDs[i] = XSToolsInstallation.Device.GetHardwareIDs(
+                        hwIDs[i] = Device.GetHardwareIDs(
                             devInfoSet,
                             xenBusDevInfoData
                         )[0];
@@ -152,21 +152,21 @@ namespace PVDevice
                 new StringBuilder(BUFFER_SIZE);
 
             xenBusDevStr = XenBus.hwIDs[
-                XSToolsInstallation.Helpers.BitIdxFromFlag((uint)xenBusDev)
+                Helpers.BitIdxFromFlag((uint)xenBusDev)
             ];
 
-            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
-                       new PInvoke.SetupApi.DeviceInfoSet(
+            using (SetupApi.DeviceInfoSet devInfoSet =
+                       new SetupApi.DeviceInfoSet(
                            IntPtr.Zero,
                            "PCI",
                            IntPtr.Zero,
-                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
-                           PInvoke.SetupApi.DiGetClassFlags.DIGCF_PRESENT))
+                           SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
+                           SetupApi.DiGetClassFlags.DIGCF_PRESENT))
             {
-                PInvoke.SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
+                SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
                 int reqSize;
 
-                XSToolsInstallation.Device.FindInSystem(
+                Device.FindInSystem(
                     out xenBusDevInfoData,
                     xenBusDevStr,
                     devInfoSet,
@@ -184,7 +184,7 @@ namespace PVDevice
                     return "";
                 }
 
-                if (!PInvoke.SetupApi.SetupDiGetDeviceInstanceId(
+                if (!SetupApi.SetupDiGetDeviceInstanceId(
                         devInfoSet.Get(),
                         ref xenBusDevInfoData,
                         xenBusDeviceInstanceId,
@@ -208,7 +208,7 @@ namespace PVDevice
 
         public static int GetDevNode(XenBusDevs xenBusDev)
         {
-            PInvoke.SetupApi.CR err;
+            SetupApi.CR err;
             int xenBusNode;
             string xenBusDeviceInstanceId = GetDeviceInstanceId(xenBusDev);
 
@@ -218,13 +218,13 @@ namespace PVDevice
                 return -1;
             }
 
-            err = PInvoke.SetupApi.CM_Locate_DevNode(
+            err = SetupApi.CM_Locate_DevNode(
                 out xenBusNode,
                 xenBusDeviceInstanceId,
-                PInvoke.SetupApi.CM_LOCATE_DEVNODE.NORMAL
+                SetupApi.CM_LOCATE_DEVNODE.NORMAL
             );
 
-            if (err != PInvoke.SetupApi.CR.SUCCESS)
+            if (err != SetupApi.CR.SUCCESS)
             {
                 Trace.WriteLine(
                     String.Format("CM_Locate_DevNode() error: {0}", err)
@@ -240,7 +240,7 @@ namespace PVDevice
         // new devices it finds.
         public static bool Enumerate(XenBusDevs xenBusDev)
         {
-            PInvoke.SetupApi.CR err;
+            SetupApi.CR err;
             int xenBusNode = GetDevNode(xenBusDev);
 
             if (xenBusNode == -1)
@@ -249,16 +249,16 @@ namespace PVDevice
                 return false;
             }
 
-            XSToolsInstallation.Helpers.AcquireSystemPrivilege(
-                PInvoke.AdvApi32.SE_LOAD_DRIVER_NAME);
+            Helpers.AcquireSystemPrivilege(
+                AdvApi32.SE_LOAD_DRIVER_NAME);
 
-            err = PInvoke.SetupApi.CM_Reenumerate_DevNode(
+            err = SetupApi.CM_Reenumerate_DevNode(
                 xenBusNode,
-                PInvoke.SetupApi.CM_REENUMERATE.SYNCHRONOUS |
-                PInvoke.SetupApi.CM_REENUMERATE.RETRY_INSTALLATION
+                SetupApi.CM_REENUMERATE.SYNCHRONOUS |
+                SetupApi.CM_REENUMERATE.RETRY_INSTALLATION
             );
 
-            if (err != PInvoke.SetupApi.CR.SUCCESS)
+            if (err != SetupApi.CR.SUCCESS)
             {
                 Trace.WriteLine(
                     String.Format("CM_Reenumerate_DevNode() error: {0}", err)
@@ -271,7 +271,7 @@ namespace PVDevice
 
         public static bool HasChildren(XenBusDevs xenBusDev)
         {
-            PInvoke.SetupApi.CR err;
+            SetupApi.CR err;
             int xenBusNode = GetDevNode(xenBusDev);
             int xenBusChild;
 
@@ -281,11 +281,11 @@ namespace PVDevice
                 return false;
             }
 
-            err = PInvoke.SetupApi.CM_Get_Child(
+            err = SetupApi.CM_Get_Child(
                 out xenBusChild, xenBusNode, 0
             );
 
-            if (err != PInvoke.SetupApi.CR.SUCCESS)
+            if (err != SetupApi.CR.SUCCESS)
             {
                 Trace.WriteLine(
                     String.Format("CM_Get_Child() error: {0}", err)

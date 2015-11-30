@@ -8,6 +8,7 @@ using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
+using XSToolsInstallation;
 
 namespace InstallAgent
 {
@@ -122,7 +123,7 @@ namespace InstallAgent
                 if (!Installer.GetFlag(Installer.States.CertificatesInstalled))
                 {
                     Trace.WriteLine("Installing certificates..");
-                    XSToolsInstallation.Helpers.InstallCertificates(
+                    Helpers.InstallCertificates(
                         Directory.GetCurrentDirectory() + @"\certs");
                     Installer.SetFlag(Installer.States.CertificatesInstalled);
                     Trace.WriteLine("Certificates installed");
@@ -161,7 +162,7 @@ namespace InstallAgent
             {
                 VM.UnsetRebootNeeded();
 
-                XSToolsInstallation.Helpers.ChangeServiceStartMode(
+                Helpers.ChangeServiceStartMode(
                     this.ServiceName,
                     ServiceStartMode.Manual
                 );
@@ -177,7 +178,7 @@ namespace InstallAgent
                         );
 
                         VM.IncrementRebootCount();
-                        XSToolsInstallation.Helpers.Reboot();
+                        Helpers.Reboot();
                     }
                     else
                     {

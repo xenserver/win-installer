@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using InstallAgent;
+using PInvoke;
+using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
-using System.Runtime.InteropServices;
-using System.ComponentModel;
 
 namespace XSToolsInstallation
 {
@@ -16,35 +15,35 @@ namespace XSToolsInstallation
         public static void Reboot()
         {
             Trace.WriteLine("OK - shutting down");
-            AcquireSystemPrivilege(PInvoke.AdvApi32.SE_SHUTDOWN_NAME);
+            AcquireSystemPrivilege(AdvApi32.SE_SHUTDOWN_NAME);
 
-            if (InstallAgent.WinVersion.GetVersionValue() >= 0x500 &&
-                InstallAgent.WinVersion.GetVersionValue() < 0x600)
+            if (WinVersion.GetVersionValue() >= 0x500 &&
+                WinVersion.GetVersionValue() < 0x600)
             {
-                PInvoke.User32.ExitWindowsEx(
-                    PInvoke.User32.ExitFlags.EWX_REBOOT |
-                    PInvoke.User32.ExitFlags.EWX_FORCE,
+                User32.ExitWindowsEx(
+                    User32.ExitFlags.EWX_REBOOT |
+                    User32.ExitFlags.EWX_FORCE,
                     0
                 );
             }
             else
             {
-                PInvoke.AdvApi32.InitiateSystemShutdownEx(
+                AdvApi32.InitiateSystemShutdownEx(
                     "", "", 0, true, true,
-                    PInvoke.AdvApi32.ShtdnReason.MAJOR_OTHER |
-                    PInvoke.AdvApi32.ShtdnReason.MINOR_ENVIRONMENT |
-                    PInvoke.AdvApi32.ShtdnReason.FLAG_PLANNED
+                    AdvApi32.ShtdnReason.MAJOR_OTHER |
+                    AdvApi32.ShtdnReason.MINOR_ENVIRONMENT |
+                    AdvApi32.ShtdnReason.FLAG_PLANNED
                 );
             }
         }
 
         public static void AcquireSystemPrivilege(string name)
         {
-            PInvoke.AdvApi32.TOKEN_PRIVILEGES tkp;
+            AdvApi32.TOKEN_PRIVILEGES tkp;
             IntPtr token;
 
-            tkp.Privileges = new PInvoke.AdvApi32.LUID_AND_ATTRIBUTES[1];
-            PInvoke.AdvApi32.LookupPrivilegeValue(
+            tkp.Privileges = new AdvApi32.LUID_AND_ATTRIBUTES[1];
+            AdvApi32.LookupPrivilegeValue(
                 IntPtr.Zero,
                 name,
                 out tkp.Privileges[0].Luid
@@ -52,18 +51,18 @@ namespace XSToolsInstallation
 
             tkp.PrivilegeCount = 1;
 
-            tkp.Privileges[0].Attributes = (uint)PInvoke.AdvApi32.Se_Privilege.ENABLED;
+            tkp.Privileges[0].Attributes = (uint)AdvApi32.Se_Privilege.ENABLED;
 
-            if (!PInvoke.AdvApi32.OpenProcessToken(
+            if (!AdvApi32.OpenProcessToken(
                     Process.GetCurrentProcess().Handle,
-                    (uint)(PInvoke.AdvApi32.Token.ADJUST_PRIVILEGES |
-                           PInvoke.AdvApi32.Token.QUERY),
+                    (uint)(AdvApi32.Token.ADJUST_PRIVILEGES |
+                           AdvApi32.Token.QUERY),
                     out token))
             {
                 throw new Exception("OpenProcessToken");
             }
 
-            if (!PInvoke.AdvApi32.AdjustTokenPrivileges(
+            if (!AdvApi32.AdjustTokenPrivileges(
                     token,
                     false,
                     ref tkp,
@@ -135,10 +134,10 @@ namespace XSToolsInstallation
                 "Changing Start Mode of service: \'" + serviceName + "\'"
             );
 
-            IntPtr scManagerHandle = PInvoke.AdvApi32.OpenSCManager(
+            IntPtr scManagerHandle = AdvApi32.OpenSCManager(
                 null,
                 null,
-                PInvoke.AdvApi32.SC_MANAGER_ALL_ACCESS
+                AdvApi32.SC_MANAGER_ALL_ACCESS
             );
 
             if (scManagerHandle == IntPtr.Zero)
@@ -147,11 +146,11 @@ namespace XSToolsInstallation
                 return false;
             }
 
-            IntPtr serviceHandle = PInvoke.AdvApi32.OpenService(
+            IntPtr serviceHandle = AdvApi32.OpenService(
                 scManagerHandle,
                 serviceName,
-                PInvoke.AdvApi32.SERVICE_QUERY_CONFIG |
-                    PInvoke.AdvApi32.SERVICE_CHANGE_CONFIG
+                AdvApi32.SERVICE_QUERY_CONFIG |
+                    AdvApi32.SERVICE_CHANGE_CONFIG
             );
 
             if (serviceHandle == IntPtr.Zero)
@@ -160,11 +159,11 @@ namespace XSToolsInstallation
                 return false;
             }
 
-            if (!PInvoke.AdvApi32.ChangeServiceConfig(
+            if (!AdvApi32.ChangeServiceConfig(
                     serviceHandle,
-                    PInvoke.AdvApi32.SERVICE_NO_CHANGE,
+                    AdvApi32.SERVICE_NO_CHANGE,
                     (uint)mode,
-                    PInvoke.AdvApi32.SERVICE_NO_CHANGE,
+                    AdvApi32.SERVICE_NO_CHANGE,
                     null,
                     null,
                     IntPtr.Zero,
@@ -181,8 +180,8 @@ namespace XSToolsInstallation
                 return false;
             }
 
-            PInvoke.AdvApi32.CloseServiceHandle(serviceHandle);
-            PInvoke.AdvApi32.CloseServiceHandle(scManagerHandle);
+            AdvApi32.CloseServiceHandle(serviceHandle);
+            AdvApi32.CloseServiceHandle(scManagerHandle);
 
             Trace.WriteLine(
                 "Start Mode successfully changed to: \'" +

@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using PInvoke;
+using System;
 using System.Runtime.InteropServices;
 
 namespace InstallAgent
@@ -71,20 +69,20 @@ namespace InstallAgent
         private static void _IsWOW64()
         {
             bool tmpWOW64;
-            IntPtr modHandle = PInvoke.Kernel32.GetModuleHandle("kernel32.dll");
+            IntPtr modHandle = Kernel32.GetModuleHandle("kernel32.dll");
 
             if (modHandle == IntPtr.Zero)
             {
                 isWOW64 = false;
             }
-            else if (PInvoke.Kernel32.GetProcAddress(
+            else if (Kernel32.GetProcAddress(
                          modHandle, "IsWow64Process"
                      ) == IntPtr.Zero)
             {
                 isWOW64 = false;
             }
             else if (IsWow64Process(
-                         PInvoke.Kernel32.GetCurrentProcess(),
+                         Kernel32.GetCurrentProcess(),
                          out tmpWOW64))
             {
                 isWOW64 = tmpWOW64;
