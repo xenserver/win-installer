@@ -9,6 +9,7 @@ using System.IO;
 using System.Collections;
 using Microsoft.Win32;
 using System.ComponentModel;
+using State;
 
 namespace InstallAgent
 {
@@ -69,34 +70,34 @@ namespace InstallAgent
 
         public static void SystemClean()
         {
-            if (!InstallerState.GetFlag(InstallerState.States.RemovedFromFilters))
+            if (!Installer.GetFlag(Installer.States.RemovedFromFilters))
             {
                 //RemovePVDriversFromFilters();
-                InstallerState.SetFlag(InstallerState.States.RemovedFromFilters);
+                Installer.SetFlag(Installer.States.RemovedFromFilters);
             }
 
-            if (!InstallerState.GetFlag(InstallerState.States.BootStartDisabled))
+            if (!Installer.GetFlag(Installer.States.BootStartDisabled))
             {
                 //DontBootStartPVDrivers();
-                InstallerState.SetFlag(InstallerState.States.BootStartDisabled);
+                Installer.SetFlag(Installer.States.BootStartDisabled);
             }
 
-            if (!InstallerState.GetFlag(InstallerState.States.MSIsUninstalled))
+            if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
             {
                 //UninstallMSIs();
-                InstallerState.SetFlag(InstallerState.States.MSIsUninstalled);
+                Installer.SetFlag(Installer.States.MSIsUninstalled);
             }
 
-            if (!InstallerState.GetFlag(InstallerState.States.XenLegacyUninstalled))
+            if (!Installer.GetFlag(Installer.States.XenLegacyUninstalled))
             {
                 //UninstallXenLegacy();
-                InstallerState.SetFlag(InstallerState.States.XenLegacyUninstalled);
+                Installer.SetFlag(Installer.States.XenLegacyUninstalled);
             }
 
-            if (!InstallerState.GetFlag(InstallerState.States.CleanedUp))
+            if (!Installer.GetFlag(Installer.States.CleanedUp))
             {
                 //CleanUpPVDrivers();
-                InstallerState.SetFlag(InstallerState.States.CleanedUp);
+                Installer.SetFlag(Installer.States.CleanedUp);
             }
         }
 

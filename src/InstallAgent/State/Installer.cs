@@ -1,14 +1,14 @@
 ﻿using Microsoft.Win32;
 using System;
 
-namespace InstallAgent
+namespace State
 {
-    public static class InstallerState
+    public static class Installer
     {
         private static int currentState;
 
         private static readonly string stateRegKey =
-            InstallAgent.rootRegKeyName + @"\InstallerState";
+            InstallAgent.InstallAgent.rootRegKeyName + @"\InstallerState";
 
         private static readonly int systemCleaned = (int)(
             States.RemovedFromFilters |
@@ -94,7 +94,7 @@ namespace InstallAgent
 
         // Static constructor: queries the Registry for the
         // state of the installer and initializes itself.
-        static InstallerState()
+        static Installer()
         {
             // In .NET 3.5: Creates a new subkey or opens an
             //              existing subkey for write access
@@ -107,7 +107,7 @@ namespace InstallAgent
             }
 
             currentState = 0;
-            
+
             for (int i = 0; i < statesDefault.Length; ++i)
             {
                 int flag = (int) installStateRK.GetValue(

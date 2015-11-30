@@ -82,7 +82,7 @@ namespace InstallAgent
                 throw new Exception("WOW64: Do not do that.");
             }
 
-            if (InstallerState.Complete())
+            if (Installer.Complete())
             {
                 Trace.WriteLine("Everything is complete!!");
                 return;
@@ -90,15 +90,15 @@ namespace InstallAgent
 
             //RegisterWMI();
 
-            if (!InstallerState.GetFlag(InstallerState.States.NetworkSettingsSaved))
+            if (!Installer.GetFlag(Installer.States.NetworkSettingsSaved))
             {
                 Trace.WriteLine("NetSettings not saved..");
                 XenVif.NetworkSettingsSaveRestore(true);
-                InstallerState.SetFlag(InstallerState.States.NetworkSettingsSaved);
+                Installer.SetFlag(Installer.States.NetworkSettingsSaved);
                 Trace.WriteLine("NetSettings saved!");
             }
 
-            if (!InstallerState.SystemCleaned())
+            if (!Installer.SystemCleaned())
             {
                 if (VM.GetPVToolsVersionOnFirstRun() == VM.PVToolsVersion.NotEight)
                 {
@@ -108,23 +108,23 @@ namespace InstallAgent
                 }
                 else // "XenPrepping" not needed, so just flip all relevant flags
                 {
-                    InstallerState.SetFlag(InstallerState.States.RemovedFromFilters);
-                    InstallerState.SetFlag(InstallerState.States.BootStartDisabled);
-                    InstallerState.SetFlag(InstallerState.States.MSIsUninstalled);
-                    InstallerState.SetFlag(InstallerState.States.XenLegacyUninstalled);
-                    InstallerState.SetFlag(InstallerState.States.CleanedUp);
+                    Installer.SetFlag(Installer.States.RemovedFromFilters);
+                    Installer.SetFlag(Installer.States.BootStartDisabled);
+                    Installer.SetFlag(Installer.States.MSIsUninstalled);
+                    Installer.SetFlag(Installer.States.XenLegacyUninstalled);
+                    Installer.SetFlag(Installer.States.CleanedUp);
                     Trace.WriteLine("xenprepping not needed; flip relevant flags");
                 }
             }
 
-            if (!InstallerState.EverythingInstalled())
+            if (!Installer.EverythingInstalled())
             {
-                if (!InstallerState.GetFlag(InstallerState.States.CertificatesInstalled))
+                if (!Installer.GetFlag(Installer.States.CertificatesInstalled))
                 {
                     Trace.WriteLine("Installing certificates..");
                     XSToolsInstallation.Helpers.InstallCertificates(
                         Directory.GetCurrentDirectory() + @"\certs");
-                    InstallerState.SetFlag(InstallerState.States.CertificatesInstalled);
+                    Installer.SetFlag(Installer.States.CertificatesInstalled);
                     Trace.WriteLine("Certificates installed");
                 }
 
@@ -134,20 +134,20 @@ namespace InstallAgent
                 );
 
                 var drivers = new[] {
-                    new { name = "xennet", flag = InstallerState.States.XenNetInstalled },
-                    new { name = "xenvif", flag = InstallerState.States.XenVifInstalled },
-                    new { name = "xenvbd", flag = InstallerState.States.XenVbdInstalled },
-                    new { name = "xeniface", flag = InstallerState.States.XenIfaceInstalled },
-                    new { name = "xenbus", flag = InstallerState.States.XenBusInstalled }
+                    new { name = "xennet", flag = Installer.States.XenNetInstalled },
+                    new { name = "xenvif", flag = Installer.States.XenVifInstalled },
+                    new { name = "xenvbd", flag = Installer.States.XenVbdInstalled },
+                    new { name = "xeniface", flag = Installer.States.XenIfaceInstalled },
+                    new { name = "xenbus", flag = Installer.States.XenBusInstalled }
                 };
 
                 foreach (var driver in drivers)
                 {
-                    if (!InstallerState.GetFlag(driver.flag))
+                    if (!Installer.GetFlag(driver.flag))
                     {
                         if (DriverHandler.InstallDriver_2(driverRootDir, driver.name))
                         {
-                            InstallerState.SetFlag(driver.flag);
+                            Installer.SetFlag(driver.flag);
                         }
                         else
                         {

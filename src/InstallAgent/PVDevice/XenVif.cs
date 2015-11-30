@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Reflection;
 using System.IO;
+using State;
 
 namespace PVDevice
 {
@@ -39,15 +40,15 @@ namespace PVDevice
                     return false;
                 }
 
-                if (!InstallAgent.InstallerState.GetFlag(
-                        InstallAgent.InstallerState.States.NetworkSettingsRestored))
+                if (!Installer.GetFlag(
+                        Installer.States.NetworkSettingsRestored))
                 {
                     try
                     {
                         FixupAliases();
                         NetworkSettingsSaveRestore(false); // Restore
-                        InstallAgent.InstallerState.SetFlag(
-                            InstallAgent.InstallerState.States.NetworkSettingsRestored
+                        Installer.SetFlag(
+                            Installer.States.NetworkSettingsRestored
                         );
                     }
                     catch (Exception e)
