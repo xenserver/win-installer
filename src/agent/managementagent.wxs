@@ -218,6 +218,7 @@
                 </Condition>
                 <File Id='XenDprivExeConfig' Name="XenDpriv.Exe.Config" Source='xenguestagent\xendpriv\XenDpriv.Exe.Config' />
                 <File Id='XenGuestAgentExeConfig' Name="XenGuestAgent.Exe.Config" Source='xenguestagent\xenguestagent\XenGuestAgent.Exe.Config' />
+				<File Id='InstallAgentExeConfig' Name="InstallAgent.exe.config" Source='InstallAgent\InstallAgent.exe.config' />
             </Component>
             <Component Id='dotnetagentsupport' Guid='$(var.supportid)'>
                 <File Id="XenDPrivExe" Name="XenDPriv.exe" Source="xenguestagent\xendpriv\XenDPriv.exe" />
