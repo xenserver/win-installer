@@ -112,7 +112,7 @@ namespace State
                         tmp = 1;
                         break;
                     case CfgMgr32.Wait.FAILED:
-                        Win32ErrorMessage.FindLast(
+                        Win32ErrorMessage.SetLast(
                             "CMP_WaitNoPendingInstallEvents"
                         );
 

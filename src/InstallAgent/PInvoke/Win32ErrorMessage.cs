@@ -12,13 +12,13 @@ namespace PInvoke
             return message;
         }
 
-        public static void FindLast(string win32FuncName)
+        public static void SetLast(string win32FuncName)
         {
+            int err = Marshal.GetLastWin32Error();
+
             message =
-                win32FuncName + " failed: " +
-                new Win32Exception(
-                    Marshal.GetLastWin32Error()
-                ).Message;
+                win32FuncName + " failed; Error " + err +
+                ": " + new Win32Exception(err).Message;
         }
     }
 }
