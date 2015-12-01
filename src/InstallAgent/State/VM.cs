@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using InstallAgent;
+using Microsoft.Win32;
 using PInvoke;
 using PVDevice;
 using System;
@@ -100,25 +101,10 @@ namespace State
 
             if (tmp == -1)
             {
-                CfgMgr32.Wait result =
-                    CfgMgr32.CMP_WaitNoPendingInstallEvents(0);
-
-                switch (result)
-                {
-                    case CfgMgr32.Wait.OBJECT_0:
-                        tmp = 0;
-                        break;
-                    case CfgMgr32.Wait.TIMEOUT:
-                        tmp = 1;
-                        break;
-                    case CfgMgr32.Wait.FAILED:
-                        Win32ErrorMessage.SetLast(
-                            "CMP_WaitNoPendingInstallEvents"
-                        );
-
-                        Trace.WriteLine(Win32ErrorMessage.GetLast());
-                        throw new Exception(Win32ErrorMessage.GetLast());
-                }
+                // With a timeout of '0', the function returns instantly
+                // 'true', if no drivers installing
+                // 'false', if it "timed out"
+                tmp = DriverHandler.BlockUntilNoDriversInstalling(0) ? 0 : 1;
 
                 openRegKey.SetValue(
                     regValName,

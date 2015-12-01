@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
+using InstallAgent;
 
 namespace PVDevice
 {
@@ -117,6 +118,8 @@ namespace PVDevice
 
         public static bool AllFunctioning()
         {
+            const uint TIMEOUT = 300; // 5 minutes
+
             Func<bool>[] pvDevIsFunctioning = {
                 XenBus.IsFunctioning,
                 XenIface.IsFunctioning,
@@ -137,15 +140,7 @@ namespace PVDevice
                     if (!busEnumerated)
                     {
                         XenBus.Enumerate(XenBus.preferredXenBus);
-
-                        // 8 tries arbitrarilly chosen to be
-                        // close to 5 minutes (4 min 15 secs)
-                        if (InstallAgent.DriverHandler.DriversInstalling(8) ==
-                                PInvoke.CfgMgr32.Wait.FAILED)
-                        {
-                            return false;
-                        }
-
+                        DriverHandler.BlockUntilNoDriversInstalling(TIMEOUT);
                         busEnumerated = true;
                         --i;
                     }

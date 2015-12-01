@@ -148,7 +148,7 @@ namespace InstallAgent
                 {
                     if (VM.AllowedToReboot())
                     {
-                        CfgMgr32.CMP_WaitNoPendingInstallEvents(
+                        DriverHandler.BlockUntilNoDriversInstalling(
                             GetTimeoutToReboot()
                         );
 
@@ -197,12 +197,11 @@ namespace InstallAgent
                 timeout = 20; // arbitrarily chosen;
 
                 Trace.WriteLine(
-                    "Something was installing before Install " +
-                    "Agent's first run. Timeout: " + timeout +
-                    " minutes"
+                    "Something was installing before " +
+                    "Install Agent's first run."
                 );
 
-                timeout *= 60 * 1000; // minutes to milliseconds
+                timeout = 20 * 60; // 20 minutes to seconds
             }
             else
             {

@@ -25,49 +25,47 @@ namespace InstallAgent
     {
         private static readonly string[] driverNames = { "xenbus", "xeniface", "xenvif", "xenvbd", "xennet" };
 
-        public static CfgMgr32.Wait DriversInstalling(uint tries)
+        public static bool BlockUntilNoDriversInstalling(uint timeout)
+        // Returns true, if no drivers are installing before the timeout
+        // is reached. Returns false, if timeout is reached. To block
+        // until no drivers are installing pass PInvoke.CfgMgr32.INFINITE
+        // 'timeout' is counted in seconds.
         {
-            CfgMgr32.Wait result = CfgMgr32.Wait.FAILED;
-
-            if (tries == 0)
-            {
-                tries = 1;
-            }
-            else if (tries > 12)
-            {
-                tries = 12;
-            }
+            CfgMgr32.Wait result;
 
             Trace.WriteLine("Checking if drivers are currently installing");
 
-            for (int i = 0; i < tries; ++i)
+            if (timeout != CfgMgr32.INFINITE)
             {
-                uint secs = (uint)(1 << i);
-
-                Trace.WriteLine("Blocking for " + secs + " seconds..");
-
-                result = CfgMgr32.CMP_WaitNoPendingInstallEvents(
-                    secs * 1000
-                );
-
-                if (result == CfgMgr32.Wait.OBJECT_0)
-                {
-                    Trace.WriteLine("No drivers installing");
-                    break;
-                }
-                else if (result == CfgMgr32.Wait.FAILED)
-                {
-                    Trace.WriteLine(
-                        "CMP_WaitNoPendingInstallEvents failed: " +
-                        new Win32Exception(
-                            Marshal.GetLastWin32Error()
-                        ).Message
-                    );
-                    break;
-                }
+                Trace.WriteLine("Blocking for " + timeout + " seconds..");
+                timeout *= 1000;
+            }
+            else
+            {
+                Trace.WriteLine("Blocking until no drivers are installing");
             }
 
-            return result;
+            result = CfgMgr32.CMP_WaitNoPendingInstallEvents(
+                timeout
+            );
+
+            if (result == CfgMgr32.Wait.OBJECT_0)
+            {
+                Trace.WriteLine("No drivers installing");
+                return true;
+            }
+            else if (result == CfgMgr32.Wait.FAILED)
+            {
+                Win32ErrorMessage.SetLast(
+                    "CMP_WaitNoPendingInstallEvents"
+                );
+
+                Trace.WriteLine(Win32ErrorMessage.GetLast());
+                throw new Exception(Win32ErrorMessage.GetLast());
+            }
+
+            Trace.WriteLine("Timeout reached - drivers still installing");
+            return false;
         }
 
         public static void InstallDrivers()
