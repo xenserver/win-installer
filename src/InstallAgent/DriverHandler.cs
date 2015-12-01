@@ -70,6 +70,38 @@ namespace InstallAgent
             return result;
         }
 
+        public static void InstallDrivers()
+        {
+            string driverRootDir = Path.Combine(
+                InstallAgent.exeDir,
+                "Drivers"
+            );
+
+            var drivers = new[] {
+                new { name = "xennet",
+                      installed = Installer.States.XenNetInstalled },
+                new { name = "xenvif",
+                      installed = Installer.States.XenVifInstalled },
+                new { name = "xenvbd",
+                      installed = Installer.States.XenVbdInstalled },
+                new { name = "xeniface",
+                      installed = Installer.States.XenIfaceInstalled },
+                new { name = "xenbus",
+                      installed = Installer.States.XenBusInstalled }
+            };
+
+            foreach (var driver in drivers)
+            {
+                if (!Installer.GetFlag(driver.installed))
+                {
+                    if (InstallDriver_2(driverRootDir, driver.name))
+                    {
+                        Installer.SetFlag(driver.installed);
+                    }
+                }
+            }
+        }
+
         public static void SystemClean()
         {
             if (!Installer.GetFlag(Installer.States.RemovedFromFilters))

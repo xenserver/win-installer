@@ -130,33 +130,7 @@ namespace InstallAgent
                     Trace.WriteLine("Certificates installed");
                 }
 
-                string driverRootDir = Path.Combine(
-                    InstallAgent.exeDir,
-                    "Drivers"
-                );
-
-                var drivers = new[] {
-                    new { name = "xennet", flag = Installer.States.XenNetInstalled },
-                    new { name = "xenvif", flag = Installer.States.XenVifInstalled },
-                    new { name = "xenvbd", flag = Installer.States.XenVbdInstalled },
-                    new { name = "xeniface", flag = Installer.States.XenIfaceInstalled },
-                    new { name = "xenbus", flag = Installer.States.XenBusInstalled }
-                };
-
-                foreach (var driver in drivers)
-                {
-                    if (!Installer.GetFlag(driver.flag))
-                    {
-                        if (DriverHandler.InstallDriver_2(driverRootDir, driver.name))
-                        {
-                            Installer.SetFlag(driver.flag);
-                        }
-                        else
-                        {
-                            // Maybe keep number of failed times?
-                        }
-                    }
-                }
+                DriverHandler.InstallDrivers();
             }
 
             if (PVDevice.PVDevice.AllFunctioning())
