@@ -74,31 +74,31 @@ namespace InstallAgent
         {
             if (!Installer.GetFlag(Installer.States.RemovedFromFilters))
             {
-                //RemovePVDriversFromFilters();
+                RemovePVDriversFromFilters();
                 Installer.SetFlag(Installer.States.RemovedFromFilters);
             }
 
             if (!Installer.GetFlag(Installer.States.BootStartDisabled))
             {
-                //DontBootStartPVDrivers();
+                DontBootStartPVDrivers();
                 Installer.SetFlag(Installer.States.BootStartDisabled);
             }
 
             if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
             {
-                //UninstallMSIs();
+                UninstallMSIs();
                 Installer.SetFlag(Installer.States.MSIsUninstalled);
             }
 
             if (!Installer.GetFlag(Installer.States.XenLegacyUninstalled))
             {
-                //UninstallXenLegacy();
+                UninstallXenLegacy();
                 Installer.SetFlag(Installer.States.XenLegacyUninstalled);
             }
 
             if (!Installer.GetFlag(Installer.States.CleanedUp))
             {
-                //CleanUpPVDrivers();
+                CleanUpPVDrivers();
                 Installer.SetFlag(Installer.States.CleanedUp);
             }
         }
@@ -392,7 +392,7 @@ namespace InstallAgent
             string[] xenDrivers = {
                 "XENBUS", "xenfilt", "xeniface", "xenlite",
                 "xennet", "xenvbd", "xenvif", "xennet6",
-                "xenutil", "xevtchn"
+                "xenutil", "xenevtchn"
             };
 
             RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
@@ -563,13 +563,13 @@ namespace InstallAgent
             string[] PVDrivers = {
                 "xen", "xenbus", "xencrsh", "xenfilt",
                 "xeniface", "xennet", "xenvbd", "xenvif",
-                "xennet6", "xenutil", "xevtchn"
+                "xennet6", "xenutil", "xenevtchn"
             };
 
             string[] services = {
                 "XENBUS", "xenfilt", "xeniface", "xenlite",
                 "xennet", "xenvbd", "xenvif", "xennet6",
-                "xenutil", "xevtchn"
+                "xenutil", "xenevtchn"
             };
 
             // On 2k8 if you're going to reinstall straight away, don't remove
@@ -577,13 +577,10 @@ namespace InstallAgent
             // are still in place
             string[] services2k8 = {
                 "xeniface", "xenlite", "xennet", "xenvbd",
-                "xenvif", "xennet6", "xenutil", "xevtchn"
+                "xenvif", "xennet6", "xenutil", "xenevtchn"
             };
 
             string[] hwIDs = {
-                // @"PCI\VEN_5853&DEV_C000&SUBSYS_C0005853&REV_01",
-                @"PCI\VEN_5853&DEV_0001",
-                @"PCI\VEN_5853&DEV_0002",
                 // @"XENBUS\VEN_XSC000&DEV_IFACE&REV_00000001",
                 @"XENBUS\VEN_XS0001&DEV_IFACE",
                 @"XENBUS\VEN_XS0002&DEV_IFACE",
@@ -596,11 +593,14 @@ namespace InstallAgent
                 // @"XENBUS\VEN_XSC000&DEV_VIF&REV_00000001",
                 @"XENBUS\VEN_XS0001&DEV_VIF",
                 @"XENBUS\VEN_XS0002&DEV_VIF",
-                @"root\xenevtchn",
+                // @"PCI\VEN_5853&DEV_C000&SUBSYS_C0005853&REV_01",
+                @"PCI\VEN_5853&DEV_0001",
+                @"PCI\VEN_5853&DEV_0002",
                 @"XENBUS\CLASS&VIF",
                 @"PCI\VEN_fffd&DEV_0101",
                 @"XEN\VIF",
                 @"XENBUS\CLASS&IFACE",
+                @"root\xenevtchn",
             };
 
             string driverPath = Environment.GetFolderPath(
