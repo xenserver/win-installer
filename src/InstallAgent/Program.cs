@@ -12,7 +12,8 @@ namespace InstallAgent
         static void Main(string[] args)
         {
             TextWriterTraceListener tlog = new TimeDateTraceListener(
-                @"C:\InstallAgent.log", "Install"
+                @"C:\ProgramData\Citrix\XSToolSetup\InstallAgent.log",
+                "InstallAgentLog"
             );
             Trace.Listeners.Add(tlog);
             Trace.AutoFlush = true;
