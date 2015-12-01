@@ -21,7 +21,7 @@ namespace State
         public enum PVToolsVersion : int
         {
             None = 0, // system is clean; no drivers installed
-            NotEight = 7, // system has drivers other than 8.x installed
+            LessThanEight = 7, // system has drivers other than 8.x installed
             Eight = 8, // system has drivers 8.x installed
         }
 
@@ -143,7 +143,7 @@ namespace State
                     (XenBus.IsPresent(XenBus.XenBusDevs.DEV_0002, true) &&
                          XenBus.HasChildren(XenBus.XenBusDevs.DEV_0002)))
                 {
-                    tmp = 7; // NotEight
+                    tmp = 7; // LessThanEight
                 }
                 else if (XenBus.IsPresent(XenBus.XenBusDevs.DEV_C000, true) &&
                          XenBus.HasChildren(XenBus.XenBusDevs.DEV_C000))

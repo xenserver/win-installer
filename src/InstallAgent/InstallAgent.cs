@@ -101,7 +101,8 @@ namespace InstallAgent
 
             if (!Installer.SystemCleaned())
             {
-                if (VM.GetPVToolsVersionOnFirstRun() == VM.PVToolsVersion.NotEight)
+                if (VM.GetPVToolsVersionOnFirstRun() ==
+                    VM.PVToolsVersion.LessThanEight)
                 {
                     Trace.WriteLine("PV Tools found on 0001 or 0002; xenprepping..");
                     DriverHandler.SystemClean();
@@ -203,15 +204,13 @@ namespace InstallAgent
                 return rt;
             }
 
-            switch (VM.GetPVToolsVersionOnFirstRun())
+            if (VM.GetPVToolsVersionOnFirstRun() == VM.PVToolsVersion.Eight)
             {
-                case VM.PVToolsVersion.None:
-                case VM.PVToolsVersion.NotEight:
-                    return RebootType.AUTOREBOOT;
-                case VM.PVToolsVersion.Eight:
-                    return RebootType.NOREBOOT;
-                default:
-                    throw new Exception("Cannot get RebootType");
+                return RebootType.NOREBOOT;
+            }
+            else
+            {
+                return RebootType.AUTOREBOOT;
             }
         }
 
