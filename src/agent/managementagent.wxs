@@ -278,6 +278,15 @@
                       Name='InstallAgent'
                       Wait='yes' />
               </Component>
+
+              <Component Id="DifXAPIDLL64" Guid="*">
+                  <File Id="difxapi64" Name="difxapi64.dll" Source="$(env.KIT)\Redist\DIFx\DIFxAPI\x64\difxapi.dll" />
+              </Component>
+
+              <Component Id="DifXAPIDLL32" Guid="*">
+                  <File Id="difxapi32" Name="difxapi32.dll" Source="$(env.KIT)\Redist\DIFx\DIFxAPI\x86\difxapi.dll" />
+              </Component>
+
           </Directory>
         </Directory>
       </Directory>
@@ -324,6 +333,8 @@
         <ComponentRef Id='RegEntry'/>
         <ComponentRef Id='XenVssComponent'/>
         <ComponentRef Id='XenService'/>
+        <ComponentRef Id="DifXAPIDLL64"/>
+        <ComponentRef Id="DifXAPIDLL32"/>
         <?if $(sys.BUILDARCH)=x64 ?>
             <ComponentRef Id='RegEntry32'/>
         <?endif ?>
