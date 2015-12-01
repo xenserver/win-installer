@@ -78,12 +78,12 @@
 
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />     
     <UIRef Id="WixUI_InstallDir" />
-    <WixVariable Id="WixUIBannerBmp" Value="$(var.Bitmaps)\BannrBmp.bmp" />
-    <WixVariable Id="WixUIDialogBmp" Value="$(var.Bitmaps)\DlgBmp.bmp" />
-    <WixVariable Id="WixUIExclamationIco" Value="$(var.Bitmaps)\exclamic.ico" />
-    <WixVariable Id="WixUIInfoIco" Value="$(var.Bitmaps)\info.ico" />
-    <WixVariable Id="WixUINewIco" Value="$(var.Bitmaps)\New.ico" />
-    <WixVariable Id="WixUIUpIco" Value="$(var.Bitmaps)\Up.ico" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.RESOURCES_Bitmaps)\BannrBmp.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.RESOURCES_Bitmaps)\DlgBmp.bmp" />
+    <WixVariable Id="WixUIExclamationIco" Value="$(var.RESOURCES_Bitmaps)\exclamic.ico" />
+    <WixVariable Id="WixUIInfoIco" Value="$(var.RESOURCES_Bitmaps)\info.ico" />
+    <WixVariable Id="WixUINewIco" Value="$(var.RESOURCES_Bitmaps)\New.ico" />
+    <WixVariable Id="WixUIUpIco" Value="$(var.RESOURCES_Bitmaps)\Up.ico" />
 
     <MajorUpgrade
             AllowDowngrades="yes" />
