@@ -109,12 +109,10 @@ namespace PVDevice
             if (PVDevice.NeedsReboot("xenbus"))
             {
                 Trace.WriteLine("BUS: needs reboot");
-                //textOut += "  Bus Device Installing Filters\n";
                 return false;
             }
 
             Trace.WriteLine("BUS: device installed");
-            //textOut += "  Bus Device Installed\n";
             return true;
         }
 

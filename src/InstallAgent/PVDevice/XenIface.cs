@@ -66,7 +66,6 @@ namespace PVDevice
             }*/
 
             Trace.WriteLine("IFACE: device installed");
-            // textOut += "  XenServer Interface Device Installed\n";
             return true;
         }
 

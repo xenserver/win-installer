@@ -23,9 +23,8 @@ namespace PVDevice
                     return false;
                 }
 
-                if ((!Device.ChildrenInstalled("xenvif")))
+                if (!Device.ChildrenInstalled("xenvif"))
                 {
-                    //textOut += "  Virtual Network Interface Children Initializing\n";
                     Trace.WriteLine("VIF: children not installed");
                     return false;
                 }
@@ -33,7 +32,6 @@ namespace PVDevice
                 if (PVDevice.NeedsReboot("xenvif"))
                 {
                     Trace.WriteLine("VIF: needs reboot");
-                    //textOut += "  Virtual Network Interface Removing Emulated Devices\n";
                     return false;
                 }
 
@@ -58,7 +56,6 @@ namespace PVDevice
                 }
 
                 Trace.WriteLine("VIF: device installed");
-                //textOut += "  Virtual Network Interface Support Installed\n";
             }
             else
             {
