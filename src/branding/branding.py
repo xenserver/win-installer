@@ -35,6 +35,7 @@ filenames = {
         "vssmsix64" : "CitrixVssX64.msi",
         "guestagentmsix86" : "CitrixGuestAgentX86.msi",
         "guestagentmsix64" : "CitrixGuestAgentX64.msi",
+        "installwizard" : "InstallWizard.msi",
 }
 
 resources = {

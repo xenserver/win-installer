@@ -232,8 +232,41 @@ def make_builds(pack):
         shutil.copytree(pack+"\\xenguestagent", "installer\\builds\\xenguestagent")
         shutil.copytree(pack+"\\xenvss", "installer\\builds\\xenvss")
 
+signinstallers = [
+    'driversmsix64',
+    'driversmsix86',
+    'vssmsix64',
+    'vssmsix86',
+    'guestagentmsix64',
+    'guestagentmsix86',
+    "installwizard",
+]
+
+def generate_signing_script():
+    with open('installer\\sign.bat','w') as signfile:
+        signfile.write("@if \"%~1\"==\"\" goto usage\n")
+        signfile.write("@if \"%~1\"==\"/help\" goto usage\n")
+        signfile.write("@set temp=%~1\n") #Remove Quotes
+        signfile.write("@set temp=%temp:\"\"=\"%\n") #Convert doube quotes to single quotes
+        for msi in signinstallers:
+            signfile.write("%temp% "+"%~dp0\\"+branding.filenames[msi]+"\n") #dp0 is the pathname of the script
+        signfile.write("@exit /B 0\n")
+        signfile.write(":usage\n")
+        signfile.write("@echo off\n")
+        signfile.write("echo Usage:\n")
+        signfile.write("echo sign.bat ^<signing command^>\n")
+        signfile.write("echo. \n")
+        signfile.write("echo Example:\n")
+        signfile.write("echo On a system where a certificate for \"My Company Inc.\" has been installed as a personal certificate\n")
+        signfile.write("echo. \n")
+        signfile.write("echo sign.bat \"signtool sign /a /s my /n \"\"My Company Inc.\"\" /t http://timestamp.verisign.com/scripts/timestamp.dll\"\n")
+
+
+
 def make_installers(pack):
     src = ".\\src\\drivers"
+
+    generate_signing_script()
 
     wix=lambda f: os.environ['WIX']+"bin\\"+f
     bitmaps = ".\\src\\bitmaps"
@@ -246,25 +279,17 @@ def make_installers(pack):
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x64","-b", ".\\installer", "-o", "installer\\"+branding.filenames['driversmsix64'],"-b",pack, "-sw1076"])
-    if signfiles:
-        sign("installer\\"+branding.filenames['driversmsix64'], signname, signstr=signstr)
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-darch=x86", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x86","-b", ".\\installer", "-o", "installer\\"+branding.filenames['driversmsix86'],"-b",pack, "-sw1076"])
-    if signfiles:
-        sign("installer\\"+branding.filenames['driversmsix86'], signname, signstr=signstr)
 #
     src = ".\\src\\vss"
 #    
     callfn([wix("candle.exe"), src+"\\citrixvss.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixvssx86.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixvssx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['vssmsix86'], "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
-    if signfiles:
-        sign("installer\\"+branding.filenames['vssmsix86'], signname, signstr=signstr)
 #
     callfn([wix("candle.exe"), src+"\\citrixvss.wxs", "-arch","x86", "-darch=x64", "-o", "installer\\citrixvssx64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixvssx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['vssmsix64'], "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
-    if signfiles:
-        sign("installer\\"+branding.filenames['vssmsix64'], signname, signstr=signstr)
 #
     src = ".\\src\\agent"
 #
@@ -272,15 +297,10 @@ def make_installers(pack):
     
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixguestagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
     callfn([wix("light.exe"), "installer\\citrixguestagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['guestagentmsix86'], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
-    if signfiles:
-        sign("installer\\"+branding.filenames['guestagentmsix86'], signname, signstr=signstr)
 #
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixguestagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
 
-
     callfn([wix("light.exe"), "installer\\citrixguestagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['guestagentmsix64'], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
-    if signfiles:
-        sign("installer\\"+branding.filenames['guestagentmsix64'], signname, signstr=signstr)
     src = ".\\src\\installwizard"
     bitmaps = ".\\src\\bitmaps"
     
@@ -305,7 +325,8 @@ def make_installers(pack):
     callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if signfiles:
-        sign("installer\\installwizard.msi", signname, signstr=signstr)
+        for signname in signinstallers:
+            sign("installer\\"+branding.filenames[signname], signname, signstr=signstr)
 
     # Remove XenLegacy.Exe so that we don't archive the dummy file
     os.remove("installer\\"+branding.filenames['legacy'])    
