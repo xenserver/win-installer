@@ -388,33 +388,89 @@ namespace InstallAgent
 
         private static void RemovePVDriversFromFilters()
         {
+            const string FUNC_NAME = "RemovePVDriversFromFilters";
+            const string BASE_RK_NAME =
+                @"SYSTEM\CurrentControlSet\Control\Class";
+            const string XENFILT = "xenfilt";
+            const string SCSIFILT = "scsifilt";
+
+            Trace.WriteLine("===> " + FUNC_NAME);
+
             RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                @"SYSTEM\CurrentControlSet\Control\Class", true
+                BASE_RK_NAME, true
             );
+
+            if (baseRK == null)
+            {
+                throw new Exception(
+                    "Could not open registry key: \'" + BASE_RK_NAME + "\'"
+                );
+            }
+
+            Trace.WriteLine("Opened key: \'" + BASE_RK_NAME + "\'");
 
             string[] filterTypes = { "LowerFilters", "UpperFilters" };
 
             foreach (string subKeyName in baseRK.GetSubKeyNames())
+            {
                 using (RegistryKey tmpRK = baseRK.OpenSubKey(subKeyName, true))
+                {
+                    if (tmpRK == null)
+                    {
+                        throw new Exception(
+                            "Could not open registry key: \'" +
+                            BASE_RK_NAME + "\\" + subKeyName + "\'"
+                        );
+                    }
+
                     foreach (string filters in filterTypes)
                     {
                         string[] values = (string[])tmpRK.GetValue(filters);
 
-                        if (values != null)
+                        if (values == null ||
+                            !(values.Contains(
+                                  XENFILT,
+                                  StringComparer.OrdinalIgnoreCase) ||
+                              values.Contains(
+                                  SCSIFILT,
+                                  StringComparer.OrdinalIgnoreCase)))
                         {
-                            /*
-                             * LINQ expression
-                             * Gets all entries of "values" that
-                             * are not "xenfilt" or "scsifilt"
-                             */
-                            values = values.Where(
-                                val => !(val.Equals("xenfilt", StringComparison.OrdinalIgnoreCase) ||
-                                         val.Equals("scsifilt", StringComparison.OrdinalIgnoreCase))
-                            ).ToArray();
-
-                            tmpRK.SetValue(filters, values, RegistryValueKind.MultiString);
+                            continue;
                         }
+
+                        Trace.WriteLine(
+                            "At \'" + subKeyName + "\\" + filters + "\'"
+                        );
+
+                        Trace.WriteLine(
+                            "Before: \'" + String.Join(" ", values) + "\'"
+                        );
+
+                        // LINQ expression
+                        // Gets all entries of "values" that
+                        // are not "xenfilt" or "scsifilt"
+                        values = values.Where(
+                            val => !(val.Equals(
+                                         XENFILT,
+                                         StringComparison.OrdinalIgnoreCase) ||
+                                     val.Equals(
+                                         SCSIFILT,
+                                         StringComparison.OrdinalIgnoreCase))
+                        ).ToArray();
+
+                        tmpRK.SetValue(
+                            filters,
+                            values,
+                            RegistryValueKind.MultiString
+                        );
+
+                        Trace.WriteLine(
+                            "After: \'" + String.Join(" ", values) + "\'"
+                        );
                     }
+                }
+            }
+            Trace.WriteLine("<=== " + FUNC_NAME);
         }
 
         private static void DontBootStartPVDrivers()
