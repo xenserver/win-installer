@@ -243,6 +243,7 @@ signinstallers = [
 ]
 
 def generate_signing_script():
+   
     with open('installer\\sign.bat','w') as signfile:
         signfile.write("@if \"%~1\"==\"\" goto usage\n")
         signfile.write("@if \"%~1\"==\"/help\" goto usage\n")
@@ -265,6 +266,9 @@ def generate_signing_script():
 
 def make_installers(pack):
     src = ".\\src\\drivers"
+    if os.path.exists('installer'):
+            shutil.rmtree('installer')
+    os.makedirs('installer')
 
     generate_signing_script()
 
