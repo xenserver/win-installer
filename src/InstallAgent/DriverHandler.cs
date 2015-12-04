@@ -57,12 +57,9 @@ namespace InstallAgent
             }
             else if (result == CfgMgr32.Wait.FAILED)
             {
-                Win32ErrorMessage.SetLast(
-                    "CMP_WaitNoPendingInstallEvents"
-                );
-
-                Trace.WriteLine(Win32ErrorMessage.GetLast());
-                throw new Exception(Win32ErrorMessage.GetLast());
+                Win32Error.Set("CMP_WaitNoPendingInstallEvents");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
 
             Trace.WriteLine("Timeout reached - drivers still installing");
@@ -613,9 +610,9 @@ namespace InstallAgent
                 }
                 else
                 {
-                    Win32ErrorMessage.SetLast("MsiGetProductInfo", err);
-                    Trace.WriteLine(Win32ErrorMessage.GetLast());
-                    throw new Win32Exception(Win32ErrorMessage.GetLast());
+                    Win32Error.Set("MsiGetProductInfo", err);
+                    Trace.WriteLine(Win32Error.GetFullErrMsg());
+                    throw new Win32Exception(Win32Error.GetFullErrMsg());
                 }
             }
 
@@ -626,9 +623,9 @@ namespace InstallAgent
             }
             else
             {
-                Win32ErrorMessage.SetLast("MsiEnumProducts", err);
-                Trace.WriteLine(Win32ErrorMessage.GetLast());
-                throw new Win32Exception(Win32ErrorMessage.GetLast());
+                Win32Error.Set("MsiEnumProducts", err);
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+                throw new Win32Exception(Win32Error.GetFullErrMsg());
             }
         }
 
