@@ -475,33 +475,65 @@ namespace InstallAgent
 
         private static void DontBootStartPVDrivers()
         {
-            string[] xenDrivers = {
+            const string FUNC_NAME = "DontBootStartPVDrivers";
+            const string BASE_RK_NAME =
+                @"SYSTEM\CurrentControlSet\Services";
+            const string START = "Start";
+            const string XENFILT_UNPLUG = @"xenfilt\Unplug";
+            const int MANUAL = 3;
+
+            string[] xenServices = {
                 "XENBUS", "xenfilt", "xeniface", "xenlite",
                 "xennet", "xenvbd", "xenvif", "xennet6",
                 "xenutil", "xenevtchn"
             };
 
+            Trace.WriteLine("===> " + FUNC_NAME);
+
             RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                @"SYSTEM\CurrentControlSet\Services", true
+                BASE_RK_NAME, true
             );
 
-            foreach (string driver in xenDrivers)
-                using (RegistryKey tmpRK = baseRK.OpenSubKey(driver, true))
-                {
-                    if (tmpRK != null)
-                    {
-                        tmpRK.SetValue("Start", 3);
-                    }
-                }
+            if (baseRK == null)
+            {
+                throw new Exception(
+                    "Could not open registry key: \'" + BASE_RK_NAME + "\'"
+                );
+            }
 
-            using (RegistryKey tmpRK = baseRK.OpenSubKey(@"xenfilt\Unplug", true))
+            Trace.WriteLine("Opened key: \'" + BASE_RK_NAME + "\'");
+
+            foreach (string service in xenServices)
+            {
+                using (RegistryKey tmpRK = baseRK.OpenSubKey(service, true))
+                {
+                    if (tmpRK == null || tmpRK.GetValue(START) == null)
+                    {
+                        continue;
+                    }
+
+                    Trace.WriteLine(service + "\\" + START + " = " + MANUAL);
+
+                    tmpRK.SetValue(START, MANUAL);
+                }
+            }
+
+            using (RegistryKey tmpRK =
+                       baseRK.OpenSubKey(XENFILT_UNPLUG, true))
             {
                 if (tmpRK != null)
                 {
+                    Trace.WriteLine("Opened subkey: \'" + XENFILT_UNPLUG + "\'");
+                    Trace.WriteLine(
+                        "Delete values \'DISCS\' and " +
+                        "\'NICS\' (if they exist)"
+                    );
                     tmpRK.DeleteValue("DISKS", false);
                     tmpRK.DeleteValue("NICS", false);
                 }
             }
+
+            Trace.WriteLine("<=== " + FUNC_NAME);
         }
 
         private static void UninstallMSIs()
