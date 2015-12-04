@@ -3,7 +3,7 @@ using PInvoke;
 using PVDevice;
 using State;
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -11,6 +11,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using XSToolsInstallation;
 
 namespace InstallAgent
@@ -538,14 +539,8 @@ namespace InstallAgent
 
         private static void UninstallMSIs()
         {
-            const int GUID_LEN = 39;
-            const int BUF_LEN = 128;
-            int err;
-            int i = 0;
-            int len;
-            StringBuilder productCode = new StringBuilder(GUID_LEN, GUID_LEN);
-            StringBuilder productName = new StringBuilder(BUF_LEN, BUF_LEN);
-            Hashtable toRemove = new Hashtable();
+            const int TRIES = 5;
+            List<string> toRemove = new List<string>();
 
             // MSIs to uninstall
             string[] msiNameList = {
@@ -556,16 +551,48 @@ namespace InstallAgent
                 "Citrix XenServer Tools Installer"
             };
 
-            // ERROR_SUCCESS = 0
-            while (Msi.MsiEnumProducts(i, productCode) == 0)
+            foreach (string msiName in msiNameList)
             {
-                string tmpCode = productCode.ToString();
+                string tmpCode = GetMsiProductCode(msiName);
 
+                if (!String.IsNullOrEmpty(tmpCode))
+                {
+                    toRemove.Add(tmpCode);
+                }
+            }
+
+            foreach (string productCode in toRemove)
+            {
+                UninstallMsi(productCode, TRIES);
+            }
+        }
+
+        private static string GetMsiProductCode(string msiName)
+        // Enumerates the MSIs present in the system. If 'msiName'
+        // exists, it returns its product code. If not, it returns
+        // the empty string.
+        {
+            const int GUID_LEN = 39;
+            const int BUF_LEN = 128;
+            int err;
+            int len;
+            StringBuilder productCode = new StringBuilder(GUID_LEN, GUID_LEN);
+            StringBuilder productName = new StringBuilder(BUF_LEN, BUF_LEN);
+
+            Trace.WriteLine(
+                "Checking if \'" + msiName +"\' is present in system.."
+            );
+
+            // ERROR_SUCCESS = 0
+            for (int i = 0;
+                 (err = Msi.MsiEnumProducts(i, productCode)) == 0;
+                 ++i)
+            {
                 len = BUF_LEN;
 
                 // Get ProductName from Product GUID
                 err = Msi.MsiGetProductInfo(
-                    tmpCode,
+                    productCode.ToString(),
                     Msi.INSTALLPROPERTY.INSTALLEDPRODUCTNAME,
                     productName,
                     ref len
@@ -573,35 +600,101 @@ namespace InstallAgent
 
                 if (err == 0)
                 {
-                    string tmpName = productName.ToString();
-
-                    if (msiNameList.Contains(tmpName))
+                    if (msiName.Equals(
+                            productName.ToString(),
+                            StringComparison.OrdinalIgnoreCase))
                     {
-                        toRemove.Add(tmpCode, tmpName);
+                        Trace.WriteLine(
+                            "Product found; Code: \'" +
+                            productCode.ToString() + "\'"
+                        );
+                        return productCode.ToString();
                     }
                 }
-
-                ++i;
+                else
+                {
+                    Win32ErrorMessage.SetLast("MsiGetProductInfo", err);
+                    Trace.WriteLine(Win32ErrorMessage.GetLast());
+                    throw new Win32Exception(Win32ErrorMessage.GetLast());
+                }
             }
 
-            foreach (DictionaryEntry product in toRemove)
+            if (err == 259) // ERROR_NO_MORE_ITEMS
             {
-                Process process = new Process();
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.FileName = "msiexec.exe";
+                Trace.WriteLine("Product not found");
+                return "";
+            }
+            else
+            {
+                Win32ErrorMessage.SetLast("MsiEnumProducts", err);
+                Trace.WriteLine(Win32ErrorMessage.GetLast());
+                throw new Win32Exception(Win32ErrorMessage.GetLast());
+            }
+        }
 
-                // For some unknown reason, XenServer Tools Installer
-                // doesn't like the '/norestart' option and doesn't get
-                // removed if it's there.
-                startInfo.Arguments =
-                    "/x " + product.Key + " /qn" +
-                    (product.Value.Equals(msiNameList[msiNameList.Length - 1]) ?
-                        "" : " /norestart"
-                    );
-                process.StartInfo = startInfo;
-                process.Start();
-                process.WaitForExit();
-                process.Close();
+        private static void UninstallMsi(string msiCode, int tries = 1)
+        // Uses 'msiexec.exe' to uninstall MSI with product code
+        // 'msiCode'. If the exit code is none of 'ERROR_SUCCCESS',
+        // the function sleeps and then retries. The amount of time
+        // sleeping is doubled on every try, starting at 1 second.
+        {
+            int secs;
+
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.FileName = "msiexec.exe";
+            startInfo.Arguments = "/x " + msiCode + " /qn /norestart";
+            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            startInfo.CreateNoWindow = true;
+
+            for (int i = 0; i < tries; ++i)
+            {
+                Trace.WriteLine(
+                    "Running: \'" + startInfo.FileName +
+                    " " + startInfo.Arguments + "\'"
+                );
+
+                using (Process proc = Process.Start(startInfo))
+                {
+                    proc.WaitForExit();
+
+                    switch (proc.ExitCode)
+                    {
+                        case 0:
+                            Trace.WriteLine("ERROR_SUCCESS");
+                            return;
+                        case 1641:
+                            Trace.WriteLine("ERROR_SUCCESS_REBOOT_INITIATED");
+                            return;
+                        case 3010:
+                            Trace.WriteLine("ERROR_SUCCESS_REBOOT_REQUIRED");
+                            return;
+                        default:
+                            if (i == tries - 1)
+                            {
+                                Trace.WriteLine(
+                                    "Tries exhausted; Error: "+
+                                    proc.ExitCode
+                                );
+
+                                // TODO: Create custom exceptions
+                                throw new Exception();
+                            }
+
+                            secs = (int)Math.Pow(2.0, (double)i);
+
+                            Trace.WriteLine(
+                                "Msi uninstall failed; Error: " +
+                                proc.ExitCode
+                            );
+                            Trace.WriteLine(
+                                "Retrying in " +
+                                secs + " seconds"
+                            );
+
+                            Thread.Sleep(secs * 1000);
+                            break;
+                    }
+                }
             }
         }
 
