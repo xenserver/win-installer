@@ -12,9 +12,12 @@ namespace PInvoke
             return message;
         }
 
-        public static void SetLast(string win32FuncName)
+        public static void SetLast(string win32FuncName, int err = -1)
         {
-            int err = Marshal.GetLastWin32Error();
+            if (err == -1)
+            {
+                err = Marshal.GetLastWin32Error();
+            }
 
             message =
                 win32FuncName + " failed; Error " + err +
