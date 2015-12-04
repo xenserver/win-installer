@@ -470,17 +470,17 @@ namespace InstallGui
 
             try
             {
-                ServiceController sc = new ServiceController("XenPVInstall");
+                ServiceController sc = new ServiceController(branding.GetString("BRANDING_shortInstallerServiceName"));
                 if (sc.Status != ServiceControllerStatus.Running)
                 {
-                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\XenPVInstall", "Start", 2);
+                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\" + branding.GetString("BRANDING_shortInstallerServiceName"), "Start", 2);
                     sc.Start();
                 }
             }
             catch
             {
-                Trace.WriteLine("Unable to find XenPVInstall service");
-                Title.Text = "Unable to find XenPVInstall service";
+                Trace.WriteLine("Unable to find " + branding.GetString("BRANDING_shortInstallerServiceName") + "service");
+                Title.Text = "Unable to find " + branding.GetString("BRANDING_shortInstallerServiceName") + " service";
             }
 
 

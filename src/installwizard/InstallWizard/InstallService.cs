@@ -617,7 +617,7 @@ namespace InstallWizard
                     {
                     }
 
-                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\XenPVInstall", "Start", 3);
+                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\"+Branding.getString("BRANDING_shortInstallerServiceName"), "Start", 3);
                     (new Thread(delegate()
                     {
                         this.Stop();
