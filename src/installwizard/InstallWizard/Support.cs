@@ -48,9 +48,50 @@ using System.Management;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Security.Cryptography.X509Certificates;
+using System.Resources;
+using System.Reflection;
 
 namespace InstallWizard
 {
+
+    public class Branding
+    {
+        private ResourceManager resources;
+        private static Branding instance;
+        private Branding()
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string brandsatpath = Path.GetDirectoryName(assembly.Location) + "\\brandsat.dll";
+            Assembly sat = Assembly.LoadFile(brandsatpath);
+            resources = new ResourceManager("textstrings", sat);
+            Trace.WriteLine("Resource manager created");
+        }
+        public static string getString(string key)
+        {
+            try
+            {
+                return Instance.resources.GetString(key);
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine("Unknown Branding : " + key);
+                Trace.WriteLine(e.ToString());
+                return "Unknown Branding " + key;
+            }
+        }
+        public static Branding Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new Branding();
+                }
+                return instance;
+            }
+        }
+    }
+
     class setupapi {
         [DllImport("setupapi.dll", CharSet = CharSet.Auto)]     // 2nd form uses an Enumerator only, with null ClassGUID 
         public static extern IntPtr SetupDiGetClassDevs(
@@ -1794,9 +1835,9 @@ namespace InstallWizard
             Trace.WriteLine("Updating NSIS Driver");
             Process installer;
             DriverPackage.EnsureMsiMutexAvailable(new TimeSpan(0, 2, 0)); // Don't try to install while installer MSI is still running
-            ProcessStartInfo si = new ProcessStartInfo(path+"xenlegacy.exe", "/S /AllowLegacyInstall");
+            ProcessStartInfo si = new ProcessStartInfo(path+Branding.getString("FILENAME_legacy"), "/S /AllowLegacyInstall");
             si.CreateNoWindow = true;
-            Trace.WriteLine("Start updating via " + path + "xenlegacy.exe");
+            Trace.WriteLine("Start updating via " + path + Branding.getString("FILENAME_legacy"));
             installer = Process.Start(si);
             while (!installer.HasExited)
             {
@@ -1819,9 +1860,9 @@ namespace InstallWizard
 
         public void uninstallerfix()
         {
-            if (File.Exists(path + "xluninstallerfix.exe"))
+            if (File.Exists(path + Branding.getString("FILENAME_legacyuninstallerfix")))
             {
-                ProcessStartInfo si = new ProcessStartInfo(path + "xluninstallerfix.exe", "/S");
+                ProcessStartInfo si = new ProcessStartInfo(path + Branding.getString("FILENAME_legacyuninstallerfix"), "/S");
                 Process fix = Process.Start(si);
                 while (!fix.HasExited)
                 {
@@ -1917,7 +1958,7 @@ namespace InstallWizard
                 throw new Exception("Xen Interface Base Not Found"); ;
 
             ManagementBaseObject inparam = bse.GetMethodParameters("AddSession");
-            inparam["ID"] = "Citrix Xen Install Wizard";
+            inparam["ID"] = Branding.getString("BRANDING_installWizardName");
             ManagementBaseObject outparam = bse.InvokeMethod("AddSession", inparam, null);
             UInt32 sessionid = (UInt32)outparam["SessionId"];
             ManagementObjectSearcher objects = new ManagementObjectSearcher(@"root\wmi", "SELECT * From CitrixXenStoreSession WHERE SessionId=" + sessionid.ToString());
@@ -2189,10 +2230,10 @@ namespace InstallWizard
                 if (!checkservicerunning("xeniface"))
                 {
                     Trace.WriteLine("Interface device not ready");
-                    textout = textout + "  XenServer Interface Device Initializing\n";
+                    textout = textout + "  "+Branding.getString("BRANDING_hypervisorProduct")+" Interface Device Initializing\n";
                     return false;
                 }
-                textout = textout+"  XenServer Interface Device Installed\n";
+                textout = textout + "  " + Branding.getString("BRANDING_hypervisorProduct") + " Interface Device Installed\n";
 
                 // If there are no vifs for the VM, xenbus dose not enumerate a device for xenvif 
                 if (checkserviceneeded("VIF")) {

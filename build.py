@@ -41,6 +41,11 @@ import manifestlatest
 import manifestspecific
 import re
 import errno
+import imp
+
+(brandingFile, brandingPath, brandingDesc) = imp.find_module("branding",["src\\branding"])
+branding = imp.load_module("branding",brandingFile,brandingPath,brandingDesc)
+
 
 def unpack_from_jenkins(filelist, packdir):
     if ('GIT_COMMIT' in os.environ):
@@ -53,6 +58,7 @@ def unpack_from_jenkins(filelist, packdir):
 
 
 header = "verinfo.wxi"
+brandingheader = "branding.wxi"
 include ="include"
 
 signtool=os.environ['KIT']+"\\bin\\x86\\signtool.exe"
@@ -146,16 +152,54 @@ def make_header():
     file.write("</Include>")
     file.close();
 
+    file = open(include+"\\"+brandingheader, 'w')
+    file.write("<?xml version='1.0' ?>\n");
+    file.write("<Include xmlns = 'http://schemas.microsoft.com/wix/2006/wi'>\n")
+    for key, value in branding.branding.items():
+        file.write("<?define BRANDING_"+key+" =\t\""+value+"\"?>\n")
+    for key, value in branding.filenames.items():
+        file.write("<?define FILENAME_"+key+" =\t\""+value+"\"?>\n")
+    for key, value in branding.resources.items():
+        file.write("<?define RESOURCE_"+key+" =\t\""+value+"\"?>\n")
+    
+    file.write("<?define RESOURCES_Bitmaps =\t\""+branding.bitmaps+"\"?>\n")
+    
+    file.write("</Include>")
+    file.close();
+
+    file = open("proj\\textstrings.txt",'w')
+    for key, value in branding.branding.items():
+        file.write("BRANDING_"+key+"="+value+"\n")
+    for key, value in branding.filenames.items():
+        file.write("FILENAME_"+key+"="+value+"\n")
+    for key, value in branding.resources.items():
+        file.write("RESOURCE_"+key+"="+value+"\n")
+    file.close();
+
+    file = open("proj\\buildsat.bat",'w')
+    file.write("echo HELLO\n")
+    file.write("call \"%VS%\\VC\\vcvarsall.bat\" x86\n")
+    file.write("set FrameworkVersion=v3.5\n")
+    file.write("resgen.exe proj\\textstrings.txt proj\\textstrings.resources\n")
+    #file.write("al.exe proj\\branding.mod /embed:proj\\textstrings.resources /embed:"+branding.bitmaps+"\\DlgBmp.bmp /t:lib /out:proj\\brandsat.dll\n")
+    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:proj\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
+    file.write("echo HELLO\n")
+    file.close();
+    print (callfnout("proj\\buildsat.bat"))
+
+
+
 def callfnout(cmd):
     print(cmd)
 
     sub = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    output = sub.communicate()[0]
+    output, error = sub.communicate()
     ret = sub.returncode
 
     if ret != 0:
         raise(Exception("Error %d in : %s" % (ret, cmd)))
     print("------------------------------------------------------------")
+    print(error)
     return output.decode('utf-8')
 
 
@@ -188,8 +232,45 @@ def make_builds(pack):
         shutil.copytree(pack+"\\xenguestagent", "installer\\builds\\xenguestagent")
         shutil.copytree(pack+"\\xenvss", "installer\\builds\\xenvss")
 
+signinstallers = [
+    'driversmsix64',
+    'driversmsix86',
+    'vssmsix64',
+    'vssmsix86',
+    'guestagentmsix64',
+    'guestagentmsix86',
+    "installwizard",
+]
+
+def generate_signing_script():
+   
+    with open('installer\\sign.bat','w') as signfile:
+        signfile.write("@if \"%~1\"==\"\" goto usage\n")
+        signfile.write("@if \"%~1\"==\"/help\" goto usage\n")
+        signfile.write("@set temp=%~1\n") #Remove Quotes
+        signfile.write("@set temp=%temp:\"\"=\"%\n") #Convert doube quotes to single quotes
+        for msi in signinstallers:
+            signfile.write("%temp% "+"%~dp0\\"+branding.filenames[msi]+"\n") #dp0 is the pathname of the script
+        signfile.write("@exit /B 0\n")
+        signfile.write(":usage\n")
+        signfile.write("@echo off\n")
+        signfile.write("echo Usage:\n")
+        signfile.write("echo sign.bat ^<signing command^>\n")
+        signfile.write("echo. \n")
+        signfile.write("echo Example:\n")
+        signfile.write("echo On a system where a certificate for \"My Company Inc.\" has been installed as a personal certificate\n")
+        signfile.write("echo. \n")
+        signfile.write("echo sign.bat \"signtool sign /a /s my /n \"\"My Company Inc.\"\" /t http://timestamp.verisign.com/scripts/timestamp.dll\"\n")
+
+
+
 def make_installers(pack):
     src = ".\\src\\drivers"
+    if os.path.exists('installer'):
+            shutil.rmtree('installer')
+    os.makedirs('installer')
+
+    generate_signing_script()
 
     wix=lambda f: os.environ['WIX']+"bin\\"+f
     bitmaps = ".\\src\\bitmaps"
@@ -201,42 +282,29 @@ def make_installers(pack):
     callfn([wix("light.exe"), "installer\\driversx86.wixobj","-darch=x86",wix("difxapp_x86.wixlib"),"-ext","WixUtilExtension.dll","-ext","WixDifxAppExtension.dll","-b",pack,"-o","installer\\driversx86.msm"])
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x64","-b", ".\\installer", "-o", "installer\\citrixxendriversx64.msi","-b",pack, "-sw1076"])
-    if signfiles:
-        sign("installer\\citrixxendriversx64.msi", signname, signstr=signstr)
+    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x64","-b", ".\\installer", "-o", "installer\\"+branding.filenames['driversmsix64'],"-b",pack, "-sw1076"])
 #
     callfn([wix("candle.exe"), src+"\\citrixxendrivers.wxs", "-darch=x86", "-o", "installer\\citrixxendrivers64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x86","-b", ".\\installer", "-o", "installer\\citrixxendriversx86.msi","-b",pack, "-sw1076"])
-    if signfiles:
-        sign("installer\\citrixxendriversx86.msi", signname, signstr=signstr)
+    callfn([wix("light.exe"), "installer\\citrixxendrivers64.wixobj", "-darch=x86","-b", ".\\installer", "-o", "installer\\"+branding.filenames['driversmsix86'],"-b",pack, "-sw1076"])
 #
     src = ".\\src\\vss"
 #    
     callfn([wix("candle.exe"), src+"\\citrixvss.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixvssx86.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixvssx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\citrixvssx86.msi", "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
-    if signfiles:
-        sign("installer\\citrixvssx86.msi", signname, signstr=signstr)
+    callfn([wix("light.exe"), "installer\\citrixvssx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['vssmsix86'], "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
 #
     callfn([wix("candle.exe"), src+"\\citrixvss.wxs", "-arch","x86", "-darch=x64", "-o", "installer\\citrixvssx64.wixobj", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixvssx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\citrixvssx64.msi", "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
-    if signfiles:
-        sign("installer\\citrixvssx64.msi", signname, signstr=signstr)
+    callfn([wix("light.exe"), "installer\\citrixvssx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['vssmsix64'], "-b", pack, "-ext","WixUtilExtension.dll", "-cultures:en-us", "-sw1076"])
 #
     src = ".\\src\\agent"
 #
 
     
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\citrixguestagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
-    callfn([wix("light.exe"), "installer\\citrixguestagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\citrixguestagentx86.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
-    if signfiles:
-        sign("installer\\citrixguestagentx86.msi", signname, signstr=signstr)
+    callfn([wix("light.exe"), "installer\\citrixguestagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['guestagentmsix86'], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
 #
     callfn([wix("candle.exe"), src+"\\citrixguestagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\citrixguestagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
 
-
-    callfn([wix("light.exe"), "installer\\citrixguestagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\citrixguestagentx64.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
-    if signfiles:
-        sign("installer\\citrixguestagentx64.msi", signname, signstr=signstr)
+    callfn([wix("light.exe"), "installer\\citrixguestagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['guestagentmsix64'], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
     src = ".\\src\\installwizard"
     bitmaps = ".\\src\\bitmaps"
     
@@ -251,21 +319,22 @@ def make_installers(pack):
     # into the installer, but it is needed to keep light happy (XenLegacy.exe
     # will exentually be sourced from the original build tree)
 
-    f = open("installer\\XenLegacy.Exe","w")
+    f = open("installer\\"+branding.filenames['legacy'],"w")
     f.write("DUMMY FILE")
     f.close()
-    f = open("installer\\xluninstallerfix.exe","w")
+    f = open("installer\\"+branding.filenames['legacyuninstallerfix'],"w")
     f.write("DUMMY FILE")
     f.close()
     
-    callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if signfiles:
-        sign("installer\\installwizard.msi", signname, signstr=signstr)
+        for signname in signinstallers:
+            sign("installer\\"+branding.filenames[signname], signname, signstr=signstr)
 
     # Remove XenLegacy.Exe so that we don't archive the dummy file
-    os.remove("installer\\XenLegacy.Exe")    
-    os.remove("installer\\xluninstallerfix.exe")    
+    os.remove("installer\\"+branding.filenames['legacy'])    
+    os.remove("installer\\"+branding.filenames['legacyuninstallerfix'])    
 
 def archive(filename, files, tgz=False):
     access='w'
@@ -394,6 +463,8 @@ if __name__ == '__main__':
     if ('AUTOCOMMIT' in os.environ):
         buildlocation = os.environ['BUILD_URL']+"artifact/installer.tar"
 
+    archiveSrc = True
+
     while (len(sys.argv) > argptr):
         if (sys.argv[argptr] == "--secure"):
             securebuild = True
@@ -448,6 +519,11 @@ if __name__ == '__main__':
         if (sys.argv[argptr] == '--buildlocation'):
             buildlocation = sys.argv[argptr+1]
             argptr +=2
+            continue
+
+        if (sys.argv[argptr] == '--noarchive'):
+            archiveSrc = False
+            argptr +=1
             continue
 
     make_header()
@@ -518,8 +594,9 @@ if __name__ == '__main__':
             os.environ['TOOLS_HOTFIX_NUMBER'])
     f.close()
 
-    listfile = callfnout(['git','ls-tree','-r','--name-only','HEAD'])
-    archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
+    if archiveSrc == True:
+        listfile = callfnout(['git','ls-tree','-r','--name-only','HEAD'])
+        archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
     archive('installer.tar', ['installer'])
 
     if ('AUTOCOMMIT' in os.environ):
