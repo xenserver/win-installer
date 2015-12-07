@@ -67,9 +67,9 @@ namespace PVDevice
 
         public static void NetworkSettingsSaveRestore(bool save)
         {
-            // Combined the 2 functions since they
+            // Combined the 2 actions since they
             // only differ in these 3 words
-            string[] function = save ?
+            string[] action = save ?
                 new string[] { "Saving", "/save", "saved" } :
                 new string[] { "Restoring", "/restore", "restored" };
 
@@ -85,10 +85,10 @@ namespace PVDevice
                 );
             }
 
-            Trace.WriteLine(function[0] + " network settings");
+            Trace.WriteLine(action[0] + " network settings");
 
             ProcessStartInfo start = new ProcessStartInfo();
-            start.Arguments = "/log " + function[1];
+            start.Arguments = "/log " + action[1];
             start.FileName = qNetExe;
             start.WindowStyle = ProcessWindowStyle.Hidden;
             start.CreateNoWindow = true;
@@ -98,10 +98,13 @@ namespace PVDevice
                 proc.WaitForExit();
             }
 
-            VifDisableEnable(false);
-            VifDisableEnable(true);
+            if (!save) // == restore
+            {
+                VifDisableEnable(false);
+                VifDisableEnable(true);
+            }
 
-            Trace.WriteLine("Network settings " + function[2]);
+            Trace.WriteLine("Network settings " + action[2]);
         }
 
         public static void FixupAliases()
