@@ -17,10 +17,10 @@ namespace PVDevice
         public static readonly string[] hwIDs;
 
         // The XenBus device we care about
-        public static readonly XenBusDevs preferredXenBus;
+        public static readonly Devs preferredXenBus;
 
         [Flags]
-        public enum XenBusDevs : uint
+        public enum Devs : uint
         {
             DEV_0001 = 1 << 0,
             DEV_0002 = 1 << 1,
@@ -30,7 +30,11 @@ namespace PVDevice
         // Static constructor
         static XenBus()
         {
-            hwIDs = new string[3];
+            hwIDs = new string[
+                Enum.GetNames(typeof(Devs)).Length // == # of devs
+            ];
+
+            const string XENBUS_DEV_PREFIX = @"PCI\VEN_5853&";
 
             using (SetupApi.DeviceInfoSet devInfoSet =
                        new SetupApi.DeviceInfoSet(
@@ -52,8 +56,8 @@ namespace PVDevice
                     SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
 
                     xenBusDevInfoData = Device.FindInSystem(
-                        @"PCI\VEN_5853&" +
-                            Enum.GetName(typeof(XenBusDevs), 1 << i),
+                        XENBUS_DEV_PREFIX +
+                            Enum.GetName(typeof(Devs), 1 << i), // == Dev name
                         devInfoSet,
                         false
                     );
@@ -74,17 +78,17 @@ namespace PVDevice
                 }
 
                 // In descending order of preference
-                if (IsPresent(XenBusDevs.DEV_C000, true))
+                if (IsPresent(Devs.DEV_C000, true))
                 {
-                    preferredXenBus = XenBusDevs.DEV_C000;
+                    preferredXenBus = Devs.DEV_C000;
                 }
-                else if (IsPresent(XenBusDevs.DEV_0001, true))
+                else if (IsPresent(Devs.DEV_0001, true))
                 {
-                    preferredXenBus = XenBusDevs.DEV_0001;
+                    preferredXenBus = Devs.DEV_0001;
                 }
-                else if (IsPresent(XenBusDevs.DEV_0002, true))
+                else if (IsPresent(Devs.DEV_0002, true))
                 {
-                    preferredXenBus = XenBusDevs.DEV_0002;
+                    preferredXenBus = Devs.DEV_0002;
                 }
             }
         }
@@ -92,9 +96,9 @@ namespace PVDevice
         public static bool IsFunctioning()
         {
             if (!IsPresent(
-                    XenBusDevs.DEV_0001 |
-                    XenBusDevs.DEV_0002 |
-                    XenBusDevs.DEV_C000,
+                    Devs.DEV_0001 |
+                    Devs.DEV_0002 |
+                    Devs.DEV_C000,
                     false))
             {
                 return false;
@@ -119,7 +123,7 @@ namespace PVDevice
         // If 'strict' == true, all the devices queried need to exist
         // (bitwise AND). Else, at least one of the devices queried
         // needs to exist (bitwise OR).
-        public static bool IsPresent(XenBusDevs xenBusDevQuery, bool strict)
+        public static bool IsPresent(Devs xenBusDevQuery, bool strict)
         {
             bool result = strict ? true : false;
 
@@ -141,7 +145,7 @@ namespace PVDevice
             return result;
         }
 
-        public static string GetDeviceInstanceId(XenBusDevs xenBusDev)
+        public static string GetDeviceInstanceId(Devs xenBusDev)
         {
             const int BUFFER_SIZE = 4096;
             string xenBusDevStr;
@@ -196,7 +200,7 @@ namespace PVDevice
             return xenBusDeviceInstanceId.ToString();
         }
 
-        public static int GetDevNode(XenBusDevs xenBusDev)
+        public static int GetDevNode(Devs xenBusDev)
         {
             SetupApi.CR err;
             int xenBusNode;
@@ -228,7 +232,7 @@ namespace PVDevice
         // Enumerates the specified XenBus device and searches
         // DriverStore for compatible drivers to install to the
         // new devices it finds.
-        public static bool Enumerate(XenBusDevs xenBusDev)
+        public static bool Enumerate(Devs xenBusDev)
         {
             SetupApi.CR err;
             int xenBusNode = GetDevNode(xenBusDev);
@@ -259,7 +263,7 @@ namespace PVDevice
             return true;
         }
 
-        public static bool HasChildren(XenBusDevs xenBusDev)
+        public static bool HasChildren(Devs xenBusDev)
         {
             SetupApi.CR err;
             int xenBusNode = GetDevNode(xenBusDev);

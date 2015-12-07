@@ -198,7 +198,7 @@ namespace InstallAgent
         // string in an .inf file. If not found, an empty string is
         // returned.
         public static string GetHardwareIdFromInf(
-            XenBus.XenBusDevs xenBusDev,
+            XenBus.Devs xenBusDev,
             string infPath)
         {
             if (!File.Exists(infPath))
@@ -212,13 +212,13 @@ namespace InstallAgent
 
             switch (xenBusDev)
             {
-                case XenBus.XenBusDevs.DEV_0001:
+                case XenBus.Devs.DEV_0001:
                     xenBusDevStr = "0001";
                     break;
-                case XenBus.XenBusDevs.DEV_0002:
+                case XenBus.Devs.DEV_0002:
                     xenBusDevStr = "0002";
                     break;
-                case XenBus.XenBusDevs.DEV_C000:
+                case XenBus.Devs.DEV_C000:
                     xenBusDevStr = "C000";
                     break;
                 default:
@@ -321,7 +321,7 @@ namespace InstallAgent
         // Full path to driver .inf files is expected to be:
         // "{driverRootDir}\{driver}\{x64|x86}\{driver}.inf"
         public static bool InstallDriver(
-            XenBus.XenBusDevs xenBusDev,
+            XenBus.Devs xenBusDev,
             string driverRootDir,
             string driver,
             NewDev.INSTALLFLAG installFlags =

@@ -124,15 +124,15 @@ namespace State
 
             if (tmp == -1)
             {
-                if ((XenBus.IsPresent(XenBus.XenBusDevs.DEV_0001, true) &&
-                         XenBus.HasChildren(XenBus.XenBusDevs.DEV_0001)) ||
-                    (XenBus.IsPresent(XenBus.XenBusDevs.DEV_0002, true) &&
-                         XenBus.HasChildren(XenBus.XenBusDevs.DEV_0002)))
+                if ((XenBus.IsPresent(XenBus.Devs.DEV_0001, true) &&
+                         XenBus.HasChildren(XenBus.Devs.DEV_0001)) ||
+                    (XenBus.IsPresent(XenBus.Devs.DEV_0002, true) &&
+                         XenBus.HasChildren(XenBus.Devs.DEV_0002)))
                 {
                     tmp = 7; // LessThanEight
                 }
-                else if (XenBus.IsPresent(XenBus.XenBusDevs.DEV_C000, true) &&
-                         XenBus.HasChildren(XenBus.XenBusDevs.DEV_C000))
+                else if (XenBus.IsPresent(XenBus.Devs.DEV_C000, true) &&
+                         XenBus.HasChildren(XenBus.Devs.DEV_C000))
                 {
                     tmp = 8; // Eight
                 }
