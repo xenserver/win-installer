@@ -34,7 +34,7 @@
             // 
             this.CanHandlePowerEvent = true;
             this.CanShutdown = true;
-            this.ServiceName = "XenInstall";
+            this.ServiceName = Branding.getString("BRANDING_shortInstallerServiceName");
 
         }
 

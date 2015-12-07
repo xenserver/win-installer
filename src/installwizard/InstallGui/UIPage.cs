@@ -45,6 +45,9 @@ using Microsoft.Win32;
 using System.Diagnostics;
 using System.ServiceProcess;
 using System.Security.Principal;
+using System.Reflection;
+using System.IO;
+using System.Resources;
 
 [assembly: Instrumented(@"root\citrix\xenserver\agent")]
 
@@ -54,9 +57,19 @@ namespace InstallGui
  
     public partial class UIPage : Form
     {
+        ResourceManager branding;
         public UIPage()
         {
             InitializeComponent();
+            
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            string brandsatpath = Path.GetDirectoryName(assembly.Location) + "\\brandsat.dll";
+            Assembly sat = Assembly.LoadFile(brandsatpath);
+            string[] resl = sat.GetManifestResourceNames();
+            Stream imagestream = sat.GetManifestResourceStream("DlgBmp.bmp");
+            pictureBox1.Image = new Bitmap(imagestream);
+            branding = new ResourceManager("textstrings", sat);
+            this.Text = branding.GetString("BRANDING_installerProductName");
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -371,18 +384,18 @@ namespace InstallGui
                         SetNext("Installation paused", new CitrixXenServerInstallEvent("UnPause"));
                         break;
                     case "Disconnected":
-                        SetDone(false, "The installation of Citrix XenServer Tools has failed");
+                        SetDone(false, "The installation of "+branding.GetString("BRANDING_toolsName")+" has failed");
                         AddMessage("Installation Service Not Found");
                         break;
                     case "Installing":
-                        SetProgressing(new string[] { "Installing Citrix XenServer Tools", service.DisplayText() }, service.Progress, service.MaxProgress);
+                        SetProgressing(new string[] { "Installing "+branding.GetString("BRANDING_toolsName"), service.DisplayText() }, service.Progress, service.MaxProgress);
                         break;
                     case "Success":
-                        SetDone(true, "You have successfully installed the Citrix XenServer Tools.");
+                        SetDone(true, "You have successfully installed the " + branding.GetString("BRANDING_toolsName") + ".");
                         AddMessage("Click 'Done' to exit the installer");
                         break;
                     case "Failed":
-                        SetDone(false, "The installation of Citrix XenServer Tools has failed");
+                        SetDone(false, "The installation of " + branding.GetString("BRANDING_toolsName") + " has failed");
                         AddMessage(service.FailMsg());
                         break;
                     case "RequestReboot":
@@ -457,17 +470,17 @@ namespace InstallGui
 
             try
             {
-                ServiceController sc = new ServiceController("XenPVInstall");
+                ServiceController sc = new ServiceController(branding.GetString("BRANDING_shortInstallerServiceName"));
                 if (sc.Status != ServiceControllerStatus.Running)
                 {
-                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\XenPVInstall", "Start", 2);
+                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\" + branding.GetString("BRANDING_shortInstallerServiceName"), "Start", 2);
                     sc.Start();
                 }
             }
             catch
             {
-                Trace.WriteLine("Unable to find XenPVInstall service");
-                Title.Text = "Unable to find XenPVInstall service";
+                Trace.WriteLine("Unable to find " + branding.GetString("BRANDING_shortInstallerServiceName") + "service");
+                Title.Text = "Unable to find " + branding.GetString("BRANDING_shortInstallerServiceName") + " service";
             }
 
 

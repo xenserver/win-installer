@@ -209,9 +209,9 @@ namespace InstallWizard
                 {
                     Trace.WriteLine("64 Bit Install");
                     installdir = (string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "Install_Dir", Application.StartupPath);
-                    DriversMsi = new DriverPackage((string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath), Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + "citrixxendriversx64.msi");
-                    VssProvMsi = new MsiInstaller(Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + "citrixvssx64.msi");
-                    AgentMsi = new MsiInstaller(Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + "citrixguestagentx64.msi");
+                    DriversMsi = new DriverPackage((string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath), Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + Branding.getString("FILENAME_driversmsix64"));
+                    VssProvMsi = new MsiInstaller(Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + Branding.getString("FILENAME_vssmsix64"));
+                    AgentMsi = new MsiInstaller(Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + Branding.getString("FILENAME_guestagentmsix64"));
 
                     InstallerNSIS = new NSISItem("Citrix XenTools", (string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath));
                 
@@ -220,9 +220,9 @@ namespace InstallWizard
                 {
                     Trace.WriteLine("32 Bit Install");
                     installdir = (string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "Install_Dir", Application.StartupPath); 
-                    DriversMsi = new DriverPackage((string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath), Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + "citrixxendriversx86.msi");
-                    VssProvMsi = new MsiInstaller(Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + "citrixvssx86.msi");
-                    AgentMsi = new MsiInstaller(Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + "citrixguestagentx86.msi");
+                    DriversMsi = new DriverPackage((string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath), Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + Branding.getString("FILENAME_driversmsix86"));
+                    VssProvMsi = new MsiInstaller(Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) +Branding.getString("FILENAME_vssmsix86"));
+                    AgentMsi = new MsiInstaller(Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath) + Branding.getString("FILENAME_guestagentmsix86"));
 
                     InstallerNSIS = new NSISItem("Citrix XenTools", (string)Registry.GetValue("HKEY_LOCAL_MACHINE\\SOFTWARE\\Citrix\\XenToolsInstaller", "MSISourceDir", Application.StartupPath));
                 
@@ -617,7 +617,7 @@ namespace InstallWizard
                     {
                     }
 
-                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\XenPVInstall", "Start", 3);
+                    Registry.SetValue(@"HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\"+Branding.getString("BRANDING_shortInstallerServiceName"), "Start", 3);
                     (new Thread(delegate()
                     {
                         this.Stop();
@@ -773,8 +773,8 @@ namespace InstallWizard
 
             processInstaller.Account = ServiceAccount.LocalSystem;
             serviceInstaller.StartType = ServiceStartMode.Automatic;
-            serviceInstaller.ServiceName = "Citrix Xen Installer";
-            serviceInstaller.Description = "Installs and Updates Xen Server Tools";
+            serviceInstaller.ServiceName = Branding.getString("BRANDING_installerServiceName");
+            serviceInstaller.Description = "Installs and Updates "+Branding.getString("BRANDING_toolsName");
             serviceInstaller.ServicesDependedOn = new string[] { "Winmgmt" };
 
             managementInstaller = new ManagementInstaller();
