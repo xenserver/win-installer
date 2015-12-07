@@ -138,77 +138,73 @@ namespace XSToolsInstallation
             throw new Exception(Win32Error.GetFullErrMsg());
         }
 
-        public static void RemoveFromSystem(string[] hwIDs, bool strictSearch)
+        public static void RemoveFromSystem(
+            SetupApi.DeviceInfoSet devInfoSet,
+            string hwID,
+            bool strictSearch)
         {
-            using (SetupApi.DeviceInfoSet devInfoSet =
-                       new SetupApi.DeviceInfoSet(
-                       IntPtr.Zero,
-                       IntPtr.Zero,
-                       IntPtr.Zero,
-                       SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+            if (!devInfoSet.HandleIsValid())
             {
-                if (!devInfoSet.HandleIsValid())
-                {
-                    return;
-                }
-
-                for (int i = 0; i < hwIDs.Length; ++i)
-                {
-                    SetupApi.SP_DEVINFO_DATA devInfoData;
-
-                    devInfoData = FindInSystem(
-                        hwIDs[i],
-                        devInfoSet,
-                        strictSearch
-                    );
-
-                    if (devInfoData == null)
-                    {
-                        continue;
-                    }
-
-                    Trace.WriteLine("Trying to remove " + hwIDs[i]);
-                    SetupApi.REMOVE_PARAMS rparams =
-                        new SetupApi.REMOVE_PARAMS();
-                    rparams.cbSize = 8; // Size of cbSide & InstallFunction
-                    rparams.InstallFunction =
-                        (uint)SetupApi.InstallFunctions.DIF_REMOVE;
-                    rparams.HwProfile = 0;
-                    rparams.Scope = SetupApi.DI_REMOVE_DEVICE_GLOBAL;
-                    GCHandle handle1 = GCHandle.Alloc(rparams);
-
-                    if (!SetupApi.SetupDiSetClassInstallParams(
-                            devInfoSet.Get(),
-                            devInfoData,
-                            ref rparams,
-                            Marshal.SizeOf(rparams)))
-                    {
-                        throw new Exception(
-                            String.Format(
-                                "Unable to set class install params " +
-                                "for hardware device: {0}",
-                                hwIDs[i]
-                            )
-                        );
-                    }
-
-                    if (!SetupApi.SetupDiCallClassInstaller(
-                            SetupApi.InstallFunctions.DIF_REMOVE,
-                            devInfoSet.Get(),
-                            devInfoData))
-                    {
-                        throw new Exception(
-                            String.Format(
-                                "Unable to call class installer " +
-                                "for hardware device: {0}",
-                                hwIDs[i]
-                            )
-                        );
-                    }
-
-                    Trace.WriteLine("Remove should have worked");
-                }
+                return;
             }
+
+            SetupApi.SP_DEVINFO_DATA devInfoData;
+
+            devInfoData = FindInSystem(
+                hwID,
+                devInfoSet,
+                strictSearch
+            );
+
+            if (devInfoData == null)
+            {
+                return;
+            }
+
+            SetupApi.REMOVE_PARAMS rparams =
+                new SetupApi.REMOVE_PARAMS();
+            rparams.cbSize = 8; // Size of cbSide & InstallFunction
+            rparams.InstallFunction =
+                (uint)SetupApi.InstallFunctions.DIF_REMOVE;
+            rparams.HwProfile = 0;
+            rparams.Scope = SetupApi.DI_REMOVE_DEVICE_GLOBAL;
+            GCHandle handle1 = GCHandle.Alloc(rparams);
+
+            if (!SetupApi.SetupDiSetClassInstallParams(
+                    devInfoSet.Get(),
+                    devInfoData,
+                    ref rparams,
+                    Marshal.SizeOf(rparams)))
+            {
+                Win32Error.Set("SetupDiSetClassInstallParams");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+
+                // TODO: write custom exception
+                throw new Exception(
+                    Win32Error.GetFullErrMsg()
+                );
+            }
+
+            Trace.WriteLine(
+                "Removing device \'" + hwID +
+                "\' from system"
+            );
+
+            if (!SetupApi.SetupDiCallClassInstaller(
+                    SetupApi.InstallFunctions.DIF_REMOVE,
+                    devInfoSet.Get(),
+                    devInfoData))
+            {
+                Win32Error.Set("SetupDiCallClassInstaller");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+
+                // TODO: write custom exception
+                throw new Exception(
+                    Win32Error.GetFullErrMsg()
+                );
+            }
+
+            Trace.WriteLine("Remove should have worked");
         }
 
         public static bool ChildrenInstalled(string enumName)

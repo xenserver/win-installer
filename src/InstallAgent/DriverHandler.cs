@@ -732,10 +732,19 @@ namespace InstallAgent
 
             try
             {
-                Device.RemoveFromSystem(
-                    new string[] { @"root\xenevtchn" },
-                    false
-                );
+                using (SetupApi.DeviceInfoSet devInfoSet =
+                       new SetupApi.DeviceInfoSet(
+                       IntPtr.Zero,
+                       IntPtr.Zero,
+                       IntPtr.Zero,
+                       SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+                {
+                    Device.RemoveFromSystem(
+                        devInfoSet,
+                        @"root\xenevtchn",
+                        false
+                    );
+                }
             }
             catch (Exception e)
             {
