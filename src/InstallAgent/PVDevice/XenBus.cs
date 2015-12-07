@@ -51,15 +51,14 @@ namespace PVDevice
                 {
                     SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
 
-                    Device.FindInSystem(
-                        out xenBusDevInfoData,
+                    xenBusDevInfoData = Device.FindInSystem(
                         @"PCI\VEN_5853&" +
                             Enum.GetName(typeof(XenBusDevs), 1 << i),
                         devInfoSet,
                         false
                     );
 
-                    if (xenBusDevInfoData.cbSize != 0)
+                    if (xenBusDevInfoData != null)
                     {
                         // Just get the first string returned.
                         // Should be the most explicit.
@@ -164,27 +163,20 @@ namespace PVDevice
                 SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
                 int reqSize;
 
-                Device.FindInSystem(
-                    out xenBusDevInfoData,
+                xenBusDevInfoData = Device.FindInSystem(
                     xenBusDevStr,
                     devInfoSet,
                     true
                 );
 
-                if (xenBusDevInfoData.cbSize == 0)
+                if (xenBusDevInfoData == null)
                 {
-                    Trace.WriteLine(
-                        String.Format(
-                            "XenBus \'{0}\' not present",
-                            xenBusDev.ToString()
-                        )
-                    );
                     return "";
                 }
 
                 if (!SetupApi.SetupDiGetDeviceInstanceId(
                         devInfoSet.Get(),
-                        ref xenBusDevInfoData,
+                        xenBusDevInfoData,
                         xenBusDeviceInstanceId,
                         BUFFER_SIZE,
                         out reqSize))

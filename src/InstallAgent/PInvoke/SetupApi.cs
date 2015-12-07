@@ -190,7 +190,7 @@ namespace PInvoke
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct SP_DEVINFO_DATA
+        public class SP_DEVINFO_DATA
         {
             public uint cbSize;
             public Guid classGuid;
@@ -211,7 +211,7 @@ namespace PInvoke
         public static extern bool SetupDiCallClassInstaller(
              InstallFunctions installFunction,
              IntPtr deviceInfoSet,
-             ref SP_DEVINFO_DATA deviceInfoData
+             SP_DEVINFO_DATA deviceInfoData
         );
 
         [DllImport("setupapi.dll", SetLastError = true)]
@@ -342,13 +342,13 @@ namespace PInvoke
         public static extern bool SetupDiEnumDeviceInfo(
             IntPtr deviceInfoSet,
             uint memberIndex,
-            ref SP_DEVINFO_DATA deviceInfoData
+            SP_DEVINFO_DATA deviceInfoData
         );
 
         [DllImport("setupapi.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern bool SetupDiGetDeviceRegistryProperty(
             IntPtr deviceInfoSet,
-            ref SP_DEVINFO_DATA deviceInfoData,
+            SP_DEVINFO_DATA deviceInfoData,
             SetupDiGetDeviceRegistryPropertyEnum property,
             out UInt32 propertyRegDataType,
             byte[] propertyBuffer,
@@ -359,7 +359,7 @@ namespace PInvoke
         [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool SetupDiSetClassInstallParams(
             IntPtr deviceInfoSet,
-            ref SP_DEVINFO_DATA deviceInfoData,
+            SP_DEVINFO_DATA deviceInfoData,
             ref IntPtr classInstallParams,
             int classInstallParamsSize
         );
@@ -367,7 +367,7 @@ namespace PInvoke
         [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool SetupDiSetClassInstallParams(
             IntPtr deviceInfoSet,
-            ref SP_DEVINFO_DATA deviceInfoData,
+            SP_DEVINFO_DATA deviceInfoData,
             ref REMOVE_PARAMS classInstallParams,
             int classInstallParamsSize
         );
@@ -457,7 +457,7 @@ namespace PInvoke
         [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]
         public static extern bool SetupDiGetDeviceInstanceId(
             IntPtr DeviceInfoSet,
-            ref SP_DEVINFO_DATA deviceInfoData,
+            SP_DEVINFO_DATA deviceInfoData,
             StringBuilder deviceInstanceId,
             int deviceInstanceIdSize,
             out int requiredSize

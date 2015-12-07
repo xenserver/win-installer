@@ -58,7 +58,7 @@ namespace XSToolsInstallation
             // Get the device's HardwareID multistring
             SetupApi.SetupDiGetDeviceRegistryProperty(
                 devInfoSet.Get(),
-                ref devInfoData,
+                devInfoData,
                 SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
                 out propertyRegDataType,
                 buffer,
@@ -69,23 +69,20 @@ namespace XSToolsInstallation
             return MultiByteStringSplit(buffer);
         }
 
-        // The function takes as input an initialized 'deviceInfoSet' object,
-        // a hardware ID string we want to search the system for and a
-        // reference to an 'SP_DEVINFO_DATA' object. If 'strictSearch' is true,
-        // the device needs to exactly match the hwID to be returned. Otherwise,
-        // the device's name needs to start with the supplied hwID string.
-        // When the function returns, if 'hwID' exists in the system,
-        // 'devInfoData' will be populated. To test for the device's existence,
-        // check 'devInfoData.cbSize'; if 0, the device doesn't exist. The
-        // initialized 'devInfoData' object can be used with any function that
-        // takes an 'SP_DEVINFO_DATA' object as input.
-        public static int FindInSystem(
-            out SetupApi.SP_DEVINFO_DATA devInfoData,
+        public static SetupApi.SP_DEVINFO_DATA FindInSystem(
             string hwID,
             SetupApi.DeviceInfoSet devInfoSet,
             bool strictSearch)
+        // The function takes as input an initialized 'deviceInfoSet'
+        // object and a hardware ID string we want to search the system
+        // for. If 'strictSearch' is true, the device needs to exactly
+        // match the hwID to be returned. Otherwise, the device's name
+        // needs to start with the supplied hwID string. If the device
+        // is found, a fully initialized 'SP_DEVINFO_DATA' object is
+        // returned. If not, the function returns 'null'.
         {
-            devInfoData = new SetupApi.SP_DEVINFO_DATA();
+            SetupApi.SP_DEVINFO_DATA devInfoData =
+                new SetupApi.SP_DEVINFO_DATA();
             devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
 
             // Select which string comparison function
@@ -94,35 +91,51 @@ namespace XSToolsInstallation
             if (strictSearch)
             {
                 hwIDFound = (string _enumID, string _hwID) =>
-                    _enumID.Equals(_hwID, StringComparison.OrdinalIgnoreCase);
+                    _enumID.Equals(
+                        _hwID,
+                        StringComparison.OrdinalIgnoreCase
+                    );
             }
             else
             {
                 hwIDFound = (string _enumID, string _hwID) =>
-                    _enumID.StartsWith(_hwID, StringComparison.OrdinalIgnoreCase);
+                    _enumID.StartsWith(
+                        _hwID,
+                        StringComparison.OrdinalIgnoreCase
+                    );
             }
+
+            Trace.WriteLine(
+                "Searching system for device: \'" + hwID +
+                "\'; (strict search: \'" + strictSearch + "\')"
+            );
 
             for (uint i = 0;
                  SetupApi.SetupDiEnumDeviceInfo(
                      devInfoSet.Get(),
                      i,
-                     ref devInfoData);
+                     devInfoData);
                  ++i)
             {
                 foreach (string id in GetHardwareIDs(devInfoSet, devInfoData))
                 {
                     if (hwIDFound(id, hwID))
                     {
-                        goto Exit; // to break out of 2 loops
+                        Trace.WriteLine("Device found");
+                        return devInfoData;
                     }
                 }
             }
 
-            // Return to 0 if we don't find the device
-            devInfoData.cbSize = 0;
+            Win32Error.Set("SetupDiEnumDeviceInfo");
+            if (Win32Error.GetErrorNo() == 259) // ERROR_NO_MORE_ITEMS
+            {
+                Trace.WriteLine("Device not found");
+                return null;
+            }
 
-        Exit:
-            return Marshal.GetLastWin32Error();
+            Trace.WriteLine(Win32Error.GetFullErrMsg());
+            throw new Exception(Win32Error.GetFullErrMsg());
         }
 
         public static void RemoveFromSystem(string[] hwIDs, bool strictSearch)
@@ -143,14 +156,13 @@ namespace XSToolsInstallation
                 {
                     SetupApi.SP_DEVINFO_DATA devInfoData;
 
-                    FindInSystem(
-                        out devInfoData,
+                    devInfoData = FindInSystem(
                         hwIDs[i],
                         devInfoSet,
                         strictSearch
                     );
 
-                    if (devInfoData.cbSize == 0)
+                    if (devInfoData == null)
                     {
                         continue;
                     }
@@ -167,7 +179,7 @@ namespace XSToolsInstallation
 
                     if (!SetupApi.SetupDiSetClassInstallParams(
                             devInfoSet.Get(),
-                            ref devInfoData,
+                            devInfoData,
                             ref rparams,
                             Marshal.SizeOf(rparams)))
                     {
@@ -183,7 +195,7 @@ namespace XSToolsInstallation
                     if (!SetupApi.SetupDiCallClassInstaller(
                             SetupApi.InstallFunctions.DIF_REMOVE,
                             devInfoSet.Get(),
-                            ref devInfoData))
+                            devInfoData))
                     {
                         throw new Exception(
                             String.Format(
@@ -220,7 +232,7 @@ namespace XSToolsInstallation
                      SetupApi.SetupDiEnumDeviceInfo(
                          devInfoSet.Get(),
                          i,
-                         ref devInfoData);
+                         devInfoData);
                      ++i)
                 {
                     SetupApi.CM_Get_DevNode_Status(

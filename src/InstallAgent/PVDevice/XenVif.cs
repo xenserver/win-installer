@@ -200,7 +200,7 @@ namespace PVDevice
                      SetupApi.SetupDiEnumDeviceInfo(
                          devInfoSet.Get(),
                          i,
-                         ref devInfoData);
+                         devInfoData);
                      ++i)
                 {
                     Trace.WriteLine("dev inst: " + devInfoData.devInst.ToString());
