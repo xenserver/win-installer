@@ -1,0 +1,7 @@
+﻿
+namespace PVDevice
+{
+    class XenNet
+    {
+    }
+}
