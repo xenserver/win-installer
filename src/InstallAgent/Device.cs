@@ -161,11 +161,15 @@ namespace XSToolsInstallation
                 return;
             }
 
-            SetupApi.REMOVE_PARAMS rparams =
-                new SetupApi.REMOVE_PARAMS();
-            rparams.cbSize = 8; // Size of cbSide & InstallFunction
-            rparams.InstallFunction =
-                (uint)SetupApi.InstallFunctions.DIF_REMOVE;
+            SetupApi.SP_REMOVEDEVICE_PARAMS rparams =
+                new SetupApi.SP_REMOVEDEVICE_PARAMS();
+
+            rparams.ClassInstallHeader.cbSize =
+                (uint)Marshal.SizeOf(rparams.ClassInstallHeader);
+
+            rparams.ClassInstallHeader.InstallFunction =
+                SetupApi.DI_FUNCTION.DIF_REMOVE;
+
             rparams.HwProfile = 0;
             rparams.Scope = SetupApi.DI_REMOVE_DEVICE_GLOBAL;
             GCHandle handle1 = GCHandle.Alloc(rparams);
@@ -191,7 +195,7 @@ namespace XSToolsInstallation
             );
 
             if (!SetupApi.SetupDiCallClassInstaller(
-                    SetupApi.InstallFunctions.DIF_REMOVE,
+                    SetupApi.DI_FUNCTION.DIF_REMOVE,
                     devInfoSet.Get(),
                     devInfoData))
             {

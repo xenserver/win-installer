@@ -55,7 +55,7 @@ namespace PInvoke
         public struct PropertyChangeParameters
         {
             public uint size;
-            public InstallFunctions diFunction;
+            public DI_FUNCTION diFunction;
             public StateChangeAction stateChange;
             public Scopes scope;
             public uint hwProfile;
@@ -105,7 +105,7 @@ namespace PInvoke
             DN_BOOT_LOG_PROB = 0x80000000  // S: Had a problem during preassignment of boot log conf
         }
 
-        public enum InstallFunctions : uint
+        public enum DI_FUNCTION : uint
         {
             DIF_SELECTDEVICE = 1,
             DIF_INSTALLDEVICE = 2,
@@ -199,24 +199,30 @@ namespace PInvoke
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct REMOVE_PARAMS
+        public struct SP_CLASSINSTALL_HEADER
         {
             public uint cbSize;
-            public uint InstallFunction;
+            public DI_FUNCTION InstallFunction;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SP_REMOVEDEVICE_PARAMS
+        {
+            public SP_CLASSINSTALL_HEADER ClassInstallHeader;
             public uint Scope;
             public uint HwProfile;
         }
 
         [DllImport("setupapi.dll", SetLastError = true)]
         public static extern bool SetupDiCallClassInstaller(
-             InstallFunctions installFunction,
+             DI_FUNCTION installFunction,
              IntPtr deviceInfoSet,
              SP_DEVINFO_DATA deviceInfoData
         );
 
         [DllImport("setupapi.dll", SetLastError = true)]
         public static extern bool SetupDiCallClassInstaller(
-             InstallFunctions installFunction,
+             DI_FUNCTION installFunction,
              IntPtr deviceInfoSet,
              IntPtr deviceInfoData
         );
@@ -368,7 +374,7 @@ namespace PInvoke
         public static extern bool SetupDiSetClassInstallParams(
             IntPtr deviceInfoSet,
             SP_DEVINFO_DATA deviceInfoData,
-            ref REMOVE_PARAMS classInstallParams,
+            ref SP_REMOVEDEVICE_PARAMS classInstallParams,
             int classInstallParamsSize
         );
 

@@ -208,7 +208,7 @@ namespace PVDevice
                         new SetupApi.PropertyChangeParameters();
 
                     pcParams.size = 8;
-                    pcParams.diFunction = SetupApi.InstallFunctions.DIF_PROPERTYCHANGE;
+                    pcParams.diFunction = SetupApi.DI_FUNCTION.DIF_PROPERTYCHANGE;
                     pcParams.scope = SetupApi.Scopes.Global;
 
                     if (enable)
@@ -255,7 +255,7 @@ namespace PVDevice
                     Trace.WriteLine(
                         "CallClassInstaller " +
                         SetupApi.SetupDiCallClassInstaller(
-                            SetupApi.InstallFunctions.DIF_PROPERTYCHANGE,
+                            SetupApi.DI_FUNCTION.DIF_PROPERTYCHANGE,
                             devInfoSet.Get(),
                             pdd.AddrOfPinnedObject()
                         ).ToString() + " " +
