@@ -17,8 +17,8 @@ namespace XSToolsInstallation
             Trace.WriteLine("OK - shutting down");
             AcquireSystemPrivilege(AdvApi32.SE_SHUTDOWN_NAME);
 
-            if (WinVersion.GetVersionValue() >= 0x500 &&
-                WinVersion.GetVersionValue() < 0x600)
+            if (WinVersion.GetMajorVersion() >= 5 &&
+                WinVersion.GetMajorVersion() < 6)
             {
                 User32.ExitWindowsEx(
                     User32.ExitFlags.EWX_REBOOT |
