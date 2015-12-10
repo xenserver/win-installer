@@ -113,7 +113,7 @@ namespace InstallAgent
                     Installer.SetFlag(Installer.States.RemovedFromFilters);
                     Installer.SetFlag(Installer.States.BootStartDisabled);
                     Installer.SetFlag(Installer.States.MSIsUninstalled);
-                    Installer.SetFlag(Installer.States.XenLegacyUninstalled);
+                    Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
                     Installer.SetFlag(Installer.States.CleanedUp);
                     Trace.WriteLine("xenprepping not needed; flip relevant flags");
                 }

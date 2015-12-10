@@ -24,7 +24,27 @@ namespace InstallAgent
      */
     static class DriverHandler
     {
-        private static readonly string[] driverNames = { "xenbus", "xeniface", "xenvif", "xenvbd", "xennet" };
+        // List of all possible PV H/W devices that can be present
+        // on a system. The ordering is deliberate, so that the
+        // device tree(s) will be walked from children to root.
+        private static readonly string[] pvHwIds = {
+            @"XENVIF\VEN_XS0001&DEV_NET",
+            @"XENVIF\VEN_XS0002&DEV_NET",
+            @"XENBUS\VEN_XS0001&DEV_VIF",
+            @"XENBUS\VEN_XS0002&DEV_VIF",
+            @"XENVIF\DEVICE",
+            @"XEN\VIF",
+            @"XENBUS\CLASS&VIF",
+            @"XENBUS\VEN_XS0001&DEV_VBD",
+            @"XENBUS\VEN_XS0002&DEV_VBD",
+            @"XENBUS\VEN_XS0001&DEV_IFACE",
+            @"XENBUS\VEN_XS0002&DEV_IFACE",
+            @"XENBUS\CLASS&IFACE",
+            @"PCI\VEN_5853&DEV_0001",
+            @"PCI\VEN_5853&DEV_0002",
+            @"PCI\VEN_fffd&DEV_0101",
+            @"ROOT\XENEVTCHN"
+        };
 
         public static bool BlockUntilNoDriversInstalling(uint timeout)
         // Returns true, if no drivers are installing before the timeout
@@ -118,15 +138,17 @@ namespace InstallAgent
                 Installer.SetFlag(Installer.States.MSIsUninstalled);
             }
 
-            if (!Installer.GetFlag(Installer.States.XenLegacyUninstalled))
+            if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
             {
-                UninstallXenLegacy();
-                Installer.SetFlag(Installer.States.XenLegacyUninstalled);
+                UninstallDriversAndDevices();
+                Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
             }
 
             if (!Installer.GetFlag(Installer.States.CleanedUp))
             {
-                CleanUpPVDrivers();
+                CleanUpXenLegacy();
+                CleanUpDriverFiles();
+                CleanUpServices();
                 Installer.SetFlag(Installer.States.CleanedUp);
             }
         }
@@ -577,7 +599,7 @@ namespace InstallAgent
             StringBuilder productName = new StringBuilder(BUF_LEN, BUF_LEN);
 
             Trace.WriteLine(
-                "Checking if \'" + msiName +"\' is present in system.."
+                "Checking if \'" + msiName + "\' is present in system.."
             );
 
             // ERROR_SUCCESS = 0
@@ -669,7 +691,7 @@ namespace InstallAgent
                             if (i == tries - 1)
                             {
                                 Trace.WriteLine(
-                                    "Tries exhausted; Error: "+
+                                    "Tries exhausted; Error: " +
                                     proc.ExitCode
                                 );
 
@@ -695,87 +717,84 @@ namespace InstallAgent
             }
         }
 
-        private static void UninstallXenLegacy()
+        private static void UninstallDriversAndDevices()
         {
-            try
+            using (SetupApi.DeviceInfoSet devInfoSet =
+                        new SetupApi.DeviceInfoSet(
+                        IntPtr.Zero,
+                        IntPtr.Zero,
+                        IntPtr.Zero,
+                        SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
             {
-                Registry.LocalMachine.OpenSubKey(
-                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", true
-                ).DeleteSubKeyTree("Citrix XenTools");
-            }
-            catch { }
-
-            try
-            {
-                HardUninstallFromReg(@"SOFTWARE\Citrix\XenTools\");
-            }
-            catch { }
-
-            if (WinVersion.Is64BitOS())
-            {
-                try
+                foreach (string hwId in pvHwIds)
                 {
-                    Registry.LocalMachine.OpenSubKey(
-                        @"SOFTWARE\Wow6432Node\Microsoft\" +
-                        @"Windows\CurrentVersion\Uninstall\",
-                        true
-                    ).DeleteSubKeyTree("Citrix XenTools");
-                }
-                catch { }
+                    UninstallDriverPackages(hwId);
 
-                try
-                {
-                    HardUninstallFromReg(@"SOFTWARE\Wow6432Node\Citrix\XenTools\");
-                }
-                catch { }
-            }
-
-            try
-            {
-                using (SetupApi.DeviceInfoSet devInfoSet =
-                       new SetupApi.DeviceInfoSet(
-                       IntPtr.Zero,
-                       IntPtr.Zero,
-                       IntPtr.Zero,
-                       SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
-                {
                     Device.RemoveFromSystem(
                         devInfoSet,
-                        @"root\xenevtchn",
+                        hwId,
                         false
                     );
                 }
             }
-            catch (Exception e)
-            {
-                Trace.WriteLine("Remove exception: " + e.ToString());
-            }
         }
 
-        private static void HardUninstallFromReg(string key)
+        private static void CleanUpXenLegacy()
+        // Cleans up leftover Xen Legacy registry entries and files
         {
-            // TODO: Check with Ben about this
-            string installdir = (string)Registry.LocalMachine.GetValue(
-                key + @"Install_Dir"
-            );
+            const string SOFTWARE = "SOFTWARE";
+            const string WOW6432NODE = @"\Wow6432Node";
+            const string UNINSTALL =
+                @"\Microsoft\Windows\CurrentVersion\Uninstall";
+            const string CITRIX_XENTOOLS = @"\Citrix\XenTools";
+            const string INSTALL_DIR = @"\Install_Dir";
 
-            if (installdir != null)
+            string rk1Path;
+            string rk2Path;
+            string rk3Path;
+
+            if (WinVersion.Is64BitOS())
             {
-                try
-                {
-                    Directory.Delete(installdir, true);
-                }
-                catch { }
+                rk1Path = SOFTWARE + WOW6432NODE + UNINSTALL;
+                rk3Path = SOFTWARE + WOW6432NODE + CITRIX_XENTOOLS;
             }
+            else
+            {
+                rk1Path = SOFTWARE + UNINSTALL;
+                rk3Path = SOFTWARE + CITRIX_XENTOOLS;
+            }
+
+            rk2Path = rk3Path + INSTALL_DIR;
 
             try
             {
-                Registry.LocalMachine.DeleteSubKeyTree(key);
+                Registry.LocalMachine.OpenSubKey(
+                    rk1Path,
+                    true
+                ).DeleteSubKeyTree("Citrix XenTools");
             }
-            catch { }
+            catch (ArgumentException) { }
+
+            string installDir = (string)Registry.LocalMachine.GetValue(
+                rk2Path
+            );
+
+            try
+            {
+                Directory.Delete(installDir, true);
+            }
+            catch (DirectoryNotFoundException) { }
+            catch (ArgumentNullException) { }
+
+            try
+            {
+                Registry.LocalMachine.DeleteSubKeyTree(rk3Path);
+            }
+            catch (ArgumentException) { }
         }
 
-        private static void CleanUpPVDrivers(bool workaround2k8 = false)
+        private static void CleanUpDriverFiles()
+        // Removes left over .sys files
         {
             string[] PVDrivers = {
                 "xen", "xenbus", "xencrsh", "xenfilt",
@@ -783,60 +802,41 @@ namespace InstallAgent
                 "xennet6", "xenutil", "xenevtchn"
             };
 
-            string[] services = {
-                "XENBUS", "xenfilt", "xeniface", "xenlite",
-                "xennet", "xenvbd", "xenvif", "xennet6",
-                "xenutil", "xenevtchn"
-            };
-
-            // On 2k8 if you're going to reinstall straight away, don't remove
-            // xenbus or xenfilt - as 2k8 assumes their registry entries
-            // are still in place
-            string[] services2k8 = {
-                "xeniface", "xenlite", "xennet", "xenvbd",
-                "xenvif", "xennet6", "xenutil", "xenevtchn"
-            };
-
-            string[] hwIDs = {
-                // @"XENBUS\VEN_XSC000&DEV_IFACE&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_IFACE",
-                @"XENBUS\VEN_XS0002&DEV_IFACE",
-                // @"XENBUS\VEN_XSC000&DEV_VBD&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_VBD",
-                @"XENBUS\VEN_XS0002&DEV_VBD",
-                // @"XENVIF\VEN_XSC000&DEV_NET&REV_00000000",
-                @"XENVIF\VEN_XS0001&DEV_NET",
-                @"XENVIF\VEN_XS0002&DEV_NET",
-                // @"XENBUS\VEN_XSC000&DEV_VIF&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_VIF",
-                @"XENBUS\VEN_XS0002&DEV_VIF",
-                // @"PCI\VEN_5853&DEV_C000&SUBSYS_C0005853&REV_01",
-                @"PCI\VEN_5853&DEV_0001",
-                @"PCI\VEN_5853&DEV_0002",
-                @"XENBUS\CLASS&VIF",
-                @"PCI\VEN_fffd&DEV_0101",
-                @"XEN\VIF",
-                @"XENBUS\CLASS&IFACE",
-                @"root\xenevtchn",
-            };
-
             string driverPath = Environment.GetFolderPath(
                 Environment.SpecialFolder.System
             ) + @"\drivers\";
 
-            // Remove drivers from DriverStore
-            foreach (string hwID in hwIDs)
+
+            foreach (string driver in PVDrivers)
             {
-                PnPRemove(hwID);
+                File.Delete(driverPath + driver + ".sys");
+            }
+        }
+
+        private static void CleanUpServices()
+        // Removes left over 'Services' registry keys
+        {
+            // On 2k8 if you're going to reinstall straight away,
+            // don't remove 'xenbus' or 'xenfilt' - as 2k8 assumes
+            // their registry entries are still in place
+            List<string> services = new List<string> {
+                "xeniface", "xenlite", "xennet", "xenvbd",
+                "xenvif", "xennet6", "xenutil", "xenevtchn"
+            };
+
+            // OS is not Win 2k8
+            if (!(WinVersion.IsServerSKU() &&
+                  WinVersion.GetMajorVersion() == 6 &&
+                  WinVersion.GetMinorVersion() < 2))
+            {
+                services.Add("XENBUS");
+                services.Add("xenfilt");
             }
 
-            // Delete services' registry entries
             using (RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                       @"SYSTEM\CurrentControlSet\Services", true
-                   ))
+                       @"SYSTEM\CurrentControlSet\Services", true))
             {
-                string[] servicelist = workaround2k8 ? services2k8 : services;
-                foreach (string service in servicelist)
+                foreach (string service in services)
                 {
                     try
                     {
@@ -845,47 +845,56 @@ namespace InstallAgent
                     catch (ArgumentException) { }
                 }
             }
-
-            // Delete driver files
-            foreach (string driver in PVDrivers)
-            {
-                File.Delete(driverPath + driver + ".sys");
-            }
         }
 
-        private static void PnPRemove(string hwID)
+        private static void UninstallDriverPackages(string hwId)
+        // Scans all oem*.inf files present in the system
+        // and uninstalls all that match 'hwId'
         {
-            Trace.WriteLine("remove " + hwID);
+            string infPath = Path.Combine(
+                Environment.GetEnvironmentVariable("windir"),
+                "inf"
+            );
 
-            string infpath = Environment.GetFolderPath(
-                Environment.SpecialFolder.System
-            ) + @"\..\inf";
-            Trace.WriteLine("inf dir = " + infpath);
+            Trace.WriteLine(
+                "Searching drivers in system for \'" + hwId + "\'"
+            );
 
-            string[] oemlist = Directory.GetFiles(infpath, "oem*.inf");
-            Trace.WriteLine(oemlist.ToString());
-
-            foreach (string oemfile in oemlist)
+            foreach (string oemFile in Directory.GetFiles(infPath, "oem*.inf"))
             {
-                Trace.WriteLine("Checking " + oemfile);
-                string contents = File.ReadAllText(oemfile);
-
-                if (contents.Contains(hwID))
+                // This is currently the only way to ignore case...
+                if (File.ReadAllText(oemFile).IndexOf(
+                        hwId, StringComparison.OrdinalIgnoreCase) == -1)
                 {
-                    bool needreboot;
-                    Trace.WriteLine("Uninstalling");
-
-                    DIFx.DriverPackageUninstall(
-                        oemfile,
-                        (int)(DIFx.DRIVER_PACKAGE.SILENT |
-                              DIFx.DRIVER_PACKAGE.FORCE |
-                              DIFx.DRIVER_PACKAGE.DELETE_FILES),
-                        IntPtr.Zero,
-                        out needreboot
-                    );
-
-                    Trace.WriteLine("Uninstalled");
+                    continue;
                 }
+
+                Trace.WriteLine(
+                    "\'" + hwId + "\' matches" + "\'" + oemFile + "\';"
+                );
+
+                bool needreboot;
+                Trace.WriteLine("Uninstalling...");
+
+                int err = DIFx.DriverPackageUninstall(
+                    oemFile,
+                    (int)(DIFx.DRIVER_PACKAGE.SILENT |
+                          DIFx.DRIVER_PACKAGE.FORCE |
+                          DIFx.DRIVER_PACKAGE.DELETE_FILES),
+                          // N.B.: Starting with Windows 7,
+                          // 'DELETE_FILES' is ignored
+                    IntPtr.Zero,
+                    out needreboot
+                );
+
+                if (err != 0) // ERROR_SUCCESS
+                {
+                    Win32Error.Set("DriverPackageUninstall", err);
+                    Trace.WriteLine(Win32Error.GetFullErrMsg());
+                    throw new Exception(Win32Error.GetFullErrMsg());
+                }
+
+                Trace.WriteLine("Uninstalled");
             }
         }
     }
