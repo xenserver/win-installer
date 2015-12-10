@@ -110,10 +110,8 @@ namespace InstallAgent
             {
                 if (!Installer.GetFlag(driver.installed))
                 {
-                    if (InstallDriver_2(driverRootDir, driver.name))
-                    {
-                        Installer.SetFlag(driver.installed);
-                    }
+                    InstallDriver(driverRootDir, driver.name);
+                    Installer.SetFlag(driver.installed);
                 }
             }
         }
@@ -153,7 +151,7 @@ namespace InstallAgent
             }
         }
 
-        public static bool InstallDriver_2(
+        public static void InstallDriver(
             string driverRootDir,
             string driver,
             NewDev.DIIRFLAG flags =
@@ -168,16 +166,7 @@ namespace InstallAgent
                 driver + build + driver + ".inf"
             );
 
-            if (!File.Exists(infPath))
-            {
-                throw new Exception(
-                    String.Format("\'{0}\' does not exist", infPath)
-                );
-            }
-
-            Trace.WriteLine(
-                String.Format("Installing \'{0}\' driver...", driver)
-            );
+            Trace.WriteLine("Installing driver \'" + driver + "\'");
 
             if (!NewDev.DiInstallDriver(
                     IntPtr.Zero,
@@ -185,21 +174,12 @@ namespace InstallAgent
                     flags,
                     out reboot))
             {
-                Trace.WriteLine(
-                    String.Format("Driver \'{0}\' install failed: {1}",
-                        driver,
-                        new Win32Exception(
-                            Marshal.GetLastWin32Error()
-                        ).Message
-                    )
-                );
-                return false;
+                Win32Error.Set("DiInstallDriver");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
 
-            Trace.WriteLine(
-                String.Format("Driver \'{0}\' installed successfully", driver)
-            );
-            return true;
+            Trace.WriteLine("Driver installed successfully");
         }
 
         private static void RemovePVDriversFromFilters()
