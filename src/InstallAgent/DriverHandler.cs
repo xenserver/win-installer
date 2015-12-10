@@ -875,22 +875,11 @@ namespace InstallAgent
                     bool needreboot;
                     Trace.WriteLine("Uninstalling");
 
-                    DIFxAll difx;
-
-                    if (WinVersion.Is64BitOS())
-                    {
-                        difx = new DIFx64();
-                    }
-                    else
-                    {
-                        difx = new DIFx32();
-                    }
-
-                    difx.Uninstall(
+                    DIFx.DriverPackageUninstall(
                         oemfile,
-                        (int)(DIFxAll.DRIVER_PACKAGE.SILENT |
-                              DIFxAll.DRIVER_PACKAGE.FORCE |
-                              DIFxAll.DRIVER_PACKAGE.DELETE_FILES),
+                        (int)(DIFx.DRIVER_PACKAGE.SILENT |
+                              DIFx.DRIVER_PACKAGE.FORCE |
+                              DIFx.DRIVER_PACKAGE.DELETE_FILES),
                         IntPtr.Zero,
                         out needreboot
                     );

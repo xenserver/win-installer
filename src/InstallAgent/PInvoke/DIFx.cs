@@ -1,9 +1,10 @@
-﻿using System;
+﻿using InstallAgent;
+using System;
 using System.Runtime.InteropServices;
 
 namespace PInvoke
 {
-    abstract class DIFxAll
+    public static class DIFx
     {
         public enum DRIVER_PACKAGE
         {
@@ -15,56 +16,43 @@ namespace PInvoke
             DELETE_FILES = 0x00000020,
         }
 
-        abstract public Int32 Uninstall(
-            string driverPackageInfPath,
-            Int32 flags,
-            IntPtr pInstallerInfo,
-            out bool pNeedReboot
-        );
-    }
-
-    class DIFx32 : DIFxAll
-    {
-        [DllImport("DIFxAPI32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern Int32 DriverPackageUninstall(
+        [DllImport("DIFxAPI64.dll",
+            CharSet = CharSet.Auto,
+            EntryPoint = "DriverPackageUninstall")]
+        private extern static int DriverPackageUninstall_64(
             [MarshalAs(UnmanagedType.LPTStr)] string driverPackageInfPath,
-            Int32 flags,
+            int flags,
             IntPtr pInstallerInfo,
             out bool pNeedReboot
         );
 
-        override public Int32 Uninstall(
-            string driverPackageInfPath,
-            Int32 flags,
+        [DllImport("DIFxAPI32.dll",
+            CharSet = CharSet.Auto,
+            EntryPoint = "DriverPackageUninstall")]
+        private extern static int DriverPackageUninstall_32(
+            [MarshalAs(UnmanagedType.LPTStr)] string driverPackageInfPath,
+            int flags,
+            IntPtr pInstallerInfo,
+            out bool pNeedReboot
+        );
+
+        public static int DriverPackageUninstall(
+            [MarshalAs(UnmanagedType.LPTStr)] string driverPackageInfPath,
+            int flags,
             IntPtr pInstallerInfo,
             out bool pNeedReboot)
         {
-            return DriverPackageUninstall(
-                driverPackageInfPath,
-                flags,
-                pInstallerInfo,
-                out pNeedReboot
-            );
-        }
-    }
+            if (WinVersion.Is64BitOS())
+            {
+                return DriverPackageUninstall_64(
+                    driverPackageInfPath,
+                    flags,
+                    pInstallerInfo,
+                    out pNeedReboot
+                );
+            }
 
-    class DIFx64 : DIFxAll
-    {
-        [DllImport("DIFxAPI64.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern Int32 DriverPackageUninstall(
-            [MarshalAs(UnmanagedType.LPTStr)] string driverPackageInfPath,
-            Int32 flags,
-            IntPtr pInstallerInfo,
-            out bool pNeedReboot
-        );
-
-        override public Int32 Uninstall(
-            string driverPackageInfPath,
-            Int32 flags,
-            IntPtr pInstallerInfo,
-            out bool pNeedReboot)
-        {
-            return DriverPackageUninstall(
+            return DriverPackageUninstall_32(
                 driverPackageInfPath,
                 flags,
                 pInstallerInfo,
