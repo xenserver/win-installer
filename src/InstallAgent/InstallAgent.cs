@@ -66,7 +66,6 @@ namespace InstallAgent
         protected override void OnStart(string[] args)
         {
             // Start thread - so we can do everything in the background
-            Trace.WriteLine("OnStart");
             installThread = new Thread(InstallThreadHandler);
             installThread.Start();
         }
@@ -82,14 +81,6 @@ namespace InstallAgent
             {
                 throw new Exception("WOW64: Do not do that.");
             }
-
-            if (Installer.Complete())
-            {
-                Trace.WriteLine("Everything is complete!!");
-                return;
-            }
-
-            //RegisterWMI();
 
             if (!Installer.GetFlag(Installer.States.NetworkSettingsSaved))
             {
