@@ -1,8 +1,9 @@
-﻿using PInvoke;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace XSToolsInstallation
 {
@@ -11,7 +12,7 @@ namespace XSToolsInstallation
         // Use to create a list of strings from the
         // "byte[] propertyBuffer" variable returned
         // by SetupDiGetDeviceRegistryProperty()
-        private static string[] MultiByteStringSplit(byte[] mbstr)
+        private static List<string> MultiByteStringSplit(byte[] mbstr)
         {
             List<string> strList = new List<string>();
             int strStart = 0;
@@ -38,55 +39,49 @@ namespace XSToolsInstallation
                 }
             }
 
-            return strList.ToArray();
+            return strList;
         }
 
-        // Returns an array of all the Hardware ID strings
-        // available for an SP_DEVINFO_DATA object
-        public static string[] GetHardwareIDs(
-            SetupApi.DeviceInfoSet devInfoSet,
-            SetupApi.SP_DEVINFO_DATA devInfoData)
+        // The function takes as input an initialized 'deviceInfoSet' object,
+        // a string array with the hardware IDs we want to search the system
+        // for and an 'SP_DEVINFO_DATA' array of the same size as 'hwIDs'.
+        // if 'strictSearch' is true, a device needs to exactly match one
+        // of the supplied hwIDs to be returned. Otherwise, the device's
+        // name needs to start with one of the supplied hwIDs.
+        // When the function returns, if 'hwIDs[i]' exists in the system,
+        // 'devices[i]' will be populated. To test for the device's existence,
+        // check 'devices[i].cbSize'; if 0, the device doesn't exist.
+        // Initialized 'devices[i]' objects can be used with any function
+        // that takes an 'SP_DEVINFO_DATA' object as input.
+        public static int FindInSystem(
+            ref PInvoke.SetupApi.SP_DEVINFO_DATA[] devices,
+            string[] hwIDs,
+            PInvoke.SetupApi.DeviceInfoSet devInfoSet,
+            bool strictSearch)
         {
+            if (devices.Length != hwIDs.Length)
+            {
+                throw new Exception(
+                    String.Format(
+                        "devices.Length != hwIDs.Length: {0} != {1}",
+                        devices.Length,
+                        hwIDs.Length
+                    )
+                );
+            }
+
             uint propertyRegDataType = 0;
             uint requiredSize = 0;
+            int j;
 
             // 'buffer' is 4KB  but Unicode chars are 2 bytes,
             // hence 'buffer' can hold up to 2K chars
             const uint BUFFER_SIZE = 4096;
             byte[] buffer = new byte[BUFFER_SIZE];
 
-            // Get the device's HardwareID multistring
-            SetupApi.SetupDiGetDeviceRegistryProperty(
-                devInfoSet.Get(),
-                ref devInfoData,
-                SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
-                out propertyRegDataType,
-                buffer,
-                BUFFER_SIZE,
-                out requiredSize
-            );
-
-            return MultiByteStringSplit(buffer);
-        }
-
-        // The function takes as input an initialized 'deviceInfoSet' object,
-        // a hardware ID string we want to search the system for and a
-        // reference to an 'SP_DEVINFO_DATA' object. If 'strictSearch' is true,
-        // the device needs to exactly match the hwID to be returned. Otherwise,
-        // the device's name needs to start with the supplied hwID string.
-        // When the function returns, if 'hwID' exists in the system,
-        // 'devInfoData' will be populated. To test for the device's existence,
-        // check 'devInfoData.cbSize'; if 0, the device doesn't exist. The
-        // initialized 'devInfoData' object can be used with any function that
-        // takes an 'SP_DEVINFO_DATA' object as input.
-        public static int FindInSystem(
-            out SetupApi.SP_DEVINFO_DATA devInfoData,
-            string hwID,
-            SetupApi.DeviceInfoSet devInfoSet,
-            bool strictSearch)
-        {
-            devInfoData = new SetupApi.SP_DEVINFO_DATA();
-            devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
+            PInvoke.SetupApi.SP_DEVINFO_DATA tmpDevInfoData =
+                new PInvoke.SetupApi.SP_DEVINFO_DATA();
+            tmpDevInfoData.cbSize = (uint)Marshal.SizeOf(tmpDevInfoData);
 
             // Select which string comparison function
             // to use, depending on 'strictSearch'
@@ -103,71 +98,77 @@ namespace XSToolsInstallation
             }
 
             for (uint i = 0;
-                 SetupApi.SetupDiEnumDeviceInfo(
+                 PInvoke.SetupApi.SetupDiEnumDeviceInfo(
                      devInfoSet.Get(),
                      i,
-                     ref devInfoData);
+                     ref tmpDevInfoData);
                  ++i)
             {
-                foreach (string id in GetHardwareIDs(devInfoSet, devInfoData))
+                // Get the device's HardwareID multistring
+                PInvoke.SetupApi.SetupDiGetDeviceRegistryProperty(
+                    devInfoSet.Get(),
+                    ref tmpDevInfoData,
+                    PInvoke.SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
+                    out propertyRegDataType,
+                    buffer,
+                    BUFFER_SIZE,
+                    out requiredSize
+                );
+
+                foreach (string id in MultiByteStringSplit(buffer))
                 {
-                    if (hwIDFound(id, hwID))
+                    // if 'id' exists in hwIDs, return its index
+                    if ((j = Array.FindIndex(hwIDs, hwid => hwIDFound(id, hwid))) != -1)
                     {
-                        goto Exit; // to break out of 2 loops
+                        devices[j] = tmpDevInfoData;
+                        tmpDevInfoData = new PInvoke.SetupApi.SP_DEVINFO_DATA();
+                        tmpDevInfoData.cbSize = (uint)Marshal.SizeOf(tmpDevInfoData);
+                        break;
                     }
                 }
             }
 
-            // Return to 0 if we don't find the device
-            devInfoData.cbSize = 0;
-
-        Exit:
             return Marshal.GetLastWin32Error();
         }
 
         public static void RemoveFromSystem(string[] hwIDs, bool strictSearch)
         {
-            using (SetupApi.DeviceInfoSet devInfoSet =
-                       new SetupApi.DeviceInfoSet(
+            using (PInvoke.SetupApi.DeviceInfoSet devInfoSet =
+                       new PInvoke.SetupApi.DeviceInfoSet(
                        IntPtr.Zero,
                        IntPtr.Zero,
                        IntPtr.Zero,
-                       SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
+                       (uint)PInvoke.SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
             {
                 if (!devInfoSet.HandleIsValid())
                 {
                     return;
                 }
 
-                for (int i = 0; i < hwIDs.Length; ++i)
+                PInvoke.SetupApi.SP_DEVINFO_DATA[] devices =
+                    new PInvoke.SetupApi.SP_DEVINFO_DATA[hwIDs.Length];
+
+                FindInSystem(ref devices, hwIDs, devInfoSet, strictSearch);
+
+                for (int i = 0; i < devices.Length; ++i)
                 {
-                    SetupApi.SP_DEVINFO_DATA devInfoData;
-
-                    FindInSystem(
-                        out devInfoData,
-                        hwIDs[i],
-                        devInfoSet,
-                        strictSearch
-                    );
-
-                    if (devInfoData.cbSize == 0)
+                    if (devices[i].cbSize == 0)
                     {
                         continue;
                     }
 
                     Trace.WriteLine("Trying to remove " + hwIDs[i]);
-                    SetupApi.REMOVE_PARAMS rparams =
-                        new SetupApi.REMOVE_PARAMS();
+                    PInvoke.SetupApi.REMOVE_PARAMS rparams =
+                        new PInvoke.SetupApi.REMOVE_PARAMS();
                     rparams.cbSize = 8; // Size of cbSide & InstallFunction
-                    rparams.InstallFunction =
-                        (uint)SetupApi.InstallFunctions.DIF_REMOVE;
+                    rparams.InstallFunction = PInvoke.SetupApi.DIF_REMOVE;
                     rparams.HwProfile = 0;
-                    rparams.Scope = SetupApi.DI_REMOVE_DEVICE_GLOBAL;
+                    rparams.Scope = PInvoke.SetupApi.DI_REMOVE_DEVICE_GLOBAL;
                     GCHandle handle1 = GCHandle.Alloc(rparams);
 
-                    if (!SetupApi.SetupDiSetClassInstallParams(
+                    if (!PInvoke.SetupApi.SetupDiSetClassInstallParams(
                             devInfoSet.Get(),
-                            ref devInfoData,
+                            ref devices[i],
                             ref rparams,
                             Marshal.SizeOf(rparams)))
                     {
@@ -180,10 +181,10 @@ namespace XSToolsInstallation
                         );
                     }
 
-                    if (!SetupApi.SetupDiCallClassInstaller(
-                            SetupApi.InstallFunctions.DIF_REMOVE,
+                    if (!PInvoke.SetupApi.SetupDiCallClassInstaller(
+                            PInvoke.SetupApi.DIF_REMOVE,
                             devInfoSet.Get(),
-                            ref devInfoData))
+                            ref devices[i]))
                     {
                         throw new Exception(
                             String.Format(
@@ -197,52 +198,6 @@ namespace XSToolsInstallation
                     Trace.WriteLine("Remove should have worked");
                 }
             }
-        }
-
-        public static bool ChildrenInstalled(string enumName)
-        {
-            UInt32 devStatus;
-            UInt32 devProblemCode;
-
-            SetupApi.SP_DEVINFO_DATA devInfoData =
-                new SetupApi.SP_DEVINFO_DATA();
-            devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
-
-            using (SetupApi.DeviceInfoSet devInfoSet =
-                       new SetupApi.DeviceInfoSet(
-                       IntPtr.Zero,
-                       enumName,
-                       IntPtr.Zero,
-                       SetupApi.DiGetClassFlags.DIGCF_PRESENT |
-                       SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
-            {
-                for (uint i = 0;
-                     SetupApi.SetupDiEnumDeviceInfo(
-                         devInfoSet.Get(),
-                         i,
-                         ref devInfoData);
-                     ++i)
-                {
-                    SetupApi.CM_Get_DevNode_Status(
-                        out devStatus,
-                        out devProblemCode,
-                        devInfoData.devInst,
-                        0
-                    );
-
-                    if ((devStatus & (uint)SetupApi.DNFlags.DN_STARTED) == 0)
-                    {
-                        Trace.WriteLine(
-                            enumName +
-                            " child not started " +
-                            devStatus.ToString()
-                        );
-
-                        return false;
-                    }
-                }
-            }
-            return true;
         }
     }
 }
