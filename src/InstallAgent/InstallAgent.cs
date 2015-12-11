@@ -98,6 +98,23 @@ namespace InstallAgent
                     Trace.WriteLine("PV Tools found on 0001 or 0002; xenprepping..");
                     DriverHandler.SystemClean();
                     Trace.WriteLine("xenprepping done!");
+
+                    // Stop after we XenPrep. Cannot install
+                    // drivers without reboot, at least for now..
+                    if (rebootOption == RebootType.AUTOREBOOT)
+                    {
+                        DriverHandler.BlockUntilNoDriversInstalling(
+                                GetTimeoutToReboot()
+                            );
+
+                        Helpers.Reboot();
+                    }
+                    else
+                    {
+                        VM.SetRebootNeeded();
+                    }
+
+                    return;
                 }
                 else // "XenPrepping" not needed, so just flip all relevant flags
                 {
