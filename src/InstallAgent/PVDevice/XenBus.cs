@@ -66,9 +66,10 @@ namespace PVDevice
                     {
                         // Just get the first string returned.
                         // Should be the most explicit.
-                        hwIDs[i] = Device.GetHardwareIDs(
+                        hwIDs[i] = Device.GetDevRegPropertyMultiStr(
                             devInfoSet,
-                            xenBusDevInfoData
+                            xenBusDevInfoData,
+                            SetupApi.SPDRP.HARDWAREID
                         )[0];
                     }
                     else

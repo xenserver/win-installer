@@ -357,10 +357,10 @@ namespace PInvoke
             IntPtr deviceInfoSet,
             SP_DEVINFO_DATA deviceInfoData,
             SPDRP property,
-            out UInt32 propertyRegDataType,
+            out int propertyRegDataType,
             byte[] propertyBuffer,
-            uint propertyBufferSize,
-            out UInt32 requiredSize
+            int propertyBufferSize,
+            out int requiredSize
         );
 
         [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]

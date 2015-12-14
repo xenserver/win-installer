@@ -41,25 +41,59 @@ namespace XSToolsInstallation
             return strList.ToArray();
         }
 
-        // Returns an array of all the Hardware ID strings
-        // available for an SP_DEVINFO_DATA object
-        public static string[] GetHardwareIDs(
+        public static string GetDevRegPropertyStr(
             SetupApi.DeviceInfoSet devInfoSet,
-            SetupApi.SP_DEVINFO_DATA devInfoData)
+            SetupApi.SP_DEVINFO_DATA devInfoData,
+            SetupApi.SPDRP property)
+        // Use this function for any 'Device Registry
+        // Property' that returns a string,
+        // e.g. SPDRP_CLASSGUID
         {
-            uint propertyRegDataType = 0;
-            uint requiredSize = 0;
+            int propertyRegDataType;
+            int requiredSize;
 
-            // 'buffer' is 4KB  but Unicode chars are 2 bytes,
-            // hence 'buffer' can hold up to 2K chars
-            const uint BUFFER_SIZE = 4096;
+            // 'buffer' is 1KB  but Unicode chars are 2 bytes,
+            // hence 'buffer' can hold up to 512 chars
+            const int BUFFER_SIZE = 1024;
             byte[] buffer = new byte[BUFFER_SIZE];
 
-            // Get the device's HardwareID multistring
             SetupApi.SetupDiGetDeviceRegistryProperty(
                 devInfoSet.Get(),
                 devInfoData,
-                SetupApi.SPDRP.HARDWAREID,
+                property,
+                out propertyRegDataType,
+                buffer,
+                BUFFER_SIZE,
+                out requiredSize
+            );
+
+            return System.Text.Encoding.Unicode.GetString(
+                buffer,
+                0,
+                requiredSize
+            );
+        }
+
+        public static string[] GetDevRegPropertyMultiStr(
+            SetupApi.DeviceInfoSet devInfoSet,
+            SetupApi.SP_DEVINFO_DATA devInfoData,
+            SetupApi.SPDRP property)
+        // Use this function for any 'Device Registry
+        // Property' that returns 'REG_MULTI_SZ',
+        // e.g. SPDRP_HARDWAREID
+        {
+            int propertyRegDataType;
+            int requiredSize;
+
+            // 'buffer' is 4KB  but Unicode chars are 2 bytes,
+            // hence 'buffer' can hold up to 2K chars
+            const int BUFFER_SIZE = 4096;
+            byte[] buffer = new byte[BUFFER_SIZE];
+
+            SetupApi.SetupDiGetDeviceRegistryProperty(
+                devInfoSet.Get(),
+                devInfoData,
+                property,
                 out propertyRegDataType,
                 buffer,
                 BUFFER_SIZE,
@@ -117,7 +151,10 @@ namespace XSToolsInstallation
                      devInfoData);
                  ++i)
             {
-                foreach (string id in GetHardwareIDs(devInfoSet, devInfoData))
+                foreach (string id in GetDevRegPropertyMultiStr(
+                             devInfoSet,
+                             devInfoData,
+                             SetupApi.SPDRP.HARDWAREID))
                 {
                     if (hwIDFound(id, hwID))
                     {
