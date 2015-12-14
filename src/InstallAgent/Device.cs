@@ -59,7 +59,7 @@ namespace XSToolsInstallation
             SetupApi.SetupDiGetDeviceRegistryProperty(
                 devInfoSet.Get(),
                 devInfoData,
-                SetupApi.SetupDiGetDeviceRegistryPropertyEnum.SPDRP_HARDWAREID,
+                SetupApi.SPDRP.HARDWAREID,
                 out propertyRegDataType,
                 buffer,
                 BUFFER_SIZE,
