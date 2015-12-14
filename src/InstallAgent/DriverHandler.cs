@@ -30,19 +30,28 @@ namespace InstallAgent
         private static readonly string[] pvHwIds = {
             @"XENVIF\VEN_XS0001&DEV_NET",
             @"XENVIF\VEN_XS0002&DEV_NET",
+            @"XENVIF\DEVICE",
+
             @"XENBUS\VEN_XS0001&DEV_VIF",
             @"XENBUS\VEN_XS0002&DEV_VIF",
-            @"XENVIF\DEVICE",
             @"XEN\VIF",
             @"XENBUS\CLASS&VIF",
+            @"XENBUS\CLASS_VIF",
+
             @"XENBUS\VEN_XS0001&DEV_VBD",
             @"XENBUS\VEN_XS0002&DEV_VBD",
+            @"XENBUS\CLASS&VBD",
+            @"XENBUS\CLASS_VBD",
+
             @"XENBUS\VEN_XS0001&DEV_IFACE",
             @"XENBUS\VEN_XS0002&DEV_IFACE",
             @"XENBUS\CLASS&IFACE",
+            @"XENBUS\CLASS_IFACE",
+
             @"PCI\VEN_5853&DEV_0001",
             @"PCI\VEN_5853&DEV_0002",
             @"PCI\VEN_fffd&DEV_0101",
+
             @"ROOT\XENEVTCHN"
         };
 
