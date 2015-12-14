@@ -1,38 +1,72 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using Microsoft.Win32;
+using PInvoke;
+using PVDevice;
+using State;
+using System;
 using System.Diagnostics;
-using System.Linq;
-using System.ServiceProcess;
-using System.Text;
-using Microsoft.Win32;
-using System.Collections;
 using System.IO;
+using System.Reflection;
+using System.ServiceProcess;
 using System.Threading;
-
+using XSToolsInstallation;
 
 namespace InstallAgent
 {
     public partial class InstallAgent : ServiceBase
     {
-        public int InstallOption { get; set; }
-        public int RebootOption { get; set; }
+        public static string rootRegKeyName =
+            @"SOFTWARE\Citrix\InstallAgent";
 
-        public static string rootRegKey =
-            @"SOFTWARE\Citrix\InstallAgent\";
+        public enum RebootType
+        {
+            NOREBOOT,
+            AUTOREBOOT,
+            DEFAULT
+        }
+
+        public static /* readonly */ RebootType rebootOption;
+        public static readonly string exeDir;
 
         private Thread installThread = null;
 
+        static InstallAgent()
+        {
+            exeDir = new DirectoryInfo(
+                Assembly.GetExecutingAssembly().Location
+            ).Parent.FullName;
+
+            // Just to kick off the static constructor
+            // before we start messing with the VM
+            VM.GetOtherDriverInstallingOnFirstRun();
+        }
+
         public InstallAgent()
         {
+            using (RegistryKey tmpRK = Registry.LocalMachine.CreateSubKey(
+                           rootRegKeyName))
+            {
+                rebootOption = GetTrueRebootType(
+                    (RebootType)Enum.Parse(
+                        typeof(RebootType),
+                        (string)tmpRK.GetValue("RebootOption", "DEFAULT"),
+                        true
+                    )
+                );
+            }
+
+            InitializeComponent();
+        }
+
+        public InstallAgent(RebootType rebootOption_)
+        {
+            rebootOption = GetTrueRebootType(rebootOption_);
             InitializeComponent();
         }
 
         protected override void OnStart(string[] args)
         {
             // Start thread - so we can do everything in the background
-            Trace.WriteLine("OnStart");  
+            Trace.WriteLine("OnStart");
             installThread = new Thread(InstallThreadHandler);
             installThread.Start();
         }
@@ -44,436 +78,141 @@ namespace InstallAgent
 
         public void InstallThreadHandler()
         {
-            /*
-            DriverPackage DriversMsi;
-            MsiInstaller VssProvMsi;
-            MsiInstaller AgentMsi;
-            string installdir;
-            */
-            if (WinVersion.isWOW64())
+            if (WinVersion.IsWOW64())
             {
-                // FAIL
+                throw new Exception("WOW64: Do not do that.");
             }
 
-            InstallerState.Initialize();
-
-            /* NO MSI INSTALLING WILL TAKE PLACE
-             * WILL NEED TO PUT DRIVERS IN DRIVER STORE
-             * Populate
-             *  -DriversMSI
-             *  -VssMSI
-             *  -AgentMSI
-             *  -installdir
-             */
-            /*
-            CreateInstallerObjects(
-                is64bitOS(),
-                out DriversMsi,
-                out VssProvMsi,
-                out AgentMsi,
-                out installdir
-            );*/
+            if (Installer.Complete())
+            {
+                Trace.WriteLine("Everything is complete!!");
+                return;
+            }
 
             //RegisterWMI();
 
-            InstallerState.GetFlag(InstallerState.States.NoDriverInstalling);
-
-            if (!InstallerState.GetFlag(InstallerState.States.NetworkSettingsStored))
+            if (!Installer.GetFlag(Installer.States.NetworkSettingsSaved))
             {
-                //StoreNetworkSettings();
-                InstallerState.SetFlag(InstallerState.States.NetworkSettingsStored);
+                Trace.WriteLine("NetSettings not saved..");
+                XenVif.NetworkSettingsSaveRestore(true);
+                Installer.SetFlag(Installer.States.NetworkSettingsSaved);
+                Trace.WriteLine("NetSettings saved!");
             }
 
-            // Ask if this is needed
-            /*
-            if (InstallerState.Complete())
+            if (!Installer.SystemCleaned())
             {
-                this.Stop();
-                return;
-            }
-             * */
-
-            while (!InstallerState.Complete())
-            {
-                // Handles state flags internally
-                DriverHandler.SystemClean();
-
-                // AgentInstallHandler();
-
-                // Polling(); // ??
-            }
-
-            if (!InstallerState.GetFlag(InstallerState.States.NetworkSettingsRestored))
-            {
-                // RestoreNetworkSettings();
-                InstallerState.SetFlag(InstallerState.States.NetworkSettingsRestored);
-            }
-        }
-    }
-
-    /*
-     * Responsible for:
-     *   - Removing drivers from 0001 and 0002 devices + cleaning up
-     *   - Installing drivers on C000 device (if nothing installed)
-     *   - Updating drivers on C000 device (if drivers already present)
-     */
-    static class DriverHandler
-    {
-        public static void SystemClean()
-        {
-            if (!InstallerState.GetFlag(InstallerState.States.RemovedFromFilters))
-            {
-                //RemovePVDriversFromFilters();
-                InstallerState.SetFlag(InstallerState.States.RemovedFromFilters);
-            }
-
-            if (!InstallerState.GetFlag(InstallerState.States.BootStartDisabled))
-            {
-                //DontBootStartPVDrivers();
-                InstallerState.SetFlag(InstallerState.States.BootStartDisabled);
-            }
-
-            if (!InstallerState.GetFlag(InstallerState.States.MSIsUninstalled))
-            {
-                //UninstallMSIs();
-                InstallerState.SetFlag(InstallerState.States.MSIsUninstalled);
-            }
-
-            if (!InstallerState.GetFlag(InstallerState.States.XenLegacyUninstalled))
-            {
-                //UninstallXenLegacy();
-                InstallerState.SetFlag(InstallerState.States.XenLegacyUninstalled);
-            }
-
-            if (!InstallerState.GetFlag(InstallerState.States.CleanedUp))
-            {
-                //CleanUpPVDrivers();
-                InstallerState.SetFlag(InstallerState.States.CleanedUp);
-            }
-        }
-
-        private static void RemovePVDriversFromFilters()
-        {
-            RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                @"SYSTEM\CurrentControlSet\Control\Class", true
-            );
-
-            string[] filterTypes = { "LowerFilters", "UpperFilters" };
-
-            foreach (string subKeyName in baseRK.GetSubKeyNames())
-            using (RegistryKey tmpRK = baseRK.OpenSubKey(subKeyName, true))
-            foreach (string filters in filterTypes)
-            {
-                string[] values = (string[]) tmpRK.GetValue(filters);
-
-                if (values != null)
+                if (VM.GetPVToolsVersionOnFirstRun() ==
+                    VM.PVToolsVersion.LessThanEight)
                 {
-                    /*
-                     * LINQ expression
-                     * Gets all entries of "values" that
-                     * are not "xenfilt" or "scsifilt"
-                     */
-                    values = values.Where(
-                        val => !(val.Equals("xenfilt", StringComparison.OrdinalIgnoreCase) ||
-                                 val.Equals("scsifilt", StringComparison.OrdinalIgnoreCase))
-                    ).ToArray();
-
-                    tmpRK.SetValue(filters, values, RegistryValueKind.MultiString);
+                    Trace.WriteLine("PV Tools found on 0001 or 0002; xenprepping..");
+                    DriverHandler.SystemClean();
+                    Trace.WriteLine("xenprepping done!");
                 }
-            }
-        }
-
-        private static void DontBootStartPVDrivers()
-        {
-            string[] xenDrivers = {
-                "XENBUS", "xenfilt", "xeniface", "xenlite",
-                "xennet", "xenvbd", "xenvif", "xennet6", 
-                "xenutil", "xevtchn"
-            };
-
-            RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                @"SYSTEM\CurrentControlSet\Services", true
-            );
-
-            foreach (string driver in xenDrivers)
-            using (RegistryKey tmpRK = baseRK.OpenSubKey(driver, true))
-            {
-                if (tmpRK != null)
+                else // "XenPrepping" not needed, so just flip all relevant flags
                 {
-                    tmpRK.SetValue("Start", 3);
+                    Installer.SetFlag(Installer.States.RemovedFromFilters);
+                    Installer.SetFlag(Installer.States.BootStartDisabled);
+                    Installer.SetFlag(Installer.States.MSIsUninstalled);
+                    Installer.SetFlag(Installer.States.XenLegacyUninstalled);
+                    Installer.SetFlag(Installer.States.CleanedUp);
+                    Trace.WriteLine("xenprepping not needed; flip relevant flags");
                 }
             }
 
-            using (RegistryKey tmpRK = baseRK.OpenSubKey(@"xenfilt\Unplug", true))
+            if (!Installer.EverythingInstalled())
             {
-                if (tmpRK != null)
+                if (!Installer.GetFlag(Installer.States.CertificatesInstalled))
                 {
-                    tmpRK.DeleteValue("DISKS", false);
-                    tmpRK.DeleteValue("NICS", false);
-                }
-            }
-        }
-
-        private static void UninstallMSIs()
-        {
-            const int GUID_LEN = 39;
-            const int BUF_LEN = 128;
-            int err;
-            int i = 0;
-            int len;
-            StringBuilder productCode = new StringBuilder(GUID_LEN, GUID_LEN);
-            StringBuilder productName = new StringBuilder(BUF_LEN, BUF_LEN);
-            Hashtable toRemove = new Hashtable();
-
-            // MSIs to uninstall
-            string[] msiNameList = {
-            //    "Citrix XenServer Windows Guest Agent",
-                "Citrix XenServer VSS Provider",
-                "Citrix Xen Windows x64 PV Drivers",
-                "Citrix Xen Windows x86 PV Drivers",
-                "Citrix XenServer Tools Installer"
-            };
-
-            // ERROR_SUCCESS = 0
-            while (PInvoke.Msi.MsiEnumProducts(i, productCode) == 0)
-            {
-                string tmpCode = productCode.ToString();
-
-                len = BUF_LEN;
-
-                // Get ProductName from Product GUID
-                err = PInvoke.Msi.MsiGetProductInfo(
-                    tmpCode,
-                    PInvoke.Msi.INSTALLPROPERTY.INSTALLEDPRODUCTNAME,
-                    productName,
-                    ref len
-                );
-
-                if (err == 0)
-                {
-                    string tmpName = productName.ToString();
-
-                    if (msiNameList.Contains(tmpName))
-                    {
-                        toRemove.Add(tmpCode, tmpName);
-                    }
+                    Trace.WriteLine("Installing certificates..");
+                    Helpers.InstallCertificates(
+                        Directory.GetCurrentDirectory() + @"\certs");
+                    Installer.SetFlag(Installer.States.CertificatesInstalled);
+                    Trace.WriteLine("Certificates installed");
                 }
 
-                ++i;
+                DriverHandler.InstallDrivers();
             }
 
-            foreach (DictionaryEntry product in toRemove)
+            if (PVDevice.PVDevice.AllFunctioning())
             {
-                Process process = new Process();
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.FileName = "msiexec.exe";
+                VM.UnsetRebootNeeded();
 
-                // For some unknown reason, XenServer Tools Installer
-                // doesn't like the '/norestart' option and doesn't get
-                // removed if it's there.
-                startInfo.Arguments = "/x " + product.Key + " /qn" +
-                    (product.Value.Equals(msiNameList[4]) ? "" : " /norestart");
-                process.StartInfo = startInfo;
-                process.Start();
-                process.WaitForExit();
-                process.Close();
-            }
-        }
-
-        private static void UninstallXenLegacy()
-        {
-            try
-            {
-                Registry.LocalMachine.OpenSubKey(
-                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", true
-                ).DeleteSubKeyTree("Citrix XenTools");
-            }
-            catch { }
-
-            try
-            {
-                HardUninstallFromReg(@"SOFTWARE\Citrix\XenTools\");
-            }
-            catch { }
-
-            if (WinVersion.is64BitOS())
-            {
-                try
-                {
-                    Registry.LocalMachine.OpenSubKey(
-                        @"SOFTWARE\Wow6432Node\Microsoft\" +
-                        @"Windows\CurrentVersion\Uninstall\",
-                        true
-                    ).DeleteSubKeyTree("Citrix XenTools");
-                }
-                catch { }
-
-                try
-                {
-                    HardUninstallFromReg(@"SOFTWARE\Wow6432Node\Citrix\XenTools\");
-                }
-                catch { }
-            }
-
-            try
-            {
-                XSToolsInstallation.Device.RemoveFromSystem(
-                    new string[] { @"root\xenevtchn" },
-                    false
+                Helpers.ChangeServiceStartMode(
+                    this.ServiceName,
+                    ServiceStartMode.Manual
                 );
             }
-            catch (Exception e)
+            else
             {
-                Trace.WriteLine("Remove exception: " + e.ToString());
-            }
-        }
-
-        private static void HardUninstallFromReg(string key)
-        {
-            // TODO: Check with Ben about this
-            string installdir = (string)Registry.LocalMachine.GetValue(
-                key + @"Install_Dir"
-            );
-
-            if (installdir != null)
-            {
-                try
+                if (rebootOption == RebootType.AUTOREBOOT)
                 {
-                    Directory.Delete(installdir, true);
-                }
-                catch { }
-            }
-
-            try
-            {
-                Registry.LocalMachine.DeleteSubKeyTree(key);
-            }
-            catch { }
-        }
-
-        private static void CleanUpPVDrivers(bool workaround2k8 = false)
-        {
-            string[] PVDrivers = {
-                "xen", "xenbus", "xencrsh", "xenfilt",
-                "xeniface", "xennet", "xenvbd", "xenvif",
-                "xennet6", "xenutil", "xevtchn"
-            };
-
-            string[] services = {
-                "XENBUS", "xenfilt", "xeniface", "xenlite",
-                "xennet", "xenvbd", "xenvif", "xennet6",
-                "xenutil", "xevtchn"
-            };
-
-            // On 2k8 if you're going to reinstall straight away, don't remove
-            // xenbus or xenfilt - as 2k8 assumes their registry entries
-            // are still in place
-            string[] services2k8 = {
-                "xeniface", "xenlite", "xennet", "xenvbd",
-                "xenvif", "xennet6", "xenutil", "xevtchn"
-            };
-
-            string[] hwIDs = {
-                // @"PCI\VEN_5853&DEV_C000&SUBSYS_C0005853&REV_01",
-                @"PCI\VEN_5853&DEV_0001",
-                @"PCI\VEN_5853&DEV_0002",
-                // @"XENBUS\VEN_XSC000&DEV_IFACE&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_IFACE",
-                @"XENBUS\VEN_XS0002&DEV_IFACE",
-                // @"XENBUS\VEN_XSC000&DEV_VBD&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_VBD",
-                @"XENBUS\VEN_XS0002&DEV_VBD",
-                // @"XENVIF\VEN_XSC000&DEV_NET&REV_00000000",
-                @"XENVIF\VEN_XS0001&DEV_NET",
-                @"XENVIF\VEN_XS0002&DEV_NET",
-                // @"XENBUS\VEN_XSC000&DEV_VIF&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_VIF",
-                @"XENBUS\VEN_XS0002&DEV_VIF",
-                @"root\xenevtchn",
-                @"XENBUS\CLASS&VIF",
-                @"PCI\VEN_fffd&DEV_0101",
-                @"XEN\VIF",
-                @"XENBUS\CLASS&IFACE",
-            };
-
-            string driverPath = Environment.GetFolderPath(
-                Environment.SpecialFolder.System
-            ) + @"\drivers\";
-
-            // Remove drivers from DriverStore
-            foreach (string hwID in hwIDs)
-            {
-                PnPRemove(hwID);
-            }
-
-            // Delete services' registry entries
-            using (RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                       @"SYSTEM\CurrentControlSet\Services", true
-                   ))
-            {
-                string[] servicelist = workaround2k8 ? services2k8 : services;
-                foreach (string service in servicelist)
-                {
-                    try
+                    if (VM.AllowedToReboot())
                     {
-                        baseRK.DeleteSubKeyTree(service);
-                    }
-                    catch (ArgumentException) { }
-                }
-            }
+                        DriverHandler.BlockUntilNoDriversInstalling(
+                            GetTimeoutToReboot()
+                        );
 
-            // Delete driver files
-            foreach (string driver in PVDrivers)
-            {
-                File.Delete(driverPath + driver + ".sys");
-            }
-        }
-
-        private static void PnPRemove(string hwID)
-        {
-            Trace.WriteLine("remove " + hwID);
-
-            string infpath = Environment.GetFolderPath(
-                Environment.SpecialFolder.System
-            ) + @"\..\inf";
-            Trace.WriteLine("inf dir = " + infpath);
-
-            string[] oemlist = Directory.GetFiles(infpath, "oem*.inf");
-            Trace.WriteLine(oemlist.ToString());
-
-            foreach (string oemfile in oemlist)
-            {
-                Trace.WriteLine("Checking " + oemfile);
-                string contents = File.ReadAllText(oemfile);
-
-                if (contents.Contains(hwID))
-                {
-                    bool needreboot;
-                    Trace.WriteLine("Uninstalling");
-
-                    PInvoke.DIFxAll difx;
-
-                    if (WinVersion.is64BitOS())
-                    {
-                        difx = new PInvoke.DIFx64();
+                        VM.IncrementRebootCount();
+                        Helpers.Reboot();
                     }
                     else
                     {
-                        difx = new PInvoke.DIFx32();
+                        Trace.WriteLine(
+                            "VM reached maximum number of allowed reboots"
+                        );
                     }
-
-                    difx.Uninstall(
-                        oemfile,
-                        (int)(PInvoke.DIFxAll.DRIVER_PACKAGE.SILENT |
-                              PInvoke.DIFxAll.DRIVER_PACKAGE.FORCE |
-                              PInvoke.DIFxAll.DRIVER_PACKAGE.DELETE_FILES),
-                        IntPtr.Zero,
-                        out needreboot
-                    );
-
-                    Trace.WriteLine("Uninstalled");
+                }
+                else
+                {
+                    VM.SetRebootNeeded();
                 }
             }
+        }
+
+        private static RebootType GetTrueRebootType(RebootType rt)
+        // If 'rebootOption = DEFAULT', the function returns one of the 2
+        // other options, depending on the system's state on first run
+        {
+            if (rt != RebootType.DEFAULT)
+            {
+                return rt;
+            }
+
+            if (VM.GetPVToolsVersionOnFirstRun() == VM.PVToolsVersion.Eight)
+            {
+                return RebootType.NOREBOOT;
+            }
+            else
+            {
+                return RebootType.AUTOREBOOT;
+            }
+        }
+
+        private static uint GetTimeoutToReboot()
+        {
+            uint timeout;
+
+            if (VM.GetOtherDriverInstallingOnFirstRun())
+            {
+                timeout = 20; // arbitrarily chosen;
+
+                Trace.WriteLine(
+                    "Something was installing before " +
+                    "Install Agent's first run."
+                );
+
+                timeout = 20 * 60; // 20 minutes to seconds
+            }
+            else
+            {
+                Trace.WriteLine(
+                    "Will wait until active (if any) PV Tools " +
+                    "driver installations have finished"
+                );
+                timeout = CfgMgr32.INFINITE;
+            }
+
+            return timeout;
         }
     }
 }

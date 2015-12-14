@@ -1,27 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceProcess;
-using System.Text;
-using Microsoft.Win32;
 using System.Diagnostics;
+using System.ServiceProcess;
 
 namespace InstallAgent
 {
-    enum IASRebootType
-    {
-        NOREBOOT,
-        AUTOREBOOT,
-        DEFAULT
-    }
-
-    enum IASInstallType
-    {
-        SILENT,
-        PASSIVE,
-        INTERACTIVE
-    }
-
     static class Program
     {
         /// <summary>
@@ -29,47 +11,16 @@ namespace InstallAgent
         /// </summary>
         static void Main(string[] args)
         {
-            bool runCMD;
-            IASRebootType rebootOpt;
-            IASInstallType installOpt;
-
             TextWriterTraceListener tlog = new TimeDateTraceListener(
-                @"C:\InstallAgent.log", "Install"
+                @"C:\ProgramData\Citrix\XSToolSetup\InstallAgent.log",
+                "InstallAgentLog"
             );
             Trace.Listeners.Add(tlog);
             Trace.AutoFlush = true;
 
-            SimpleParse.Parse(
-                args,
-                out runCMD,
-                out installOpt,
-                out rebootOpt
-            );
-
-            using (RegistryKey tmpRK = Registry.LocalMachine.CreateSubKey(
-                InstallAgent.rootRegKey
-            ))
+            if (args.Length == 0) // run as service
             {
-                tmpRK.SetValue(
-                    "InstallOption",
-                    installOpt,
-                    RegistryValueKind.DWord
-                );
-
-                tmpRK.SetValue(
-                    "RebootOption",
-                    rebootOpt,
-                    RegistryValueKind.DWord
-                );
-            }
-
-            if (runCMD)
-            {
-                InstallAgent ias = new InstallAgent();
-                ias.InstallThreadHandler();
-            }
-            else // run as a service
-            {
+                // rebootOption is populated in the constructor
                 ServiceBase[] ServicesToRun;
                 ServicesToRun = new ServiceBase[] 
                 { 
@@ -77,6 +28,36 @@ namespace InstallAgent
                 };
                 ServiceBase.Run(ServicesToRun);
             }
+            else if (args.Length == 1) // run from command line
+            {
+                InstallAgent.RebootType rebootOpt;
+
+                try
+                {
+                    rebootOpt = (InstallAgent.RebootType)Enum.Parse(
+                        typeof(InstallAgent.RebootType), args[0], true
+                    );
+                }
+                catch
+                {
+                    Usage();
+                    return;
+                }
+
+                InstallAgent ias = new InstallAgent(rebootOpt);
+                ias.InstallThreadHandler();
+            }
+            else
+            {
+                Usage();
+            }
+        }
+
+        static void Usage()
+        {
+            Console.WriteLine(
+                "Usage: InstallAgent.exe {NOREBOOT | AUTOREBOOT | DEFAULT}"
+            );
         }
     }
 }

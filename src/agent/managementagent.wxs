@@ -218,6 +218,7 @@
                 </Condition>
                 <File Id='XenDprivExeConfig' Name="XenDpriv.Exe.Config" Source='xenguestagent\xendpriv\XenDpriv.Exe.Config' />
                 <File Id='XenGuestAgentExeConfig' Name="XenGuestAgent.Exe.Config" Source='xenguestagent\xenguestagent\XenGuestAgent.Exe.Config' />
+				<File Id='InstallAgentExeConfig' Name="InstallAgent.exe.config" Source='InstallAgent\InstallAgent.exe.config' />
             </Component>
             <Component Id='dotnetagentsupport' Guid='$(var.supportid)'>
                 <File Id="XenDPrivExe" Name="XenDPriv.exe" Source="xenguestagent\xendpriv\XenDPriv.exe" />
@@ -260,7 +261,7 @@
                   <ServiceInstall Id='InstallServiceInstaller'
                       Type='ownProcess'
                       Vital='yes'
-                      Name='XSInstallAgent'
+                      Name='InstallAgent'
                       DisplayName='$(var.Brand) $(var.Product) $(var.Install)'
                       Description='Installs and updates management agent'
                       Start='auto'
@@ -274,9 +275,18 @@
                       Start='install' 
                       Stop='both' 
                       Remove='uninstall' 
-                      Name='XenSvc' 
+                      Name='InstallAgent'
                       Wait='yes' />
               </Component>
+
+              <Component Id="DifXAPIDLL64" Guid="*">
+                  <File Id="difxapi64" Name="difxapi64.dll" Source="$(env.KIT)\Redist\DIFx\DIFxAPI\x64\difxapi.dll" />
+              </Component>
+
+              <Component Id="DifXAPIDLL32" Guid="*">
+                  <File Id="difxapi32" Name="difxapi32.dll" Source="$(env.KIT)\Redist\DIFx\DIFxAPI\x86\difxapi.dll" />
+              </Component>
+
           </Directory>
         </Directory>
       </Directory>
@@ -323,6 +333,8 @@
         <ComponentRef Id='RegEntry'/>
         <ComponentRef Id='XenVssComponent'/>
         <ComponentRef Id='XenService'/>
+        <ComponentRef Id="DifXAPIDLL64"/>
+        <ComponentRef Id="DifXAPIDLL32"/>
         <?if $(sys.BUILDARCH)=x64 ?>
             <ComponentRef Id='RegEntry32'/>
         <?endif ?>
