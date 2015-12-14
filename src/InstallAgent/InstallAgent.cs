@@ -131,11 +131,17 @@ namespace InstallAgent
             {
                 if (!Installer.GetFlag(Installer.States.CertificatesInstalled))
                 {
-                    Trace.WriteLine("Installing certificates..");
-                    Helpers.InstallCertificates(
-                        Directory.GetCurrentDirectory() + @"\certs");
+                    string certsPath = Path.Combine(
+                        InstallAgent.exeDir,
+                        "Certs"
+                    );
+
+                    if (Directory.Exists(certsPath))
+                    {
+                        Helpers.InstallCertificates(certsPath);
+                    }
+
                     Installer.SetFlag(Installer.States.CertificatesInstalled);
-                    Trace.WriteLine("Certificates installed");
                 }
 
                 DriverHandler.InstallDrivers();
