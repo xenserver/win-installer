@@ -8,7 +8,7 @@ using XSToolsInstallation;
 
 namespace PVDevice
 {
-    static class XenBus
+    public static class XenBus
     {
         // Is populated in the static constructor
         // If the device exists, hwIDs[i] will be the
