@@ -1,4 +1,5 @@
-﻿using PInvoke;
+﻿using Microsoft.Win32;
+using PInvoke;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -102,6 +103,32 @@ namespace XSToolsInstallation
 
             return MultiByteStringSplit(buffer);
         }
+
+        public static string GetDriverVersion(
+            SetupApi.DeviceInfoSet devInfoSet,
+            SetupApi.SP_DEVINFO_DATA devInfoData)
+        {
+            string driverKeyName = GetDevRegPropertyStr(
+                devInfoSet,
+                devInfoData,
+                SetupApi.SPDRP.DRIVER
+            );
+
+            if (String.IsNullOrEmpty(driverKeyName))
+            {
+                return "0.0.0.0";
+            }
+
+            driverKeyName =
+                @"SYSTEM\CurrentControlSet\Control\Class\" + driverKeyName;
+
+            RegistryKey rk = Registry.LocalMachine.OpenSubKey(
+                driverKeyName, true
+            );
+            
+            return (string)rk.GetValue("DriverVersion");
+        }
+
 
         public static SetupApi.SP_DEVINFO_DATA FindInSystem(
             string hwID,
