@@ -63,6 +63,7 @@
       <?define XenVssComponentGUID = 'bb4ad259-a748-4a92-b265-5635cae68e42' ?>
       <?define pf="ProgramFilesFolder" ?>
     <?endif?>
+    <?define certs= 'f056d833-6b1f-4c9d-9636-f26ff3a75292' ?>
 
   <Product Name='$(var.Brand) $(var.Product) $(var.Agent)' Id='$(var.ProductId)'
            Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='$(var.Brand)'
@@ -232,7 +233,15 @@
                  <File Id='uninstall_cmd' Name="uninstall-XenProvider.cmd" Source='xenvss\uninstall-XenProvider.cmd' />
                  <File Id='regvss_vbs' Name="regvss.vbs" Source='xenvss\regvss.vbs' />
             </Component>
-
+            <?if $(var.usecerts)=yes ?>
+                <Directory Id="certsdir" Name="Certs">
+                    <Component Id="Certs" Guid="$(var.certs)">
+                        <File Id="EapCitrix" Name="EapCitrix.cer" Source="$(var.Bitmaps)\eapcitrix.cer" />
+                        <File Id="EapCodeSign" Name="EapCodeSign.cer" Source="$(var.Bitmaps)\eapcodesign.cer" />
+                        <File Id="EapRoot" Name="EapRoot.cer" Source="$(var.Bitmaps)\eaproot.cer" />
+                    </Component>
+                </Directory>
+            <?endif?>
             <Component Id='XenService' Guid="*">
                 <File Id='XenGuestAgent.Exe' Name='XenGuestAgent.Exe' Source="xenguestagent\xenguestagent\xenguestagent.exe" />
                 <ServiceInstall Id='XenServiceInstaller'
@@ -325,6 +334,9 @@
       
       
     <Feature Id='Complete' Level='1'>
+        <?if $(var.usecerts)=yes ?>
+            <ComponentRef Id='Certs' />
+        <?endif?>
         <ComponentRef Id='dotnetfouragent'/>
         <ComponentRef Id='dotnetagentsupport'/>
         <MergeRef Id='Drivers' />
