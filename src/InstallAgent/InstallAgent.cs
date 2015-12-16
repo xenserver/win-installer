@@ -77,6 +77,19 @@ namespace InstallAgent
 
         public void InstallThreadHandler()
         {
+            try
+            {
+                __InstallThreadHandler();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.ToString());
+                throw;
+            }
+        }
+
+        private void __InstallThreadHandler()
+        {
             if (WinVersion.IsWOW64())
             {
                 throw new Exception("WOW64: Do not do that.");
