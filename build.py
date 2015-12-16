@@ -309,11 +309,16 @@ def make_installers(pack):
     bitmaps = ".\\src\\bitmaps"
 
     generate_driver_wxs(pack)
+    
+    if (all_drivers_signed) :
+        use_certs='no'
+    else:
+        use_certs='yes'
 
     callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x64","-darch=x64","-o", "installer\\drivergenx64.wixobj"])
     callfn([wix("light.exe"), "installer\\drivergenx64.wixobj","-darch=x64","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx64.msm"])
     src = ".\\src\\agent"
-    callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\managementagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
+    callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\managementagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
     callfn([wix("light.exe"), "installer\\managementagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\managementagentx64.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
     if signfiles:
         sign("installer\\managementagentx64.msi", signname, signstr=signstr)
@@ -321,7 +326,7 @@ def make_installers(pack):
     callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x86","-darch=x86","-o", "installer\\drivergenx86.wixobj"])
     callfn([wix("light.exe"), "installer\\drivergenx86.wixobj","-darch=x86","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx86.msm"])
     src = ".\\src\\agent"
-    callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\managementagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps])
+    callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\managementagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
     callfn([wix("light.exe"), "installer\\managementagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\managementagentx86.msi", "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
     if signfiles:
         sign("installer\\managementagentx86.msi", signname, signstr=signstr)
@@ -373,10 +378,6 @@ def make_installers(pack):
     src = ".\\src\\installwizard"
     bitmaps = ".\\src\\bitmaps"
     
-    if (all_drivers_signed) :
-        use_certs='no'
-    else:
-        use_certs='yes'
     
     callfn([wix("candle.exe"), src+"\\installwizard.wxs",  "-o", "installer\\installwizard.wixobj", "-ext", "WixUtilExtension", "-ext", "WixUIExtension", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
     
