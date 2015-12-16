@@ -66,7 +66,6 @@ namespace InstallAgent
         protected override void OnStart(string[] args)
         {
             // Start thread - so we can do everything in the background
-            Trace.WriteLine("OnStart");
             installThread = new Thread(InstallThreadHandler);
             installThread.Start();
         }
@@ -82,14 +81,6 @@ namespace InstallAgent
             {
                 throw new Exception("WOW64: Do not do that.");
             }
-
-            if (Installer.Complete())
-            {
-                Trace.WriteLine("Everything is complete!!");
-                return;
-            }
-
-            //RegisterWMI();
 
             if (!Installer.GetFlag(Installer.States.NetworkSettingsSaved))
             {
@@ -107,13 +98,30 @@ namespace InstallAgent
                     Trace.WriteLine("PV Tools found on 0001 or 0002; xenprepping..");
                     DriverHandler.SystemClean();
                     Trace.WriteLine("xenprepping done!");
+
+                    // Stop after we XenPrep. Cannot install
+                    // drivers without reboot, at least for now..
+                    if (rebootOption == RebootType.AUTOREBOOT)
+                    {
+                        DriverHandler.BlockUntilNoDriversInstalling(
+                                GetTimeoutToReboot()
+                            );
+
+                        Helpers.Reboot();
+                    }
+                    else
+                    {
+                        VM.SetRebootNeeded();
+                    }
+
+                    return;
                 }
                 else // "XenPrepping" not needed, so just flip all relevant flags
                 {
                     Installer.SetFlag(Installer.States.RemovedFromFilters);
                     Installer.SetFlag(Installer.States.BootStartDisabled);
                     Installer.SetFlag(Installer.States.MSIsUninstalled);
-                    Installer.SetFlag(Installer.States.XenLegacyUninstalled);
+                    Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
                     Installer.SetFlag(Installer.States.CleanedUp);
                     Trace.WriteLine("xenprepping not needed; flip relevant flags");
                 }
@@ -123,11 +131,17 @@ namespace InstallAgent
             {
                 if (!Installer.GetFlag(Installer.States.CertificatesInstalled))
                 {
-                    Trace.WriteLine("Installing certificates..");
-                    Helpers.InstallCertificates(
-                        Directory.GetCurrentDirectory() + @"\certs");
+                    string certsPath = Path.Combine(
+                        InstallAgent.exeDir,
+                        "Certs"
+                    );
+
+                    if (Directory.Exists(certsPath))
+                    {
+                        Helpers.InstallCertificates(certsPath);
+                    }
+
                     Installer.SetFlag(Installer.States.CertificatesInstalled);
-                    Trace.WriteLine("Certificates installed");
                 }
 
                 DriverHandler.InstallDrivers();

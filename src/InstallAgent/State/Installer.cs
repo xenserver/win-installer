@@ -14,7 +14,7 @@ namespace State
             States.RemovedFromFilters |
             States.BootStartDisabled |
             States.MSIsUninstalled |
-            States.XenLegacyUninstalled |
+            States.DrvsAndDevsUninstalled |
             States.CleanedUp
         );
 
@@ -55,7 +55,7 @@ namespace State
             new StateInfo("RemovedFromFilters", 0),
             new StateInfo("BootStartDisabled", 0),
             new StateInfo("MSIsUninstalled", 0),
-            new StateInfo("XenLegacyUninstalled", 0),
+            new StateInfo("DrvsAndDevsUninstalled", 0),
             new StateInfo("CleanedUp", 0),
             new StateInfo("XenBusInstalled", 0),
             new StateInfo("XenIfaceInstalled", 0),
@@ -77,7 +77,7 @@ namespace State
             RemovedFromFilters = 1 << 2,
             BootStartDisabled = 1 << 3,
             MSIsUninstalled = 1 << 4,
-            XenLegacyUninstalled = 1 << 5,
+            DrvsAndDevsUninstalled = 1 << 5,
             CleanedUp = 1 << 6,
             // --------------- End ---------------
 

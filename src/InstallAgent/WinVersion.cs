@@ -41,10 +41,8 @@ namespace InstallAgent
         public static uint GetServicePackMinor() { return (uint)osvi.wServicePackMinor; }
         public static uint GetSuite() { return (uint)osvi.wSuiteMask; }
         public static uint GetProductType() { return osvi.wProductType; }
-        public static uint GetVersionValue()
-        {
-            return ((osvi.dwMajorVersion << 8) | osvi.dwMinorVersion);
-        }
+        public static uint GetMajorVersion() { return osvi.dwMajorVersion; }
+        public static uint GetMinorVersion() { return osvi.dwMinorVersion; }
 
         public static bool IsServerSKU()
         {

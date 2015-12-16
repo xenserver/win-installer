@@ -24,7 +24,36 @@ namespace InstallAgent
      */
     static class DriverHandler
     {
-        private static readonly string[] driverNames = { "xenbus", "xeniface", "xenvif", "xenvbd", "xennet" };
+        // List of all possible PV H/W devices that can be present
+        // on a system. The ordering is deliberate, so that the
+        // device tree(s) will be walked from children to root.
+        private static readonly string[] pvHwIds = {
+            @"XENVIF\VEN_XS0001&DEV_NET",
+            @"XENVIF\VEN_XS0002&DEV_NET",
+            @"XENVIF\DEVICE",
+
+            @"XENBUS\VEN_XS0001&DEV_VIF",
+            @"XENBUS\VEN_XS0002&DEV_VIF",
+            @"XEN\VIF",
+            @"XENBUS\CLASS&VIF",
+            @"XENBUS\CLASS_VIF",
+
+            @"XENBUS\VEN_XS0001&DEV_VBD",
+            @"XENBUS\VEN_XS0002&DEV_VBD",
+            @"XENBUS\CLASS&VBD",
+            @"XENBUS\CLASS_VBD",
+
+            @"XENBUS\VEN_XS0001&DEV_IFACE",
+            @"XENBUS\VEN_XS0002&DEV_IFACE",
+            @"XENBUS\CLASS&IFACE",
+            @"XENBUS\CLASS_IFACE",
+
+            @"PCI\VEN_5853&DEV_0001",
+            @"PCI\VEN_5853&DEV_0002",
+            @"PCI\VEN_fffd&DEV_0101",
+
+            @"ROOT\XENEVTCHN"
+        };
 
         public static bool BlockUntilNoDriversInstalling(uint timeout)
         // Returns true, if no drivers are installing before the timeout
@@ -90,10 +119,8 @@ namespace InstallAgent
             {
                 if (!Installer.GetFlag(driver.installed))
                 {
-                    if (InstallDriver_2(driverRootDir, driver.name))
-                    {
-                        Installer.SetFlag(driver.installed);
-                    }
+                    InstallDriver(driverRootDir, driver.name);
+                    Installer.SetFlag(driver.installed);
                 }
             }
         }
@@ -118,158 +145,22 @@ namespace InstallAgent
                 Installer.SetFlag(Installer.States.MSIsUninstalled);
             }
 
-            if (!Installer.GetFlag(Installer.States.XenLegacyUninstalled))
+            if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
             {
-                UninstallXenLegacy();
-                Installer.SetFlag(Installer.States.XenLegacyUninstalled);
+                UninstallDriversAndDevices();
+                Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
             }
 
             if (!Installer.GetFlag(Installer.States.CleanedUp))
             {
-                CleanUpPVDrivers();
+                CleanUpXenLegacy();
+                CleanUpDriverFiles();
+                CleanUpServices();
                 Installer.SetFlag(Installer.States.CleanedUp);
             }
         }
 
-        // Driver will not install on device, until next reboot
-        public static bool StageToDriverStore(
-            string driverRootDir,
-            string driver,
-            SetupApi.SP_COPY copyStyle =
-                SetupApi.SP_COPY.NEWER_ONLY)
-        {
-            string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
-
-            string infDir = Path.Combine(
-                driverRootDir,
-                driver + build
-            );
-
-            string infPath = Path.Combine(
-                infDir,
-                driver + ".inf"
-            );
-
-            if (!File.Exists(infPath))
-            {
-                throw new Exception(
-                    String.Format("\'{0}\' does not exist", infPath)
-                );
-            }
-
-            Trace.WriteLine(
-                String.Format("Staging \'{0}\' to DriverStore", driver)
-            );
-
-            if (!SetupApi.SetupCopyOEMInf(
-                    infPath,
-                    infDir,
-                    SetupApi.SPOST.PATH,
-                    copyStyle,
-                    IntPtr.Zero,
-                    0,
-                    IntPtr.Zero,
-                    IntPtr.Zero))
-            {
-                Trace.WriteLine(
-                    String.Format("\'{0}\' driver staging failed: {1}",
-                        driver,
-                        new Win32Exception(
-                            Marshal.GetLastWin32Error()
-                        ).Message
-                    )
-                );
-                return false;
-            }
-
-            Trace.WriteLine(
-                String.Format(
-                    "\'{0}\' driver staging success", driver
-                )
-            );
-
-            return true;
-        }
-
-        // Searches an .inf file for a hardware device ID that is
-        // either a XenBus device itself or is a device enumerated
-        // under one. User has to supply which of the 3 XenBus IDs
-        // to look for. Function assumes there can be at most 1 such
-        // string in an .inf file. If not found, an empty string is
-        // returned.
-        public static string GetHardwareIdFromInf(
-            XenBus.XenBusDevs xenBusDev,
-            string infPath)
-        {
-            if (!File.Exists(infPath))
-            {
-                throw new Exception(
-                    String.Format("\'{0}\' does not exist", infPath)
-                );
-            }
-
-            string xenBusDevStr;
-
-            switch (xenBusDev)
-            {
-                case XenBus.XenBusDevs.DEV_0001:
-                    xenBusDevStr = "0001";
-                    break;
-                case XenBus.XenBusDevs.DEV_0002:
-                    xenBusDevStr = "0002";
-                    break;
-                case XenBus.XenBusDevs.DEV_C000:
-                    xenBusDevStr = "C000";
-                    break;
-                default:
-                    throw new Exception("Not a valid XenBus device");
-            }
-
-            string hwID = "";
-            string suffix = WinVersion.Is64BitOS() ? "amd64" : "x86";
-
-            string hwIDPattern =
-                @"((?:PCI|XENBUS|XENVIF)\\VEN_(?:5853|XS" +
-                xenBusDevStr + @")\&DEV_(?:" + xenBusDevStr +
-                @"|IFACE|VIF|VBD|NET)[A-Z\d\&_]*)";
-
-            using (System.IO.StreamReader infFile =
-                       new System.IO.StreamReader(infPath))
-            {
-                string line;
-                bool sectionFound = false;
-
-                while ((line = infFile.ReadLine()) != null)
-                {
-                    if (line.Equals("[Inst.NT" + suffix + "]"))
-                    {
-                        sectionFound = true;
-                        continue;
-                    }
-
-                    if (!sectionFound)
-                    {
-                        continue;
-                    }
-
-                    // When we reach the next section, break the loop
-                    if (line.StartsWith("["))
-                    {
-                        break;
-                    }
-
-                    foreach (Match m in Regex.Matches(line, hwIDPattern))
-                    {
-                        hwID = m.Value;
-                        break;
-                    }
-                }
-            }
-
-            return hwID;
-        }
-
-        public static bool InstallDriver_2(
+        public static void InstallDriver(
             string driverRootDir,
             string driver,
             NewDev.DIIRFLAG flags =
@@ -284,16 +175,7 @@ namespace InstallAgent
                 driver + build + driver + ".inf"
             );
 
-            if (!File.Exists(infPath))
-            {
-                throw new Exception(
-                    String.Format("\'{0}\' does not exist", infPath)
-                );
-            }
-
-            Trace.WriteLine(
-                String.Format("Installing \'{0}\' driver...", driver)
-            );
+            Trace.WriteLine("Installing driver \'" + driver + "\'");
 
             if (!NewDev.DiInstallDriver(
                     IntPtr.Zero,
@@ -301,87 +183,12 @@ namespace InstallAgent
                     flags,
                     out reboot))
             {
-                Trace.WriteLine(
-                    String.Format("Driver \'{0}\' install failed: {1}",
-                        driver,
-                        new Win32Exception(
-                            Marshal.GetLastWin32Error()
-                        ).Message
-                    )
-                );
-                return false;
+                Win32Error.Set("DiInstallDriver");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
 
-            Trace.WriteLine(
-                String.Format("Driver \'{0}\' installed successfully", driver)
-            );
-            return true;
-        }
-
-        // Full path to driver .inf files is expected to be:
-        // "{driverRootDir}\{driver}\{x64|x86}\{driver}.inf"
-        public static bool InstallDriver(
-            XenBus.XenBusDevs xenBusDev,
-            string driverRootDir,
-            string driver,
-            NewDev.INSTALLFLAG installFlags =
-                NewDev.INSTALLFLAG.NONINTERACTIVE)
-        {
-            bool reboot;
-
-            string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
-
-            string infPath = Path.Combine(
-                driverRootDir,
-                driver + build + driver + ".inf"
-            );
-
-            if (!File.Exists(infPath))
-            {
-                throw new Exception(
-                    String.Format("\'{0}\' does not exist", infPath)
-                );
-            }
-
-            string hwID = GetHardwareIdFromInf(
-                xenBusDev,
-                infPath
-            );
-
-            if (String.IsNullOrEmpty(hwID))
-            {
-                throw new Exception(
-                    String.Format("Hardware ID found for \'{0}\'", driver)
-                );
-            }
-
-            Trace.WriteLine(
-                String.Format("Installing {0} on {1}", driver, hwID)
-            );
-
-            if (!NewDev.UpdateDriverForPlugAndPlayDevices(
-                    IntPtr.Zero,
-                    hwID,
-                    infPath,
-                    installFlags,
-                    out reboot))
-            {
-                Trace.WriteLine(
-                    String.Format("Driver \'{0}\' install failed: {1}",
-                        driver,
-                        new Win32Exception(
-                            Marshal.GetLastWin32Error()
-                        ).Message
-                    )
-                );
-                return false;
-            }
-
-            Trace.WriteLine(
-                String.Format("Driver \'{0}\' install success", driver)
-            );
-
-            return true;
+            Trace.WriteLine("Driver installed successfully");
         }
 
         private static void RemovePVDriversFromFilters()
@@ -577,7 +384,7 @@ namespace InstallAgent
             StringBuilder productName = new StringBuilder(BUF_LEN, BUF_LEN);
 
             Trace.WriteLine(
-                "Checking if \'" + msiName +"\' is present in system.."
+                "Checking if \'" + msiName + "\' is present in system.."
             );
 
             // ERROR_SUCCESS = 0
@@ -669,7 +476,7 @@ namespace InstallAgent
                             if (i == tries - 1)
                             {
                                 Trace.WriteLine(
-                                    "Tries exhausted; Error: "+
+                                    "Tries exhausted; Error: " +
                                     proc.ExitCode
                                 );
 
@@ -695,78 +502,84 @@ namespace InstallAgent
             }
         }
 
-        private static void UninstallXenLegacy()
+        private static void UninstallDriversAndDevices()
         {
-            try
+            using (SetupApi.DeviceInfoSet devInfoSet =
+                        new SetupApi.DeviceInfoSet(
+                        IntPtr.Zero,
+                        IntPtr.Zero,
+                        IntPtr.Zero,
+                        SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES))
             {
-                Registry.LocalMachine.OpenSubKey(
-                    @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall", true
-                ).DeleteSubKeyTree("Citrix XenTools");
-            }
-            catch { }
+                foreach (string hwId in pvHwIds)
+                {
+                    UninstallDriverPackages(hwId);
 
-            try
-            {
-                HardUninstallFromReg(@"SOFTWARE\Citrix\XenTools\");
+                    Device.RemoveFromSystem(
+                        devInfoSet,
+                        hwId,
+                        false
+                    );
+                }
             }
-            catch { }
+        }
+
+        private static void CleanUpXenLegacy()
+        // Cleans up leftover Xen Legacy registry entries and files
+        {
+            const string SOFTWARE = "SOFTWARE";
+            const string WOW6432NODE = @"\Wow6432Node";
+            const string UNINSTALL =
+                @"\Microsoft\Windows\CurrentVersion\Uninstall";
+            const string CITRIX_XENTOOLS = @"\Citrix\XenTools";
+            const string INSTALL_DIR = @"\Install_Dir";
+
+            string rk1Path;
+            string rk2Path;
+            string rk3Path;
 
             if (WinVersion.Is64BitOS())
             {
-                try
-                {
-                    Registry.LocalMachine.OpenSubKey(
-                        @"SOFTWARE\Wow6432Node\Microsoft\" +
-                        @"Windows\CurrentVersion\Uninstall\",
-                        true
-                    ).DeleteSubKeyTree("Citrix XenTools");
-                }
-                catch { }
-
-                try
-                {
-                    HardUninstallFromReg(@"SOFTWARE\Wow6432Node\Citrix\XenTools\");
-                }
-                catch { }
+                rk1Path = SOFTWARE + WOW6432NODE + UNINSTALL;
+                rk3Path = SOFTWARE + WOW6432NODE + CITRIX_XENTOOLS;
             }
+            else
+            {
+                rk1Path = SOFTWARE + UNINSTALL;
+                rk3Path = SOFTWARE + CITRIX_XENTOOLS;
+            }
+
+            rk2Path = rk3Path + INSTALL_DIR;
 
             try
             {
-                Device.RemoveFromSystem(
-                    new string[] { @"root\xenevtchn" },
-                    false
-                );
+                Registry.LocalMachine.OpenSubKey(
+                    rk1Path,
+                    true
+                ).DeleteSubKeyTree("Citrix XenTools");
             }
-            catch (Exception e)
-            {
-                Trace.WriteLine("Remove exception: " + e.ToString());
-            }
-        }
+            catch (ArgumentException) { }
 
-        private static void HardUninstallFromReg(string key)
-        {
-            // TODO: Check with Ben about this
-            string installdir = (string)Registry.LocalMachine.GetValue(
-                key + @"Install_Dir"
+            string installDir = (string)Registry.LocalMachine.GetValue(
+                rk2Path
             );
 
-            if (installdir != null)
+            try
             {
-                try
-                {
-                    Directory.Delete(installdir, true);
-                }
-                catch { }
+                Directory.Delete(installDir, true);
             }
+            catch (DirectoryNotFoundException) { }
+            catch (ArgumentNullException) { }
 
             try
             {
-                Registry.LocalMachine.DeleteSubKeyTree(key);
+                Registry.LocalMachine.DeleteSubKeyTree(rk3Path);
             }
-            catch { }
+            catch (ArgumentException) { }
         }
 
-        private static void CleanUpPVDrivers(bool workaround2k8 = false)
+        private static void CleanUpDriverFiles()
+        // Removes left over .sys files
         {
             string[] PVDrivers = {
                 "xen", "xenbus", "xencrsh", "xenfilt",
@@ -774,60 +587,41 @@ namespace InstallAgent
                 "xennet6", "xenutil", "xenevtchn"
             };
 
-            string[] services = {
-                "XENBUS", "xenfilt", "xeniface", "xenlite",
-                "xennet", "xenvbd", "xenvif", "xennet6",
-                "xenutil", "xenevtchn"
-            };
-
-            // On 2k8 if you're going to reinstall straight away, don't remove
-            // xenbus or xenfilt - as 2k8 assumes their registry entries
-            // are still in place
-            string[] services2k8 = {
-                "xeniface", "xenlite", "xennet", "xenvbd",
-                "xenvif", "xennet6", "xenutil", "xenevtchn"
-            };
-
-            string[] hwIDs = {
-                // @"XENBUS\VEN_XSC000&DEV_IFACE&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_IFACE",
-                @"XENBUS\VEN_XS0002&DEV_IFACE",
-                // @"XENBUS\VEN_XSC000&DEV_VBD&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_VBD",
-                @"XENBUS\VEN_XS0002&DEV_VBD",
-                // @"XENVIF\VEN_XSC000&DEV_NET&REV_00000000",
-                @"XENVIF\VEN_XS0001&DEV_NET",
-                @"XENVIF\VEN_XS0002&DEV_NET",
-                // @"XENBUS\VEN_XSC000&DEV_VIF&REV_00000001",
-                @"XENBUS\VEN_XS0001&DEV_VIF",
-                @"XENBUS\VEN_XS0002&DEV_VIF",
-                // @"PCI\VEN_5853&DEV_C000&SUBSYS_C0005853&REV_01",
-                @"PCI\VEN_5853&DEV_0001",
-                @"PCI\VEN_5853&DEV_0002",
-                @"XENBUS\CLASS&VIF",
-                @"PCI\VEN_fffd&DEV_0101",
-                @"XEN\VIF",
-                @"XENBUS\CLASS&IFACE",
-                @"root\xenevtchn",
-            };
-
             string driverPath = Environment.GetFolderPath(
                 Environment.SpecialFolder.System
             ) + @"\drivers\";
 
-            // Remove drivers from DriverStore
-            foreach (string hwID in hwIDs)
+
+            foreach (string driver in PVDrivers)
             {
-                PnPRemove(hwID);
+                File.Delete(driverPath + driver + ".sys");
+            }
+        }
+
+        private static void CleanUpServices()
+        // Removes left over 'Services' registry keys
+        {
+            // On 2k8 if you're going to reinstall straight away,
+            // don't remove 'xenbus' or 'xenfilt' - as 2k8 assumes
+            // their registry entries are still in place
+            List<string> services = new List<string> {
+                "xeniface", "xenlite", "xennet", "xenvbd",
+                "xenvif", "xennet6", "xenutil", "xenevtchn"
+            };
+
+            // OS is not Win 2k8
+            if (!(WinVersion.IsServerSKU() &&
+                  WinVersion.GetMajorVersion() == 6 &&
+                  WinVersion.GetMinorVersion() < 2))
+            {
+                services.Add("XENBUS");
+                services.Add("xenfilt");
             }
 
-            // Delete services' registry entries
             using (RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                       @"SYSTEM\CurrentControlSet\Services", true
-                   ))
+                       @"SYSTEM\CurrentControlSet\Services", true))
             {
-                string[] servicelist = workaround2k8 ? services2k8 : services;
-                foreach (string service in servicelist)
+                foreach (string service in services)
                 {
                     try
                     {
@@ -836,58 +630,56 @@ namespace InstallAgent
                     catch (ArgumentException) { }
                 }
             }
-
-            // Delete driver files
-            foreach (string driver in PVDrivers)
-            {
-                File.Delete(driverPath + driver + ".sys");
-            }
         }
 
-        private static void PnPRemove(string hwID)
+        private static void UninstallDriverPackages(string hwId)
+        // Scans all oem*.inf files present in the system
+        // and uninstalls all that match 'hwId'
         {
-            Trace.WriteLine("remove " + hwID);
+            string infPath = Path.Combine(
+                Environment.GetEnvironmentVariable("windir"),
+                "inf"
+            );
 
-            string infpath = Environment.GetFolderPath(
-                Environment.SpecialFolder.System
-            ) + @"\..\inf";
-            Trace.WriteLine("inf dir = " + infpath);
+            Trace.WriteLine(
+                "Searching drivers in system for \'" + hwId + "\'"
+            );
 
-            string[] oemlist = Directory.GetFiles(infpath, "oem*.inf");
-            Trace.WriteLine(oemlist.ToString());
-
-            foreach (string oemfile in oemlist)
+            foreach (string oemFile in Directory.GetFiles(infPath, "oem*.inf"))
             {
-                Trace.WriteLine("Checking " + oemfile);
-                string contents = File.ReadAllText(oemfile);
-
-                if (contents.Contains(hwID))
+                // This is currently the only way to ignore case...
+                if (File.ReadAllText(oemFile).IndexOf(
+                        hwId, StringComparison.OrdinalIgnoreCase) == -1)
                 {
-                    bool needreboot;
-                    Trace.WriteLine("Uninstalling");
-
-                    DIFxAll difx;
-
-                    if (WinVersion.Is64BitOS())
-                    {
-                        difx = new DIFx64();
-                    }
-                    else
-                    {
-                        difx = new DIFx32();
-                    }
-
-                    difx.Uninstall(
-                        oemfile,
-                        (int)(DIFxAll.DRIVER_PACKAGE.SILENT |
-                              DIFxAll.DRIVER_PACKAGE.FORCE |
-                              DIFxAll.DRIVER_PACKAGE.DELETE_FILES),
-                        IntPtr.Zero,
-                        out needreboot
-                    );
-
-                    Trace.WriteLine("Uninstalled");
+                    continue;
                 }
+
+                Trace.WriteLine(
+                    "\'" + hwId + "\' matches" + "\'" + oemFile + "\';"
+                );
+
+                bool needreboot;
+                Trace.WriteLine("Uninstalling...");
+
+                int err = DIFx.DriverPackageUninstall(
+                    oemFile,
+                    (int)(DIFx.DRIVER_PACKAGE.SILENT |
+                          DIFx.DRIVER_PACKAGE.FORCE |
+                          DIFx.DRIVER_PACKAGE.DELETE_FILES),
+                          // N.B.: Starting with Windows 7,
+                          // 'DELETE_FILES' is ignored
+                    IntPtr.Zero,
+                    out needreboot
+                );
+
+                if (err != 0) // ERROR_SUCCESS
+                {
+                    Win32Error.Set("DriverPackageUninstall", err);
+                    Trace.WriteLine(Win32Error.GetFullErrMsg());
+                    throw new Exception(Win32Error.GetFullErrMsg());
+                }
+
+                Trace.WriteLine("Uninstalled");
             }
         }
     }

@@ -4,6 +4,7 @@ using PInvoke;
 using PVDevice;
 using System;
 using System.Diagnostics;
+using XSToolsInstallation;
 
 namespace State
 {
@@ -12,6 +13,7 @@ namespace State
         private static readonly string regKeyName =
             InstallAgent.InstallAgent.rootRegKeyName + @"\VMState";
 
+        private static /* readonly */ XenBus.Devs xenBusDev;
         private static /* readonly */ PVToolsVersion pvToolsVer;
         private static /* readonly */ bool othDrvInstalling;
 
@@ -24,6 +26,11 @@ namespace State
             None = 0, // system is clean; no drivers installed
             LessThanEight = 7, // system has drivers other than 8.x installed
             Eight = 8, // system has drivers 8.x installed
+        }
+
+        public static XenBus.Devs GetXenBusDevUsedOnFirstRun()
+        {
+            return xenBusDev;
         }
 
         public static PVToolsVersion GetPVToolsVersionOnFirstRun()
@@ -116,38 +123,127 @@ namespace State
             othDrvInstalling = (tmp == 1) ? true : false;
         }
 
-        private static void SetPVToolsVersionOnFirstRun(
+        private static void SetXenBusDevUsedOnFirstRun(
             RegistryKey openRegKey)
+        // Keeps the XenBus device that was used on
+        // the Install Agent's first run
         {
-            string regValName = "PVToolsVersionOnFirstRun";
-            int tmp = (int)openRegKey.GetValue(regValName, -1);
+            string regValName = "XenBusDevUsedOnFirstRun";
 
-            if (tmp == -1)
+            try
             {
-                if ((XenBus.IsPresent(XenBus.XenBusDevs.DEV_0001, true) &&
-                         XenBus.HasChildren(XenBus.XenBusDevs.DEV_0001)) ||
-                    (XenBus.IsPresent(XenBus.XenBusDevs.DEV_0002, true) &&
-                         XenBus.HasChildren(XenBus.XenBusDevs.DEV_0002)))
+                xenBusDev = (XenBus.Devs)Enum.Parse(
+                    typeof(XenBus.Devs),
+                    (string)openRegKey.GetValue(regValName),
+                    true
+                );
+            }
+            catch (ArgumentNullException)
+            // <value> does not exist; first run of Install Agent
+            {
+                string tmp = "";
+
+                foreach (XenBus.Devs tmpXenBus in
+                         Enum.GetValues(typeof(XenBus.Devs)))
                 {
-                    tmp = 7; // LessThanEight
+                    if (!XenBus.IsPresent(tmpXenBus, true) ||
+                        !XenBus.HasChildren(tmpXenBus))
+                    {
+                        continue;
+                    }
+
+                    tmp = tmpXenBus.ToString();
+                    xenBusDev = tmpXenBus;
+                    break;
                 }
-                else if (XenBus.IsPresent(XenBus.XenBusDevs.DEV_C000, true) &&
-                         XenBus.HasChildren(XenBus.XenBusDevs.DEV_C000))
+
+                if (String.IsNullOrEmpty(tmp))
                 {
-                    tmp = 8; // Eight
-                }
-                else
-                {
-                    tmp = 0; // None
+                    xenBusDev = (XenBus.Devs)0;
                 }
 
                 openRegKey.SetValue(
                     regValName,
                     tmp,
-                    RegistryValueKind.DWord
+                    RegistryValueKind.String
                 );
             }
+            catch (ArgumentException)
+            // <value> exists, but is empty =>
+            // no XenBus dev used =>
+            // no PV drivers installed
+            {
+                xenBusDev = (XenBus.Devs)0;
+            }
+        }
 
+        private static void SetPVToolsVersionOnFirstRun(
+            RegistryKey openRegKey)
+        {
+            string regValName = "PVToolsVersionOnFirstRun";
+            int tmp = (int)openRegKey.GetValue(regValName, -1);
+            string drvVer;
+
+            if (tmp != -1)
+            {
+                // We can save some indentation..
+                goto SetStaticVariable;
+            }
+
+            if (xenBusDev == (XenBus.Devs)0)
+            {
+                tmp = 0; // None
+                drvVer = "0.0.0.0";
+            }
+            else
+            {
+                using (SetupApi.DeviceInfoSet devInfoSet =
+                    new SetupApi.DeviceInfoSet(
+                        IntPtr.Zero,
+                        "PCI",
+                        IntPtr.Zero,
+                        SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
+                        SetupApi.DiGetClassFlags.DIGCF_PRESENT))
+                {
+                    int idx = Helpers.BitIdxFromFlag((uint)xenBusDev);
+
+                    SetupApi.SP_DEVINFO_DATA devInfoData =
+                        Device.FindInSystem(
+                            XenBus.hwIDs[idx],
+                            devInfoSet,
+                            true
+                        );
+
+                    drvVer = Device.GetDriverVersion(
+                        devInfoSet, devInfoData
+                    );
+                }
+
+                // Split the DriverVersion string on the '.'
+                // char and parse the 1st substring (major
+                // version number)
+                tmp = Int32.Parse(
+                    drvVer.Split(new char[] { '.' })[0]
+                );
+
+                if (tmp != 8) // Eight
+                {
+                    tmp = 7; // LessThanEight
+                }
+
+            }
+
+            Trace.WriteLine(
+                "XenBus driver version on first run: \'" + drvVer + "\'"
+            );
+
+            openRegKey.SetValue(
+                regValName,
+                tmp,
+                RegistryValueKind.DWord
+            );
+
+        SetStaticVariable:
             pvToolsVer = (PVToolsVersion)Enum.Parse(
                 typeof(PVToolsVersion), tmp.ToString()
             );
@@ -177,10 +273,12 @@ namespace State
             using (RegistryKey rk =
                        Registry.LocalMachine.CreateSubKey(regKeyName))
             {
-                // These 2 registry keys will not exist on first run. Populate
+                // These 3 registry keys will not exist on first run. Populate
                 // them and only read them afterwards. This needs to be done
                 // before any installer-related action takes place.
+                // N.B. Ordering is important
                 SetOtherDriverInstallingOnFirstRun(rk);
+                SetXenBusDevUsedOnFirstRun(rk);
                 SetPVToolsVersionOnFirstRun(rk);
 
                 SetRebootsSoFar(rk);
