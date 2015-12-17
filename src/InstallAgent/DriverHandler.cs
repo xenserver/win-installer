@@ -1,6 +1,5 @@
 ﻿using Microsoft.Win32;
 using PInvoke;
-using PVDevice;
 using State;
 using System;
 using System.Collections.Generic;
@@ -8,9 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using XSToolsInstallation;
 
@@ -594,7 +591,20 @@ namespace InstallAgent
 
             foreach (string driver in PVDrivers)
             {
-                File.Delete(driverPath + driver + ".sys");
+                string fullPath = driverPath + driver + ".sys";
+
+                Trace.WriteLine("Deleting \'" + fullPath + "\'");
+
+                try
+                {
+                    File.Delete(fullPath);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Trace.WriteLine(
+                        "File open by another process; did not delete"
+                    );
+                }
             }
         }
 
