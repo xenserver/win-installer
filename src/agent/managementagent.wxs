@@ -177,6 +177,11 @@
                   Value="[HOSTTIME64]"
                   Execute="firstSequence" />
 
+
+    <CustomAction Id="SetREBOOTOPTION" Property="REBOOTOPTION" Value="DEFAULT" />
+    <CustomAction Id="RebootOptionForce" Property="REBOOTOPTION" Value="AUTOREBOOT" />
+    <CustomAction Id="RebootOptionNone" Property="REBOOTOPTION"  Value="NOREBOOT" />
+
     <InstallExecuteSequence>
         <Custom Action="SaveCmdLineHosttime" Before="AppSearch"/>
         <Custom Action="SetFromHosttime64" After="AppSearch">
@@ -184,6 +189,15 @@
         </Custom>
         <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
             CMDLINE_HOSTTIME
+        </Custom>
+        <Custom Action="SetREBOOTOPTION" Before="WriteRegistryValues">
+            REBOOT="Force"
+        </Custom>
+        <Custom Action="RebootOptionForce" After="SetREBOOTOPTION">
+            REBOOT="Force"
+        </Custom>
+        <Custom Action="RebootOptionNone" After="SetREBOOTOPTION">
+            REBOOT="Suppress" OR REBOOT="ReallySuppress"
         </Custom>
     </InstallExecuteSequence>
 
@@ -329,6 +343,12 @@
               <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
           </RegistryKey>
       </Component>
+      <Component Id="InstallAgentReg" Guid="15382399-a381-4ff1-8f8d-10ab8a31512e">
+          <RegistryKey Root="HKLM"
+              Key='Software\Citrix\InstallAgent'>
+              <RegistryValue Type='string' Name='RebootOption' Value='[REBOOTOPTION]' />
+          </RegistryKey>
+      </Component>
 
     </Directory>
       
@@ -350,11 +370,13 @@
         <?if $(sys.BUILDARCH)=x64 ?>
             <ComponentRef Id='RegEntry32'/>
         <?endif ?>
+        <ComponentRef Id='InstallAgentReg'/>
         <ComponentRef Id='InstallService' />
     </Feature>
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>
             <ComponentRef Id='RegEntry32'/>
+         <ComponentRef Id='InstallService' /> 
         </Feature>
     <?endif ?>
   </Product>
