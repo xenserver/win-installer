@@ -13,12 +13,7 @@ namespace InstallAgent
         {
             try
             {
-                TextWriterTraceListener tlog = new TimeDateTraceListener(
-                    @"C:\ProgramData\Citrix\XSToolSetup\InstallAgent.log",
-                    "InstallAgentLog"
-                );
-                Trace.Listeners.Add(tlog);
-                Trace.AutoFlush = true;
+                TimeDateTraceListener.Initialize("InstallAgent");
 
                 if (args.Length == 0) // run as service
                 {
