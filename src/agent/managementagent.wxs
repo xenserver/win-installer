@@ -190,9 +190,7 @@
         <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
             CMDLINE_HOSTTIME
         </Custom>
-        <Custom Action="SetREBOOTOPTION" Before="WriteRegistryValues">
-            REBOOT="Force"
-        </Custom>
+        <Custom Action="SetREBOOTOPTION" Before="WriteRegistryValues" />
         <Custom Action="RebootOptionForce" After="SetREBOOTOPTION">
             REBOOT="Force"
         </Custom>
