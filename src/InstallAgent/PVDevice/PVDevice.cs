@@ -53,42 +53,28 @@ namespace PVDevice
                 @"SYSTEM\CurrentControlSet\enum\xenbus"
             );
 
-            if (enumKey == null)
+            foreach (string name in enumKey.GetSubKeyNames())
             {
-                Trace.WriteLine(@"Cannot find SYSTEM\CurrentControlSet\enum\xenbus");
-                return false;
-            }
-
-            string[] subKeyNames = enumKey.GetSubKeyNames();
-
-            if (subKeyNames == null)
-            {
-                Trace.WriteLine("No subkeys available");
-            }
-
-            foreach (string name in subKeyNames)
-            {
-                if (name == null)
-                {
-                    Trace.WriteLine("The subkey name is null");
-                }
-
                 // We only care about new-style VEN_XS devices
                 if (name.StartsWith("VEN_XS"))
                 {
                     RegistryKey subKeyDetailsKey = enumKey.OpenSubKey(name + @"\_");
-                    string subKeyDevice = (string)subKeyDetailsKey.GetValue(
-                        "LocationInformation"
-                    );
+
+                    string subKeyDevice = subKeyDetailsKey != null ?
+                        (string)subKeyDetailsKey.GetValue(
+                            "LocationInformation") :
+                        null;
 
                     // LocationInformation isn't certain to be set
                     if (subKeyDevice != null && subKeyDevice.Equals(device))
                     {
+                        Trace.WriteLine("Yes");
                         return true;
                     }
                 }
             }
 
+            Trace.WriteLine("No");
             return false;
         }
 
