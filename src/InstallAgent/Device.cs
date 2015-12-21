@@ -178,14 +178,19 @@ namespace XSToolsInstallation
                      devInfoData);
                  ++i)
             {
-                foreach (string id in GetDevRegPropertyMultiStr(
-                             devInfoSet,
-                             devInfoData,
-                             SetupApi.SPDRP.HARDWAREID))
+                string [] ids = GetDevRegPropertyMultiStr(
+                    devInfoSet,
+                    devInfoData,
+                    SetupApi.SPDRP.HARDWAREID
+                );
+
+                foreach (string id in ids)
                 {
                     if (hwIDFound(id, hwID))
                     {
-                        Trace.WriteLine("Device found");
+                        Trace.WriteLine(
+                            "Found: \'" + String.Join("  ", ids) + "\'"
+                        );
                         return devInfoData;
                     }
                 }
