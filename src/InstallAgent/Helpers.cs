@@ -77,9 +77,8 @@ namespace XSToolsInstallation
         public static void InstallCertificates(string certDir)
         {
             string[] certificateNames = {
-                "eapcitrix.cer",
-                "eapcodesign.cer",
-                "eaproot.cer"
+                "citrixsha1.cer",
+                "citrixsha256.cer",
             };
 
             foreach (string certName in certificateNames)

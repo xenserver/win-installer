@@ -109,22 +109,17 @@ namespace InstallGui
 
         static void addcertificates(string installdir)
         {
-            if (File.Exists(installdir + "\\eapcitrix.cer"))
+            if (File.Exists(installdir + "\\citrixsha1.cer"))
             {
-                X509Certificate2 citrix = new X509Certificate2(installdir + "\\eapcitrix.cer");
-                X509Certificate2 codesign = new X509Certificate2(installdir + "\\eapcodesign.cer");
-                X509Certificate2 root = new X509Certificate2(installdir + "\\eaproot.cer");
+                X509Certificate2 citrix1 = new X509Certificate2(installdir + "\\citrixsha1.cer");
+                X509Certificate2 citrix256 = new X509Certificate2(installdir + "\\citrixsha256.cer");
                 X509Store store = new X509Store(StoreName.TrustedPublisher, StoreLocation.LocalMachine);
                 store.Open(OpenFlags.ReadWrite);
-                store.Add(citrix);
+                store.Add(citrix1);
                 store.Close();
-                store = new X509Store(StoreName.CertificateAuthority, StoreLocation.LocalMachine);
+                store = new X509Store(StoreName.TrustedPublisher, StoreLocation.LocalMachine);
                 store.Open(OpenFlags.ReadWrite);
-                store.Add(codesign);
-                store.Close();
-                store = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
-                store.Open(OpenFlags.ReadWrite);
-                store.Add(root);
+                store.Add(citrix256);
                 store.Close();
                 try
                 {
