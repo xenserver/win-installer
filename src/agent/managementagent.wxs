@@ -248,9 +248,8 @@
             <?if $(var.usecerts)=yes ?>
                 <Directory Id="certsdir" Name="Certs">
                     <Component Id="Certs" Guid="$(var.certs)">
-                        <File Id="EapCitrix" Name="EapCitrix.cer" Source="$(var.Bitmaps)\eapcitrix.cer" />
-                        <File Id="EapCodeSign" Name="EapCodeSign.cer" Source="$(var.Bitmaps)\eapcodesign.cer" />
-                        <File Id="EapRoot" Name="EapRoot.cer" Source="$(var.Bitmaps)\eaproot.cer" />
+                        <File Id="CitrixSha1" Name="citrixsha1.cer" Source="$(var.Bitmaps)\citrixsha1.cer" />
+                        <File Id="CitrixSha256" Name="citrixsha256.cer" Source="$(var.Bitmaps)\citrixsha256.cer" />
                     </Component>
                 </Directory>
             <?endif?>
