@@ -1,9 +1,10 @@
-﻿using Microsoft.Win32;
+﻿using InstallAgent;
+using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
-using InstallAgent;
+using XSToolsInstallation;
 
 namespace PVDevice
 {
@@ -125,7 +126,12 @@ namespace PVDevice
                 {
                     if (!busEnumerated)
                     {
-                        XenBus.Enumerate(XenBus.preferredXenBus);
+                        string xenBusHwId = XenBus.hwIDs[
+                            Helpers.BitIdxFromFlag(
+                                (uint)XenBus.preferredXenBus)
+                        ];
+
+                        Device.Enumerate(xenBusHwId, true);
                         DriverHandler.BlockUntilNoDriversInstalling(TIMEOUT);
                         busEnumerated = true;
                         --i;
