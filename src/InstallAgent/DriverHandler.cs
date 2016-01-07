@@ -609,7 +609,7 @@ namespace InstallAgent
         }
 
         private static void CleanUpServices()
-        // Removes left over 'Services' registry keys
+        // Properly uninstalls PV drivers' services
         {
             // On 2k8 if you're going to reinstall straight away,
             // don't remove 'xenbus' or 'xenfilt' - as 2k8 assumes
@@ -628,17 +628,9 @@ namespace InstallAgent
                 services.Add("xenfilt");
             }
 
-            using (RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                       @"SYSTEM\CurrentControlSet\Services", true))
+            foreach (string service in services)
             {
-                foreach (string service in services)
-                {
-                    try
-                    {
-                        baseRK.DeleteSubKeyTree(service);
-                    }
-                    catch (ArgumentException) { }
-                }
+                Helpers.DeleteService(service);
             }
         }
 
