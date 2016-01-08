@@ -274,9 +274,8 @@
                     </Component>
                     <?if $(var.usecerts)=yes ?>
                     <Component Id="Certs" Guid="$(var.certs)">
-                        <File Id="EapCitrix" Name="EapCitrix.cer" Source="$(var.RESOURCES_Bitmaps)\eapcitrix.cer" />
-                        <File Id="EapCodeSign" Name="EapCodeSign.cer" Source="$(var.RESOURCES_Bitmaps)\eapcodesign.cer" />
-                        <File Id="EapRoot" Name="EapRoot.cer" Source="$(var.RESOURCES_Bitmaps)\eaproot.cer" />
+                        <File Id="CitrixSha1" Name="citrixsha1.cer" Source="$(var.Bitmaps)\citrixsha1.cer" />
+                        <File Id="CitrixSha256" Name="citrixsha256.cer" Source="$(var.Bitmaps)\citrixsha256.cer" />
                     </Component>
                     <?endif?>
                     <Component Id='dotnetthreefiveagent' Guid='$(var.dn35id)' >
