@@ -173,21 +173,7 @@ namespace InstallAgent
             {
                 if (rebootOption == RebootType.AUTOREBOOT)
                 {
-                    if (VM.AllowedToReboot())
-                    {
-                        DriverHandler.BlockUntilNoDriversInstalling(
-                            GetTimeoutToReboot()
-                        );
-
-                        VM.IncrementRebootCount();
-                        Helpers.Reboot();
-                    }
-                    else
-                    {
-                        Trace.WriteLine(
-                            "VM reached maximum number of allowed reboots"
-                        );
-                    }
+                    TryReboot();
                 }
                 else
                 {
@@ -240,6 +226,25 @@ namespace InstallAgent
             }
 
             return timeout;
+        }
+
+        public static void TryReboot()
+        {
+            if (VM.AllowedToReboot())
+            {
+                DriverHandler.BlockUntilNoDriversInstalling(
+                    GetTimeoutToReboot()
+                );
+
+                VM.IncrementRebootCount();
+                Helpers.Reboot();
+            }
+            else
+            {
+                Trace.WriteLine(
+                    "VM reached maximum number of allowed reboots"
+                );
+            }
         }
     }
 }
