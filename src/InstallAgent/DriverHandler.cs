@@ -122,7 +122,8 @@ namespace InstallAgent
             }
         }
 
-        public static void SystemClean()
+        public static bool SystemClean()
+        // Returns 'true' if all actions are completed; 'false' otherwise
         {
             if (!Installer.GetFlag(Installer.States.RemovedFromFilters))
             {
@@ -136,25 +137,49 @@ namespace InstallAgent
                 Installer.SetFlag(Installer.States.BootStartDisabled);
             }
 
-            if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
+            if (!Installer.GetFlag(Installer.States.ProceedWithSystemClean))
+            // Makes Install Agent stop here the first time it runs
             {
-                UninstallMSIs();
-                Installer.SetFlag(Installer.States.MSIsUninstalled);
+                Installer.SetFlag(Installer.States.ProceedWithSystemClean);
+                return false;
             }
 
-            if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
+            // Do 2 passes to decrease the chance of
+            // something left behind/not being removed
+            const int TIMES = 2;
+
+            for (int i = 0; i < TIMES; ++i)
             {
-                UninstallDriversAndDevices();
-                Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
+                if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
+                {
+                    UninstallDriversAndDevices();
+
+                    if (i == TIMES - 1)
+                    {
+                        Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
+                    }
+                }
+
+                if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
+                {
+                    UninstallMSIs();
+
+                    if (i == TIMES - 1)
+                    {
+                        Installer.SetFlag(Installer.States.MSIsUninstalled);
+                    }
+                }
             }
 
             if (!Installer.GetFlag(Installer.States.CleanedUp))
             {
                 CleanUpXenLegacy();
-                CleanUpDriverFiles();
                 CleanUpServices();
+                CleanUpDriverFiles();
                 Installer.SetFlag(Installer.States.CleanedUp);
             }
+
+            return true;
         }
 
         public static void InstallDriver(

@@ -63,6 +63,7 @@ namespace State
             new StateInfo("XenNetInstalled", 0),
             new StateInfo("XenVbdInstalled", 0),
             new StateInfo("CertificatesInstalled", 0),
+            new StateInfo("ProceedWithSystemClean", 0),
         };
 
         [Flags]
@@ -90,6 +91,7 @@ namespace State
             // ---------------- End ---------------
 
             CertificatesInstalled = 1 << 12,
+            ProceedWithSystemClean = 1 << 13,
         }
 
         // Static constructor: queries the Registry for the
