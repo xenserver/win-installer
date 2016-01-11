@@ -192,21 +192,15 @@ namespace InstallAgent
         }
 
         private static RebootType GetTrueRebootType(RebootType rt)
-        // If 'rebootOption = DEFAULT', the function returns one of the 2
-        // other options, depending on the system's state on first run
+        // 'rebootOption = DEFAULT' defaults to NOREBOOT
         {
-            if (rt != RebootType.DEFAULT)
-            {
-                return rt;
-            }
-
-            if (VM.GetPVToolsVersionOnFirstRun() == VM.PVToolsVersion.Eight)
+            if (rt == RebootType.DEFAULT)
             {
                 return RebootType.NOREBOOT;
             }
             else
             {
-                return RebootType.AUTOREBOOT;
+                return rt;
             }
         }
 
