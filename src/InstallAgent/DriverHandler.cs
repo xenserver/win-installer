@@ -94,6 +94,8 @@ namespace InstallAgent
 
         public static void InstallDrivers()
         {
+            string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
+
             string driverRootDir = Path.Combine(
                 InstallAgent.exeDir,
                 "Drivers"
@@ -116,7 +118,12 @@ namespace InstallAgent
             {
                 if (!Installer.GetFlag(driver.installed))
                 {
-                    InstallDriver(driverRootDir, driver.name);
+                    string infPath = Path.Combine(
+                        driverRootDir,
+                        driver.name + build + driver.name + ".inf"
+                    );
+
+                    InstallDriver(infPath);
                     Installer.SetFlag(driver.installed);
                 }
             }
@@ -183,21 +190,15 @@ namespace InstallAgent
         }
 
         public static void InstallDriver(
-            string driverRootDir,
-            string driver,
+            string infPath,
             NewDev.DIIRFLAG flags =
                 NewDev.DIIRFLAG.ZERO)
         {
             bool reboot;
 
-            string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
-
-            string infPath = Path.Combine(
-                driverRootDir,
-                driver + build + driver + ".inf"
+            Trace.WriteLine(
+                "Installing driver: \'" + Path.GetFileName(infPath) + "\'"
             );
-
-            Trace.WriteLine("Installing driver \'" + driver + "\'");
 
             if (!NewDev.DiInstallDriver(
                     IntPtr.Zero,
@@ -206,7 +207,6 @@ namespace InstallAgent
                     out reboot))
             {
                 Win32Error.Set("DiInstallDriver");
-                Trace.WriteLine(Win32Error.GetFullErrMsg());
                 throw new Exception(Win32Error.GetFullErrMsg());
             }
 
