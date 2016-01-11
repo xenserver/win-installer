@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PInvoke
+namespace PInvokeWrap
 {
-    class AdvApi32
+    public static class AdvApi32
     {
         private const int ANYSIZE_ARRAY = 1;
 

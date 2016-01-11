@@ -1,5 +1,5 @@
 ﻿using Microsoft.Win32;
-using PInvoke;
+using PInvokeWrap;
 using State;
 using System;
 using System.Collections.Generic;
@@ -688,11 +688,11 @@ namespace InstallAgent
                 bool needreboot;
                 Trace.WriteLine("Uninstalling...");
 
-                int err = DIFx.DriverPackageUninstall(
+                int err = DIFxAPI.DriverPackageUninstall(
                     oemFile,
-                    (int)(DIFx.DRIVER_PACKAGE.SILENT |
-                          DIFx.DRIVER_PACKAGE.FORCE |
-                          DIFx.DRIVER_PACKAGE.DELETE_FILES),
+                    (int)(DIFxAPI.DRIVER_PACKAGE.SILENT |
+                          DIFxAPI.DRIVER_PACKAGE.FORCE |
+                          DIFxAPI.DRIVER_PACKAGE.DELETE_FILES),
                           // N.B.: Starting with Windows 7,
                           // 'DELETE_FILES' is ignored
                     IntPtr.Zero,

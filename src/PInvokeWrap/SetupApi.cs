@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace PInvoke
+namespace PInvokeWrap
 {
     public static class SetupApi
     {

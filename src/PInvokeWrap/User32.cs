@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PInvoke
+namespace PInvokeWrap
 {
-    class User32
+    public static class User32
     {
         [Flags]
         public enum ExitFlags : int

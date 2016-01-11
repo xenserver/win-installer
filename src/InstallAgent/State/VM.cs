@@ -1,6 +1,6 @@
 ﻿using InstallAgent;
 using Microsoft.Win32;
-using PInvoke;
+using PInvokeWrap;
 using PVDevice;
 using System;
 using System.Diagnostics;

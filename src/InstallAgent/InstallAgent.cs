@@ -1,5 +1,5 @@
 ﻿using Microsoft.Win32;
-using PInvoke;
+using PInvokeWrap;
 using PVDevice;
 using State;
 using System;

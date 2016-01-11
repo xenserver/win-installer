@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PInvoke
+namespace PInvokeWrap
 {
-    class NewDev
+    public static class NewDev
     {
         // Originally: INSTALLFLAG_FORCE, ...
         public enum INSTALLFLAG
