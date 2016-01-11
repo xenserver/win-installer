@@ -464,6 +464,11 @@ namespace InstallAgent
         // the function sleeps and then retries. The amount of time
         // sleeping is doubled on every try, starting at 1 second.
         {
+            if (tries < 1)
+            {
+                throw new Exception("tries = " + tries + " < 1");
+            }
+
             int secs;
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
