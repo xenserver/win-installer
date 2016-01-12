@@ -151,21 +151,7 @@ namespace InstallAgent
 
             if (!Installer.EverythingInstalled())
             {
-                if (!Installer.GetFlag(Installer.States.CertificatesInstalled))
-                {
-                    string certsPath = Path.Combine(
-                        InstallAgent.exeDir,
-                        "Certs"
-                    );
-
-                    if (Directory.Exists(certsPath))
-                    {
-                        Helpers.InstallCertificates(certsPath);
-                    }
-
-                    Installer.SetFlag(Installer.States.CertificatesInstalled);
-                }
-
+                InstallCertificates();
                 DriverHandler.InstallDrivers();
             }
 
@@ -248,6 +234,38 @@ namespace InstallAgent
                     "VM reached maximum number of allowed reboots"
                 );
             }
+        }
+
+        private static void InstallCertificates()
+        // Installs security certificates if they exist
+        {
+            if (Installer.GetFlag(Installer.States.CertificatesInstalled))
+            {
+                return;
+            }
+
+            string certsDir = Path.Combine(
+                InstallAgent.exeDir,
+                "Certs"
+            );
+
+            if (!Directory.Exists(certsDir))
+            {
+                Installer.SetFlag(Installer.States.CertificatesInstalled);
+                return;
+            }
+
+            string[] certNames = {
+                "citrixsha1.cer",
+                "citrixsha256.cer",
+            };
+
+            foreach (string certName in certNames)
+            {
+                Helpers.InstallCertificate(Path.Combine(certsDir, certName));
+            }
+
+            Installer.SetFlag(Installer.States.CertificatesInstalled);
         }
     }
 }

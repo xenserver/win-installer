@@ -74,35 +74,24 @@ namespace XSToolsInstallation
             }
         }
 
-        public static void InstallCertificates(string certDir)
+        public static void InstallCertificate(string cerPath)
         {
-            string[] certificateNames = {
-                "citrixsha1.cer",
-                "citrixsha256.cer",
-            };
+            X509Certificate2 cert = new X509Certificate2(cerPath);
 
-            foreach (string certName in certificateNames)
-            {
-                string fullCertPath = Path.Combine(
-                    certDir, certName
-                );
+            X509Store store = new X509Store(
+                StoreName.TrustedPublisher,
+                StoreLocation.LocalMachine
+            );
 
-                X509Certificate2 cert =
-                    new X509Certificate2(fullCertPath);
+            Trace.WriteLine(
+                "Installing cerificate: \'" + Path.GetFileName(cerPath) + "\'"
+            );
 
-                X509Store store = new X509Store(
-                    StoreName.TrustedPublisher,
-                    StoreLocation.LocalMachine
-                );
+            store.Open(OpenFlags.ReadWrite);
+            store.Add(cert);
+            store.Close();
 
-                Trace.WriteLine("Installing certificate \'" + certName + "\'");
-
-                store.Open(OpenFlags.ReadWrite);
-                store.Add(cert);
-                store.Close();
-
-                Trace.WriteLine("Certificate installed");
-            }
+            Trace.WriteLine("Certificate installed");
         }
 
         public static int BitIdxFromFlag(uint flag)
