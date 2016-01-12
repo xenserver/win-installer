@@ -103,11 +103,6 @@ namespace State
             RegistryKey installStateRK =
                 Registry.LocalMachine.CreateSubKey(stateRegKey);
 
-            if (installStateRK == null)
-            {
-                throw new Exception("Failed opening \'InstallAgent\' registry key.");
-            }
-
             currentState = 0;
 
             for (int i = 0; i < statesDefault.Length; ++i)

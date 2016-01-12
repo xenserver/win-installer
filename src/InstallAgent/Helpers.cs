@@ -1,5 +1,4 @@
-﻿using InstallAgent;
-using PInvokeWrap;
+﻿using PInvokeWrap;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -59,7 +58,8 @@ namespace XSToolsInstallation
                            AdvApi32.Token.QUERY),
                     out token))
             {
-                throw new Exception("OpenProcessToken");
+                Win32Error.Set("OpenProcessToken");
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
 
             if (!AdvApi32.AdjustTokenPrivileges(
@@ -70,7 +70,8 @@ namespace XSToolsInstallation
                     IntPtr.Zero,
                     IntPtr.Zero))
             {
-                throw new Exception("AdjustTokenPrivileges"); ;
+                Win32Error.Set("AdjustTokenPrivileges");
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
         }
 
@@ -156,11 +157,8 @@ namespace XSToolsInstallation
                     null,
                     null))
             {
-                Trace.WriteLine(
-                    "Could not change service's Start Mode: " +
-                    new Win32Exception(
-                        Marshal.GetLastWin32Error()
-                    ).Message);
+                Win32Error.Set("ChangeServiceConfig");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
                 return false;
             }
 

@@ -204,7 +204,6 @@ namespace XSToolsInstallation
                 return null;
             }
 
-            Trace.WriteLine(Win32Error.GetFullErrMsg());
             throw new Exception(Win32Error.GetFullErrMsg());
         }
 
@@ -213,11 +212,6 @@ namespace XSToolsInstallation
             string hwID,
             bool strictSearch)
         {
-            if (!devInfoSet.HandleIsValid())
-            {
-                return;
-            }
-
             SetupApi.SP_DEVINFO_DATA devInfoData;
 
             devInfoData = FindInSystem(
@@ -251,9 +245,6 @@ namespace XSToolsInstallation
                     Marshal.SizeOf(rparams)))
             {
                 Win32Error.Set("SetupDiSetClassInstallParams");
-                Trace.WriteLine(Win32Error.GetFullErrMsg());
-
-                // TODO: write custom exception
                 throw new Exception(
                     Win32Error.GetFullErrMsg()
                 );
@@ -270,9 +261,6 @@ namespace XSToolsInstallation
                     devInfoData))
             {
                 Win32Error.Set("SetupDiCallClassInstaller");
-                Trace.WriteLine(Win32Error.GetFullErrMsg());
-
-                // TODO: write custom exception
                 throw new Exception(
                     Win32Error.GetFullErrMsg()
                 );

@@ -84,7 +84,6 @@ namespace InstallAgent
             else if (result == CfgMgr32.Wait.FAILED)
             {
                 Win32Error.Set("CMP_WaitNoPendingInstallEvents");
-                Trace.WriteLine(Win32Error.GetFullErrMsg());
                 throw new Exception(Win32Error.GetFullErrMsg());
             }
 
@@ -227,13 +226,6 @@ namespace InstallAgent
                 BASE_RK_NAME, true
             );
 
-            if (baseRK == null)
-            {
-                throw new Exception(
-                    "Could not open registry key: \'" + BASE_RK_NAME + "\'"
-                );
-            }
-
             Trace.WriteLine("Opened key: \'" + BASE_RK_NAME + "\'");
 
             string[] filterTypes = { "LowerFilters", "UpperFilters" };
@@ -242,14 +234,6 @@ namespace InstallAgent
             {
                 using (RegistryKey tmpRK = baseRK.OpenSubKey(subKeyName, true))
                 {
-                    if (tmpRK == null)
-                    {
-                        throw new Exception(
-                            "Could not open registry key: \'" +
-                            BASE_RK_NAME + "\\" + subKeyName + "\'"
-                        );
-                    }
-
                     foreach (string filters in filterTypes)
                     {
                         string[] values = (string[])tmpRK.GetValue(filters);
@@ -320,13 +304,6 @@ namespace InstallAgent
             RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
                 BASE_RK_NAME, true
             );
-
-            if (baseRK == null)
-            {
-                throw new Exception(
-                    "Could not open registry key: \'" + BASE_RK_NAME + "\'"
-                );
-            }
 
             Trace.WriteLine("Opened key: \'" + BASE_RK_NAME + "\'");
 
@@ -440,7 +417,6 @@ namespace InstallAgent
                 else
                 {
                     Win32Error.Set("MsiGetProductInfo", err);
-                    Trace.WriteLine(Win32Error.GetFullErrMsg());
                     throw new Win32Exception(Win32Error.GetFullErrMsg());
                 }
             }
@@ -453,7 +429,6 @@ namespace InstallAgent
             else
             {
                 Win32Error.Set("MsiEnumProducts", err);
-                Trace.WriteLine(Win32Error.GetFullErrMsg());
                 throw new Win32Exception(Win32Error.GetFullErrMsg());
             }
         }
@@ -507,8 +482,9 @@ namespace InstallAgent
                                     proc.ExitCode
                                 );
 
-                                // TODO: Create custom exceptions
-                                throw new Exception();
+                                throw new Exception(
+                                    "Number of tries exhausted"
+                                );
                             }
 
                             secs = (int)Math.Pow(2.0, (double)i);
@@ -707,7 +683,6 @@ namespace InstallAgent
                 if (err != 0) // ERROR_SUCCESS
                 {
                     Win32Error.Set("DriverPackageUninstall", err);
-                    Trace.WriteLine(Win32Error.GetFullErrMsg());
                     throw new Exception(Win32Error.GetFullErrMsg());
                 }
 

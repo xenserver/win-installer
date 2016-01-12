@@ -240,27 +240,24 @@ namespace PVDevice
 
                     Trace.WriteLine(Marshal.SizeOf(pcParams).ToString());
 
-                    Trace.WriteLine(
-                        "InstallPaarams " +
-                        SetupApi.SetupDiSetClassInstallParams(
+                    if (!SetupApi.SetupDiSetClassInstallParams(
                             devInfoSet.Get(),
                             pdd.AddrOfPinnedObject(),
                             pinned.AddrOfPinnedObject(),
-                            Marshal.SizeOf(pcParams)
-                        ).ToString()
-                    );
+                            Marshal.SizeOf(pcParams)))
+                    {
+                        Win32Error.Set("SetupDiSetClassInstallParams");
+                        Trace.WriteLine(Win32Error.GetFullErrMsg());
+                    }
 
-                    Trace.WriteLine(Marshal.GetLastWin32Error().ToString());
-
-                    Trace.WriteLine(
-                        "CallClassInstaller " +
-                        SetupApi.SetupDiCallClassInstaller(
+                    if (!SetupApi.SetupDiCallClassInstaller(
                             SetupApi.DI_FUNCTION.DIF_PROPERTYCHANGE,
                             devInfoSet.Get(),
-                            pdd.AddrOfPinnedObject()
-                        ).ToString() + " " +
-                        Marshal.GetLastWin32Error().ToString()
-                    );
+                            pdd.AddrOfPinnedObject()))
+                    {
+                        Win32Error.Set("SetupDiCallClassInstaller");
+                        Trace.WriteLine(Win32Error.GetFullErrMsg());
+                    }
 
                     pdd.Free();
                     pinned.Free();
