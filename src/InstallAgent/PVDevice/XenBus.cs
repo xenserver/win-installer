@@ -1,4 +1,4 @@
-﻿using PInvoke;
+﻿using PInvokeWrap;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -146,128 +146,15 @@ namespace PVDevice
             return result;
         }
 
-        public static string GetDeviceInstanceId(Devs xenBusDev)
-        {
-            const int BUFFER_SIZE = 4096;
-            string xenBusDevStr;
-            StringBuilder xenBusDeviceInstanceId =
-                new StringBuilder(BUFFER_SIZE);
-
-            xenBusDevStr = XenBus.hwIDs[
-                Helpers.BitIdxFromFlag((uint)xenBusDev)
-            ];
-
-            using (SetupApi.DeviceInfoSet devInfoSet =
-                       new SetupApi.DeviceInfoSet(
-                           IntPtr.Zero,
-                           "PCI",
-                           IntPtr.Zero,
-                           SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
-                           SetupApi.DiGetClassFlags.DIGCF_PRESENT))
-            {
-                SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;
-                int reqSize;
-
-                xenBusDevInfoData = Device.FindInSystem(
-                    xenBusDevStr,
-                    devInfoSet,
-                    true
-                );
-
-                if (xenBusDevInfoData == null)
-                {
-                    return "";
-                }
-
-                if (!SetupApi.SetupDiGetDeviceInstanceId(
-                        devInfoSet.Get(),
-                        xenBusDevInfoData,
-                        xenBusDeviceInstanceId,
-                        BUFFER_SIZE,
-                        out reqSize))
-                {
-                    Trace.WriteLine(
-                        String.Format(
-                            "SetupDiGetDeviceInstanceId() failed: {0}",
-                            new Win32Exception(
-                                Marshal.GetLastWin32Error()
-                            ).Message
-                        )
-                    );
-                    return "";
-                }
-            }
-
-            return xenBusDeviceInstanceId.ToString();
-        }
-
-        public static int GetDevNode(Devs xenBusDev)
-        {
-            SetupApi.CR err;
-            int xenBusNode;
-            string xenBusDeviceInstanceId = GetDeviceInstanceId(xenBusDev);
-
-            if (String.IsNullOrEmpty(xenBusDeviceInstanceId))
-            {
-                Trace.WriteLine("Could not retrieve XenBus Instance ID");
-                return -1;
-            }
-
-            err = SetupApi.CM_Locate_DevNode(
-                out xenBusNode,
-                xenBusDeviceInstanceId,
-                SetupApi.CM_LOCATE_DEVNODE.NORMAL
-            );
-
-            if (err != SetupApi.CR.SUCCESS)
-            {
-                Trace.WriteLine(
-                    String.Format("CM_Locate_DevNode() error: {0}", err)
-                );
-                return -1;
-            }
-
-            return xenBusNode;
-        }
-
-        // Enumerates the specified XenBus device and searches
-        // DriverStore for compatible drivers to install to the
-        // new devices it finds.
-        public static bool Enumerate(Devs xenBusDev)
-        {
-            SetupApi.CR err;
-            int xenBusNode = GetDevNode(xenBusDev);
-
-            if (xenBusNode == -1)
-            {
-                Trace.WriteLine("Could not get XenBus DevNode");
-                return false;
-            }
-
-            Helpers.AcquireSystemPrivilege(
-                AdvApi32.SE_LOAD_DRIVER_NAME);
-
-            err = SetupApi.CM_Reenumerate_DevNode(
-                xenBusNode,
-                SetupApi.CM_REENUMERATE.SYNCHRONOUS |
-                SetupApi.CM_REENUMERATE.RETRY_INSTALLATION
-            );
-
-            if (err != SetupApi.CR.SUCCESS)
-            {
-                Trace.WriteLine(
-                    String.Format("CM_Reenumerate_DevNode() error: {0}", err)
-                );
-                return false;
-            }
-
-            return true;
-        }
-
         public static bool HasChildren(Devs xenBusDev)
         {
             SetupApi.CR err;
-            int xenBusNode = GetDevNode(xenBusDev);
+
+            string xenBusHwId = XenBus.hwIDs[
+                Helpers.BitIdxFromFlag((uint)xenBusDev)
+            ];
+
+            int xenBusNode = Device.GetDevNode(xenBusHwId);
             int xenBusChild;
 
             if (xenBusNode == -1)

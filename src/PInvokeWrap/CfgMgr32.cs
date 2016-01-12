@@ -1,8 +1,8 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace PInvoke
+namespace PInvokeWrap
 {
-    class CfgMgr32
+    public static class CfgMgr32
     {
         public const uint INFINITE = 0xFFFFFFFF;
 

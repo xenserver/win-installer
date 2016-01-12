@@ -1,9 +1,10 @@
 ﻿using Microsoft.Win32;
-using PInvoke;
+using PInvokeWrap;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace XSToolsInstallation
 {
@@ -178,14 +179,19 @@ namespace XSToolsInstallation
                      devInfoData);
                  ++i)
             {
-                foreach (string id in GetDevRegPropertyMultiStr(
-                             devInfoSet,
-                             devInfoData,
-                             SetupApi.SPDRP.HARDWAREID))
+                string [] ids = GetDevRegPropertyMultiStr(
+                    devInfoSet,
+                    devInfoData,
+                    SetupApi.SPDRP.HARDWAREID
+                );
+
+                foreach (string id in ids)
                 {
                     if (hwIDFound(id, hwID))
                     {
-                        Trace.WriteLine("Device found");
+                        Trace.WriteLine(
+                            "Found: \'" + String.Join("  ", ids) + "\'"
+                        );
                         return devInfoData;
                     }
                 }
@@ -318,6 +324,131 @@ namespace XSToolsInstallation
                     }
                 }
             }
+            return true;
+        }
+
+        public static string GetDeviceInstanceId(string enum_device)
+        // Returns the device instance ID of the specified device
+        // 'enum_device' should have the following format:
+        // <enumerator>\<device_id>
+        {
+            const int BUFFER_SIZE = 4096;
+            string enumerator = enum_device.Split(new char[] { '\\' })[0];
+            StringBuilder deviceInstanceId = new StringBuilder(BUFFER_SIZE);
+            SetupApi.SP_DEVINFO_DATA devInfoData;
+            int reqSize;
+
+            using (SetupApi.DeviceInfoSet devInfoSet =
+                new SetupApi.DeviceInfoSet(
+                    IntPtr.Zero,
+                    enumerator,
+                    IntPtr.Zero,
+                    SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
+                    SetupApi.DiGetClassFlags.DIGCF_PRESENT))
+            {
+                devInfoData = Device.FindInSystem(
+                    enum_device,
+                    devInfoSet,
+                    false
+                );
+
+                if (devInfoData == null)
+                {
+                    return "";
+                }
+
+                if (!SetupApi.SetupDiGetDeviceInstanceId(
+                        devInfoSet.Get(),
+                        devInfoData,
+                        deviceInstanceId,
+                        BUFFER_SIZE,
+                        out reqSize))
+                {
+                    Win32Error.Set("SetupDiGetDeviceInstanceId");
+                    throw new Exception(Win32Error.GetFullErrMsg());
+                }
+            }
+
+            return deviceInstanceId.ToString();
+        }
+
+        public static int GetDevNode(string enum_device = "")
+        // Returns the device node of the specified device
+        // 'enum_device' should have the following format:
+        // <enumerator>\<device_id>
+        // If it is the empty string, the root of the device
+        // tree will be returned
+        {
+            SetupApi.CR err;
+            int devNode;
+            string deviceInstanceId;
+
+            if (!String.IsNullOrEmpty(enum_device))
+            {
+                deviceInstanceId = GetDeviceInstanceId(enum_device);
+
+                if (String.IsNullOrEmpty(deviceInstanceId))
+                {
+                    Trace.WriteLine("No instance exists in system");
+                    return -1;
+                }
+            }
+            else
+            {
+                deviceInstanceId = "";
+            }
+
+            err = SetupApi.CM_Locate_DevNode(
+                out devNode,
+                deviceInstanceId,
+                SetupApi.CM_LOCATE_DEVNODE.NORMAL
+            );
+
+            if (err != SetupApi.CR.SUCCESS)
+            {
+                Trace.WriteLine("CM_Locate_DevNode() error: " + err);
+                return -1;
+            }
+
+            return devNode;
+        }
+
+        public static bool Enumerate(
+            string enum_device = "",
+            bool installDevices = false)
+        // 'enum_device' should have the following format:
+        // <enumerator>\<device_id>
+        // If it is the empty string, the root of the device
+        // tree will be enumerated
+        // If 'installDevices' is 'true', PnP will try to complete
+        // installation of any not-fully-installed devices.
+        {
+            SetupApi.CR err;
+            int devNode = GetDevNode(enum_device);
+            SetupApi.CM_REENUMERATE ulFlags = SetupApi.CM_REENUMERATE.NORMAL;
+
+            if (installDevices)
+            {
+                ulFlags |= SetupApi.CM_REENUMERATE.RETRY_INSTALLATION;
+            }
+
+            if (devNode == -1)
+            {
+                Trace.WriteLine("Could not get DevNode");
+                return false;
+            }
+
+            Helpers.AcquireSystemPrivilege(AdvApi32.SE_LOAD_DRIVER_NAME);
+
+            err = SetupApi.CM_Reenumerate_DevNode(devNode, ulFlags);
+
+            if (err != SetupApi.CR.SUCCESS)
+            {
+                Trace.WriteLine("CM_Reenumerate_DevNode() error: " + err);
+                return false;
+            }
+
+            Trace.WriteLine("Enumeration completed successfully");
             return true;
         }
     }

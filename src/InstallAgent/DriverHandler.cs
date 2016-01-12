@@ -1,6 +1,5 @@
 ﻿using Microsoft.Win32;
-using PInvoke;
-using PVDevice;
+using PInvokeWrap;
 using State;
 using System;
 using System.Collections.Generic;
@@ -8,9 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using XSToolsInstallation;
 
@@ -125,7 +122,8 @@ namespace InstallAgent
             }
         }
 
-        public static void SystemClean()
+        public static bool SystemClean()
+        // Returns 'true' if all actions are completed; 'false' otherwise
         {
             if (!Installer.GetFlag(Installer.States.RemovedFromFilters))
             {
@@ -139,25 +137,49 @@ namespace InstallAgent
                 Installer.SetFlag(Installer.States.BootStartDisabled);
             }
 
-            if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
+            if (!Installer.GetFlag(Installer.States.ProceedWithSystemClean))
+            // Makes Install Agent stop here the first time it runs
             {
-                UninstallMSIs();
-                Installer.SetFlag(Installer.States.MSIsUninstalled);
+                Installer.SetFlag(Installer.States.ProceedWithSystemClean);
+                return false;
             }
 
-            if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
+            // Do 2 passes to decrease the chance of
+            // something left behind/not being removed
+            const int TIMES = 2;
+
+            for (int i = 0; i < TIMES; ++i)
             {
-                UninstallDriversAndDevices();
-                Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
+                if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
+                {
+                    UninstallDriversAndDevices();
+
+                    if (i == TIMES - 1)
+                    {
+                        Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
+                    }
+                }
+
+                if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
+                {
+                    UninstallMSIs();
+
+                    if (i == TIMES - 1)
+                    {
+                        Installer.SetFlag(Installer.States.MSIsUninstalled);
+                    }
+                }
             }
 
             if (!Installer.GetFlag(Installer.States.CleanedUp))
             {
                 CleanUpXenLegacy();
-                CleanUpDriverFiles();
                 CleanUpServices();
+                CleanUpDriverFiles();
                 Installer.SetFlag(Installer.States.CleanedUp);
             }
+
+            return true;
         }
 
         public static void InstallDriver(
@@ -594,12 +616,25 @@ namespace InstallAgent
 
             foreach (string driver in PVDrivers)
             {
-                File.Delete(driverPath + driver + ".sys");
+                string fullPath = driverPath + driver + ".sys";
+
+                Trace.WriteLine("Deleting \'" + fullPath + "\'");
+
+                try
+                {
+                    File.Delete(fullPath);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Trace.WriteLine(
+                        "File open by another process; did not delete"
+                    );
+                }
             }
         }
 
         private static void CleanUpServices()
-        // Removes left over 'Services' registry keys
+        // Properly uninstalls PV drivers' services
         {
             // On 2k8 if you're going to reinstall straight away,
             // don't remove 'xenbus' or 'xenfilt' - as 2k8 assumes
@@ -618,17 +653,9 @@ namespace InstallAgent
                 services.Add("xenfilt");
             }
 
-            using (RegistryKey baseRK = Registry.LocalMachine.OpenSubKey(
-                       @"SYSTEM\CurrentControlSet\Services", true))
+            foreach (string service in services)
             {
-                foreach (string service in services)
-                {
-                    try
-                    {
-                        baseRK.DeleteSubKeyTree(service);
-                    }
-                    catch (ArgumentException) { }
-                }
+                Helpers.DeleteService(service);
             }
         }
 
@@ -661,11 +688,11 @@ namespace InstallAgent
                 bool needreboot;
                 Trace.WriteLine("Uninstalling...");
 
-                int err = DIFx.DriverPackageUninstall(
+                int err = DIFxAPI.DriverPackageUninstall(
                     oemFile,
-                    (int)(DIFx.DRIVER_PACKAGE.SILENT |
-                          DIFx.DRIVER_PACKAGE.FORCE |
-                          DIFx.DRIVER_PACKAGE.DELETE_FILES),
+                    (int)(DIFxAPI.DRIVER_PACKAGE.SILENT |
+                          DIFxAPI.DRIVER_PACKAGE.FORCE |
+                          DIFxAPI.DRIVER_PACKAGE.DELETE_FILES),
                           // N.B.: Starting with Windows 7,
                           // 'DELETE_FILES' is ignored
                     IntPtr.Zero,

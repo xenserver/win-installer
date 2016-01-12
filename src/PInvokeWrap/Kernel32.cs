@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PInvoke
+namespace PInvokeWrap
 {
     public static class Kernel32
     {

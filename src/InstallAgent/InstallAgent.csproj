@@ -48,9 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DriverHandler.cs" />
-    <Compile Include="PInvoke\AdvApi32.cs" />
-    <Compile Include="PInvoke\CfgMgr32.cs" />
-    <Compile Include="PInvoke\DIFx.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="InstallAgent.cs">
@@ -60,10 +57,6 @@
       <DependentUpon>InstallAgent.cs</DependentUpon>
     </Compile>
     <Compile Include="State\Installer.cs" />
-    <Compile Include="PInvoke\Kernel32.cs" />
-    <Compile Include="PInvoke\Msi.cs" />
-    <Compile Include="PInvoke\NewDev.cs" />
-    <Compile Include="PInvoke\Win32ErrorMessage.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
@@ -78,11 +71,8 @@
     <Compile Include="PVDevice\XenNet.cs" />
     <Compile Include="PVDevice\XenVbd.cs" />
     <Compile Include="PVDevice\XenVif.cs" />
-    <Compile Include="PInvoke\SetupApi.cs" />
     <Compile Include="TimeDateTraceListener.cs" />
-    <Compile Include="PInvoke\User32.cs" />
     <Compile Include="State\VM.cs" />
-    <Compile Include="WinVersion.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ProjectInstaller.resx">
@@ -93,6 +83,12 @@
     <None Include="InstallAgent.exe.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PInvokeWrap\PInvokeWrap.csproj">
+      <Project>{ce6ce4a7-c693-4102-bebf-20777ac32d06}</Project>
+      <Name>PInvokeWrap</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

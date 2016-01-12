@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("InstallAgent")]
+[assembly: AssemblyTitle("PInvokeWrap")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Citrix")]
-[assembly: AssemblyProduct("InstallAgent")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyProduct("PInvokeWrap")]
+[assembly: AssemblyCopyright("Copyright © Microsoft 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("eb5d9cac-3ffd-4e92-adc4-78cbadebc5d1")]
+[assembly: Guid("02593033-e3c1-47d9-99d9-f36cd4e6975f")]
 
 // Version information for an assembly consists of the following four values:
 //

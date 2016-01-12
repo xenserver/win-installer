@@ -1,5 +1,5 @@
 ﻿using InstallAgent;
-using PInvoke;
+using PInvokeWrap;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -184,6 +184,59 @@ namespace XSToolsInstallation
             );
 
             return true;
+        }
+
+        public static bool DeleteService(string serviceName)
+        // Marks the specified service for deletion from
+        // the service control manager database
+        {
+            Trace.WriteLine(
+                "Deleting service: \'" + serviceName + "\'"
+            );
+
+            IntPtr scManagerHandle = AdvApi32.OpenSCManager(
+                null,
+                null,
+                AdvApi32.SC_MANAGER_ALL_ACCESS
+            );
+
+            if (scManagerHandle == IntPtr.Zero)
+            {
+                Win32Error.Set("OpenSCManager");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+                return false;
+            }
+
+            IntPtr serviceHandle = AdvApi32.OpenService(
+                scManagerHandle,
+                serviceName,
+                AdvApi32.DELETE
+            );
+
+            if (serviceHandle == IntPtr.Zero)
+            {
+                Win32Error.Set("OpenService");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+                AdvApi32.CloseServiceHandle(scManagerHandle);
+                return false;
+            }
+
+            bool success = AdvApi32.DeleteService(serviceHandle);
+
+            if (success)
+            {
+                Trace.WriteLine("Service deleted successfully");
+            }
+            else
+            {
+                Win32Error.Set("DeleteService");
+                Trace.WriteLine(Win32Error.GetFullErrMsg());
+            }
+
+            AdvApi32.CloseServiceHandle(serviceHandle);
+            AdvApi32.CloseServiceHandle(scManagerHandle);
+
+            return success;
         }
     }
 }

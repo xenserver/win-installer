@@ -1,10 +1,9 @@
-﻿using InstallAgent;
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PInvoke
+namespace PInvokeWrap
 {
-    public static class DIFx
+    public static class DIFxAPI
     {
         public enum DRIVER_PACKAGE
         {

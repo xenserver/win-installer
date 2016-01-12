@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace PInvoke
+namespace PInvokeWrap
 {
-    class AdvApi32
+    public static class AdvApi32
     {
         private const int ANYSIZE_ARRAY = 1;
 
@@ -192,6 +192,7 @@ namespace PInvoke
         public const uint SERVICE_NO_CHANGE = 0xFFFFFFFF;
         public const uint SERVICE_QUERY_CONFIG = 0x00000001;
         public const uint SERVICE_CHANGE_CONFIG = 0x00000002;
+        public const uint DELETE = 0x00010000;
         public const uint SC_MANAGER_ALL_ACCESS = 0x000F003F;
 
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -230,6 +231,9 @@ namespace PInvoke
 
         [DllImport("advapi32.dll", EntryPoint = "CloseServiceHandle")]
         public static extern int CloseServiceHandle(IntPtr hSCObject);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool DeleteService(IntPtr hService);
         // ------------- End -------------
     }
 }

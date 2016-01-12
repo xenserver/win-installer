@@ -1,8 +1,7 @@
-﻿using PInvoke;
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
-namespace InstallAgent
+namespace PInvokeWrap
 {
     public static class WinVersion
     {

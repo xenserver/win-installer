@@ -1,5 +1,5 @@
 ﻿using Microsoft.Win32;
-using PInvoke;
+using PInvokeWrap;
 using PVDevice;
 using State;
 using System;
@@ -77,6 +77,19 @@ namespace InstallAgent
 
         public void InstallThreadHandler()
         {
+            try
+            {
+                __InstallThreadHandler();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.ToString());
+                throw;
+            }
+        }
+
+        private void __InstallThreadHandler()
+        {
             if (WinVersion.IsWOW64())
             {
                 throw new Exception("WOW64: Do not do that.");
@@ -95,26 +108,36 @@ namespace InstallAgent
                 if (VM.GetPVToolsVersionOnFirstRun() ==
                     VM.PVToolsVersion.LessThanEight)
                 {
-                    Trace.WriteLine("PV Tools found on 0001 or 0002; xenprepping..");
-                    DriverHandler.SystemClean();
-                    Trace.WriteLine("xenprepping done!");
+                    Trace.WriteLine("PV Tools < 8.x detected; cleaning..");
 
-                    // Stop after we XenPrep. Cannot install
-                    // drivers without reboot, at least for now..
-                    if (rebootOption == RebootType.AUTOREBOOT)
+                    if (!DriverHandler.SystemClean())
+                    // Regardless of the 'rebootOption' value, the VM has to
+                    // reboot after the first 2 actions in SystemClean(),
+                    // before the new drivers can be installed
                     {
-                        DriverHandler.BlockUntilNoDriversInstalling(
-                                GetTimeoutToReboot()
-                            );
+                        Trace.WriteLine(
+                            "Prevented old drivers from being used after " +
+                            "the system reboots. Install Agent will " +
+                            "continue after the reboot"
+                        );
 
-                        Helpers.Reboot();
-                    }
-                    else
-                    {
-                        VM.SetRebootNeeded();
+                        if (rebootOption == RebootType.AUTOREBOOT)
+                        {
+                            TryReboot();
+                        }
+                        else // NOREBOOT
+                        {
+                            VM.SetRebootNeeded();
+                        }
+
+                        return;
                     }
 
-                    return;
+                    // Enumerate the PCI Bus after
+                    // cleaning the system
+                    Device.Enumerate(@"ACPI\PNP0A03", true);
+
+                    Trace.WriteLine("Old PV Tools removal complete!");
                 }
                 else // "XenPrepping" not needed, so just flip all relevant flags
                 {
@@ -123,7 +146,6 @@ namespace InstallAgent
                     Installer.SetFlag(Installer.States.MSIsUninstalled);
                     Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
                     Installer.SetFlag(Installer.States.CleanedUp);
-                    Trace.WriteLine("xenprepping not needed; flip relevant flags");
                 }
             }
 
@@ -160,21 +182,7 @@ namespace InstallAgent
             {
                 if (rebootOption == RebootType.AUTOREBOOT)
                 {
-                    if (VM.AllowedToReboot())
-                    {
-                        DriverHandler.BlockUntilNoDriversInstalling(
-                            GetTimeoutToReboot()
-                        );
-
-                        VM.IncrementRebootCount();
-                        Helpers.Reboot();
-                    }
-                    else
-                    {
-                        Trace.WriteLine(
-                            "VM reached maximum number of allowed reboots"
-                        );
-                    }
+                    TryReboot();
                 }
                 else
                 {
@@ -184,21 +192,15 @@ namespace InstallAgent
         }
 
         private static RebootType GetTrueRebootType(RebootType rt)
-        // If 'rebootOption = DEFAULT', the function returns one of the 2
-        // other options, depending on the system's state on first run
+        // 'rebootOption = DEFAULT' defaults to NOREBOOT
         {
-            if (rt != RebootType.DEFAULT)
-            {
-                return rt;
-            }
-
-            if (VM.GetPVToolsVersionOnFirstRun() == VM.PVToolsVersion.Eight)
+            if (rt == RebootType.DEFAULT)
             {
                 return RebootType.NOREBOOT;
             }
             else
             {
-                return RebootType.AUTOREBOOT;
+                return rt;
             }
         }
 
@@ -227,6 +229,25 @@ namespace InstallAgent
             }
 
             return timeout;
+        }
+
+        public static void TryReboot()
+        {
+            if (VM.AllowedToReboot())
+            {
+                DriverHandler.BlockUntilNoDriversInstalling(
+                    GetTimeoutToReboot()
+                );
+
+                VM.IncrementRebootCount();
+                Helpers.Reboot();
+            }
+            else
+            {
+                Trace.WriteLine(
+                    "VM reached maximum number of allowed reboots"
+                );
+            }
         }
     }
 }
