@@ -33,7 +33,7 @@
 #include "shellapi.h"
 #include "shlobj.h"
 #include "shlwapi.h"
-
+#include "branding.h"
 
 TCHAR * _vatallocprintf(const TCHAR *format, va_list args)
 {
@@ -144,12 +144,12 @@ bool parseCommandLine(arguments* args)
 }
 
 
-TCHAR* ma64 = _T("managementagentx64.msi");
-TCHAR* ma32 = _T("managementagentx86.msi");
+TCHAR* ma64 = _T(FILENAME_managementx64);
+TCHAR* ma32 = _T(FILENAME_managementx86);
 TCHAR* iw = _T("installwizard.msi");
 	
-TCHAR* xenlegacy = _T("xenlegacy.exe");
-TCHAR* uninstallerfix = _T("xluninstallerfix.exe");
+TCHAR* xenlegacy = _T(FILENAME_legacy);
+TCHAR* uninstallerfix = _T(FILENAME_legacyuninstallerfix);
 
 TCHAR sysdir[MAX_PATH];
 TCHAR workfile[MAX_PATH];
