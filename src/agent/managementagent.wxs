@@ -315,6 +315,10 @@
                   <File Id="helperfunctions" Name="HelperFunctions.dll" Source="Libraries\HelperFunctions.dll" />
               </Component>
 
+              <Component Id="HardwareDeviceDLL" Guid="*">
+                  <File Id="hardwaredevice" Name="HardwareDevice.dll" Source="Libraries\HardwareDevice.dll" />
+              </Component>
+
           </Directory>
         </Directory>
       </Directory>
@@ -379,6 +383,7 @@
         <ComponentRef Id='InstallService' />
         <ComponentRef Id='PInvokeWrapDLL' />
         <ComponentRef Id='HelperFunctionsDLL' />
+        <ComponentRef Id='HardwareDeviceDLL' />
     </Feature>
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>

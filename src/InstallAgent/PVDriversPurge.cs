@@ -1,13 +1,12 @@
-﻿using HelperFunctions;
+﻿using HardwareDevice;
+using HelperFunctions;
 using Microsoft.Win32;
 using PInvokeWrap;
-using State;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using SystemDevice;
 
 namespace PVDriversRemoval
 {

@@ -1,8 +1,8 @@
-﻿using HelperFunctions;
+﻿using HardwareDevice;
+using HelperFunctions;
 using PInvokeWrap;
 using System;
 using System.Diagnostics;
-using SystemDevice;
 
 namespace PVDevice
 {

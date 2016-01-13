@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using HardwareDevice;
+using Microsoft.Win32;
 using PInvokeWrap;
 using State;
 using System;
@@ -6,7 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using SystemDevice;
 
 namespace PVDevice
 {

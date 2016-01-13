@@ -1,4 +1,5 @@
-﻿using HelperFunctions;
+﻿using HardwareDevice;
+using HelperFunctions;
 using Microsoft.Win32;
 using PInvokeWrap;
 using PVDevice;
@@ -10,7 +11,6 @@ using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
-using SystemDevice;
 
 namespace InstallAgent
 {

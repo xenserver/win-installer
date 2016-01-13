@@ -1,10 +1,10 @@
-﻿using HelperFunctions;
+﻿using HardwareDevice;
+using HelperFunctions;
 using Microsoft.Win32;
 using PInvokeWrap;
 using PVDevice;
 using System;
 using System.Diagnostics;
-using SystemDevice;
 
 namespace State
 {

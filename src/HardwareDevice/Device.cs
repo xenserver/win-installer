@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace SystemDevice
+namespace HardwareDevice
 {
     public static class Device
     {
@@ -93,7 +93,7 @@ namespace SystemDevice
             RegistryKey rk = Registry.LocalMachine.OpenSubKey(
                 driverKeyName, true
             );
-            
+
             return (string)rk.GetValue("DriverVersion");
         }
 

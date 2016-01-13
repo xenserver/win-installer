@@ -1,10 +1,10 @@
-﻿using HelperFunctions;
+﻿using HardwareDevice;
+using HelperFunctions;
 using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
-using SystemDevice;
 
 namespace PVDevice
 {
