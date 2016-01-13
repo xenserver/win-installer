@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using PInvokeWrap;
 using PVDevice;
+using PVDriversRemoval;
 using State;
 using System;
 using System.Diagnostics;
@@ -111,9 +112,9 @@ namespace InstallAgent
                 {
                     Trace.WriteLine("PV Tools < 8.x detected; cleaning..");
 
-                    if (!DriverHandler.SystemClean())
+                    if (!PVDriversWipe())
                     // Regardless of the 'rebootOption' value, the VM has to
-                    // reboot after the first 2 actions in SystemClean(),
+                    // reboot after the first 2 actions in PVDriversWipe(),
                     // before the new drivers can be installed
                     {
                         Trace.WriteLine(
@@ -153,7 +154,7 @@ namespace InstallAgent
             if (!Installer.EverythingInstalled())
             {
                 InstallCertificates();
-                DriverHandler.InstallDrivers();
+                PVDriversInstall();
             }
 
             if (PVDevice.PVDevice.AllFunctioning())
@@ -267,6 +268,107 @@ namespace InstallAgent
             }
 
             Installer.SetFlag(Installer.States.CertificatesInstalled);
+        }
+
+        private static void PVDriversInstall()
+        // Installs the set of PV drivers provided
+        // by the Management Agent
+        {
+            string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
+
+            string driverRootDir = Path.Combine(
+                InstallAgent.exeDir,
+                "Drivers"
+            );
+
+            var drivers = new[] {
+                new { name = "xennet",
+                      installed = Installer.States.XenNetInstalled },
+                new { name = "xenvif",
+                      installed = Installer.States.XenVifInstalled },
+                new { name = "xenvbd",
+                      installed = Installer.States.XenVbdInstalled },
+                new { name = "xeniface",
+                      installed = Installer.States.XenIfaceInstalled },
+                new { name = "xenbus",
+                      installed = Installer.States.XenBusInstalled }
+            };
+
+            foreach (var driver in drivers)
+            {
+                if (!Installer.GetFlag(driver.installed))
+                {
+                    string infPath = Path.Combine(
+                        driverRootDir,
+                        driver.name + build + driver.name + ".inf"
+                    );
+
+                    Helpers.InstallDriver(infPath);
+                    Installer.SetFlag(driver.installed);
+                }
+            }
+        }
+
+        private static bool PVDriversWipe()
+        // Wipes the system clean of PV drivers. Has to be called
+        // twice, with a VM reboot inbetween. Returns 'true' when
+        // all actions are completed; 'false' otherwise
+        {
+            if (!Installer.GetFlag(Installer.States.RemovedFromFilters))
+            {
+                PVDriversPurge.RemovePVDriversFromFilters();
+                Installer.SetFlag(Installer.States.RemovedFromFilters);
+            }
+
+            if (!Installer.GetFlag(Installer.States.BootStartDisabled))
+            {
+                PVDriversPurge.DontBootStartPVDrivers();
+                Installer.SetFlag(Installer.States.BootStartDisabled);
+            }
+
+            if (!Installer.GetFlag(Installer.States.ProceedWithSystemClean))
+            // Makes Install Agent stop here the first time it runs
+            {
+                Installer.SetFlag(Installer.States.ProceedWithSystemClean);
+                return false;
+            }
+
+            // Do 2 passes to decrease the chance of
+            // something left behind/not being removed
+            const int TIMES = 2;
+
+            for (int i = 0; i < TIMES; ++i)
+            {
+                if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
+                {
+                    PVDriversPurge.UninstallDriversAndDevices();
+
+                    if (i == TIMES - 1)
+                    {
+                        Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
+                    }
+                }
+
+                if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
+                {
+                    PVDriversPurge.UninstallMSIs();
+
+                    if (i == TIMES - 1)
+                    {
+                        Installer.SetFlag(Installer.States.MSIsUninstalled);
+                    }
+                }
+            }
+
+            if (!Installer.GetFlag(Installer.States.CleanedUp))
+            {
+                PVDriversPurge.CleanUpXenLegacy();
+                PVDriversPurge.CleanUpServices();
+                PVDriversPurge.CleanUpDriverFiles();
+                Installer.SetFlag(Installer.States.CleanedUp);
+            }
+
+            return true;
         }
     }
 }

@@ -9,15 +9,10 @@ using System.IO;
 using System.Linq;
 using SystemDevice;
 
-namespace InstallAgent
+namespace PVDriversRemoval
 {
-    /*
-     * Responsible for:
-     *   - Removing drivers from 0001 and 0002 devices + cleaning up
-     *   - Installing drivers on C000 device (if nothing installed)
-     *   - Updating drivers on C000 device (if drivers already present)
-     */
-    static class DriverHandler
+    public static class PVDriversPurge
+    // Cleans a VM of all PV drivers
     {
         // List of all possible PV H/W devices that can be present
         // on a system. The ordering is deliberate, so that the
@@ -50,104 +45,7 @@ namespace InstallAgent
             @"ROOT\XENEVTCHN"
         };
 
-        public static void InstallDrivers()
-        {
-            string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
-
-            string driverRootDir = Path.Combine(
-                InstallAgent.exeDir,
-                "Drivers"
-            );
-
-            var drivers = new[] {
-                new { name = "xennet",
-                      installed = Installer.States.XenNetInstalled },
-                new { name = "xenvif",
-                      installed = Installer.States.XenVifInstalled },
-                new { name = "xenvbd",
-                      installed = Installer.States.XenVbdInstalled },
-                new { name = "xeniface",
-                      installed = Installer.States.XenIfaceInstalled },
-                new { name = "xenbus",
-                      installed = Installer.States.XenBusInstalled }
-            };
-
-            foreach (var driver in drivers)
-            {
-                if (!Installer.GetFlag(driver.installed))
-                {
-                    string infPath = Path.Combine(
-                        driverRootDir,
-                        driver.name + build + driver.name + ".inf"
-                    );
-
-                    Helpers.InstallDriver(infPath);
-                    Installer.SetFlag(driver.installed);
-                }
-            }
-        }
-
-        public static bool SystemClean()
-        // Returns 'true' if all actions are completed; 'false' otherwise
-        {
-            if (!Installer.GetFlag(Installer.States.RemovedFromFilters))
-            {
-                RemovePVDriversFromFilters();
-                Installer.SetFlag(Installer.States.RemovedFromFilters);
-            }
-
-            if (!Installer.GetFlag(Installer.States.BootStartDisabled))
-            {
-                DontBootStartPVDrivers();
-                Installer.SetFlag(Installer.States.BootStartDisabled);
-            }
-
-            if (!Installer.GetFlag(Installer.States.ProceedWithSystemClean))
-            // Makes Install Agent stop here the first time it runs
-            {
-                Installer.SetFlag(Installer.States.ProceedWithSystemClean);
-                return false;
-            }
-
-            // Do 2 passes to decrease the chance of
-            // something left behind/not being removed
-            const int TIMES = 2;
-
-            for (int i = 0; i < TIMES; ++i)
-            {
-                if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
-                {
-                    UninstallDriversAndDevices();
-
-                    if (i == TIMES - 1)
-                    {
-                        Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
-                    }
-                }
-
-                if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
-                {
-                    UninstallMSIs();
-
-                    if (i == TIMES - 1)
-                    {
-                        Installer.SetFlag(Installer.States.MSIsUninstalled);
-                    }
-                }
-            }
-
-            if (!Installer.GetFlag(Installer.States.CleanedUp))
-            {
-                CleanUpXenLegacy();
-                CleanUpServices();
-                CleanUpDriverFiles();
-                Installer.SetFlag(Installer.States.CleanedUp);
-            }
-
-            return true;
-        }
-
-        private static void RemovePVDriversFromFilters()
+        public static void RemovePVDriversFromFilters()
         {
             const string FUNC_NAME = "RemovePVDriversFromFilters";
             const string BASE_RK_NAME =
@@ -219,7 +117,7 @@ namespace InstallAgent
             Trace.WriteLine("<=== " + FUNC_NAME);
         }
 
-        private static void DontBootStartPVDrivers()
+        public static void DontBootStartPVDrivers()
         {
             const string FUNC_NAME = "DontBootStartPVDrivers";
             const string BASE_RK_NAME =
@@ -275,7 +173,7 @@ namespace InstallAgent
             Trace.WriteLine("<=== " + FUNC_NAME);
         }
 
-        private static void UninstallMSIs()
+        public static void UninstallMSIs()
         {
             const int TRIES = 5;
             List<string> toRemove = new List<string>();
@@ -305,7 +203,7 @@ namespace InstallAgent
             }
         }
 
-        private static void UninstallDriversAndDevices()
+        public static void UninstallDriversAndDevices()
         {
             using (SetupApi.DeviceInfoSet devInfoSet =
                         new SetupApi.DeviceInfoSet(
@@ -327,7 +225,7 @@ namespace InstallAgent
             }
         }
 
-        private static void CleanUpXenLegacy()
+        public static void CleanUpXenLegacy()
         // Cleans up leftover Xen Legacy registry entries and files
         {
             const string SOFTWARE = "SOFTWARE";
@@ -381,7 +279,7 @@ namespace InstallAgent
             catch (ArgumentException) { }
         }
 
-        private static void CleanUpDriverFiles()
+        public static void CleanUpDriverFiles()
         // Removes left over .sys files
         {
             string[] PVDrivers = {
@@ -414,7 +312,7 @@ namespace InstallAgent
             }
         }
 
-        private static void CleanUpServices()
+        public static void CleanUpServices()
         // Properly uninstalls PV drivers' services
         {
             // On 2k8 if you're going to reinstall straight away,

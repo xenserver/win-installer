@@ -47,7 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DriverHandler.cs" />
+    <Compile Include="PVDriversPurge.cs" />
     <Compile Include="Device.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="InstallAgent.cs">
