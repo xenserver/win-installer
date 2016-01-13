@@ -105,50 +105,51 @@ namespace InstallAgent
                 Trace.WriteLine("NetSettings saved!");
             }
 
-            if (!Installer.SystemCleaned())
+            while (!Installer.SystemCleaned())
+            // use 'while' to abuse the 'break' statement
             {
-                if (VM.GetPVToolsVersionOnFirstRun() ==
+                if (VM.GetPVToolsVersionOnFirstRun() !=
                     VM.PVToolsVersion.LessThanEight)
-                {
-                    Trace.WriteLine("PV Tools < 8.x detected; cleaning..");
-
-                    if (!PVDriversWipe())
-                    // Regardless of the 'rebootOption' value, the VM has to
-                    // reboot after the first 2 actions in PVDriversWipe(),
-                    // before the new drivers can be installed
-                    {
-                        Trace.WriteLine(
-                            "Prevented old drivers from being used after " +
-                            "the system reboots. Install Agent will " +
-                            "continue after the reboot"
-                        );
-
-                        if (rebootOption == RebootType.AUTOREBOOT)
-                        {
-                            TryReboot();
-                        }
-                        else // NOREBOOT
-                        {
-                            VM.SetRebootNeeded();
-                        }
-
-                        return;
-                    }
-
-                    // Enumerate the PCI Bus after
-                    // cleaning the system
-                    Device.Enumerate(@"ACPI\PNP0A03", true);
-
-                    Trace.WriteLine("Old PV Tools removal complete!");
-                }
-                else // "XenPrepping" not needed, so just flip all relevant flags
+                // System clean not needed; flip all relevant flags
                 {
                     Installer.SetFlag(Installer.States.RemovedFromFilters);
                     Installer.SetFlag(Installer.States.BootStartDisabled);
                     Installer.SetFlag(Installer.States.MSIsUninstalled);
                     Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
                     Installer.SetFlag(Installer.States.CleanedUp);
+                    break;
                 }
+
+                Trace.WriteLine("PV Tools < 8.x detected; cleaning..");
+
+                if (!PVDriversWipe())
+                // Regardless of the 'rebootOption' value, the VM has to
+                // reboot after the first 2 actions in PVDriversWipe(),
+                // before the new drivers can be installed
+                {
+                    Trace.WriteLine(
+                        "Prevented old drivers from being used after " +
+                        "the system reboots. Install Agent will " +
+                        "continue after the reboot"
+                    );
+
+                    if (rebootOption == RebootType.AUTOREBOOT)
+                    {
+                        TryReboot();
+                    }
+                    else // NOREBOOT
+                    {
+                        VM.SetRebootNeeded();
+                    }
+
+                    return;
+                }
+
+                // Enumerate the PCI Bus after
+                // cleaning the system
+                Device.Enumerate(@"ACPI\PNP0A03", true);
+
+                Trace.WriteLine("Old PV Tools removal complete!");
             }
 
             if (!Installer.EverythingInstalled())
