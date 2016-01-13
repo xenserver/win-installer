@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallAgent", "..\src\Inst
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PInvokeWrap", "..\src\PInvokeWrap\PInvokeWrap.csproj", "{CE6CE4A7-C693-4102-BEBF-20777AC32D06}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelperFunctions", "..\src\HelperFunctions\HelperFunctions.csproj", "{6FFF20B4-142B-43B9-83B3-89DDD118E216}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -166,6 +168,18 @@ Global
 		{CE6CE4A7-C693-4102-BEBF-20777AC32D06}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{CE6CE4A7-C693-4102-BEBF-20777AC32D06}.Release|Win32.ActiveCfg = Release|Any CPU
 		{CE6CE4A7-C693-4102-BEBF-20777AC32D06}.Release|x64.ActiveCfg = Release|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Release|Win32.ActiveCfg = Release|Any CPU
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

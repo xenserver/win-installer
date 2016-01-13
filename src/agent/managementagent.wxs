@@ -311,6 +311,10 @@
                   <File Id="pinvokewrap" Name="PInvokeWrap.dll" Source="Libraries\PInvokeWrap.dll" />
               </Component>
 
+              <Component Id="HelperFunctionsDLL" Guid="*">
+                  <File Id="helperfunctions" Name="HelperFunctions.dll" Source="Libraries\HelperFunctions.dll" />
+              </Component>
+
           </Directory>
         </Directory>
       </Directory>
@@ -374,6 +378,7 @@
         <ComponentRef Id='InstallAgentReg'/>
         <ComponentRef Id='InstallService' />
         <ComponentRef Id='PInvokeWrapDLL' />
+        <ComponentRef Id='HelperFunctionsDLL' />
     </Feature>
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>

@@ -49,7 +49,6 @@
   <ItemGroup>
     <Compile Include="PVDriversPurge.cs" />
     <Compile Include="Device.cs" />
-    <Compile Include="Helpers.cs" />
     <Compile Include="InstallAgent.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -85,6 +84,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\HelperFunctions\HelperFunctions.csproj">
+      <Project>{6fff20b4-142b-43b9-83b3-89ddd118e216}</Project>
+      <Name>HelperFunctions</Name>
+    </ProjectReference>
     <ProjectReference Include="..\PInvokeWrap\PInvokeWrap.csproj">
       <Project>{ce6ce4a7-c693-4102-bebf-20777ac32d06}</Project>
       <Name>PInvokeWrap</Name>
