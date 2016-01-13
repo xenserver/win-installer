@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelperFunctions", "..\src\H
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HardwareDevice", "..\src\HardwareDevice\HardwareDevice.csproj", "{277A3C3D-C32D-41CD-89DE-407C97CE29FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PVDriversRemoval", "..\src\PVDriversRemoval\PVDriversRemoval.csproj", "{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -194,6 +196,18 @@ Global
 		{277A3C3D-C32D-41CD-89DE-407C97CE29FF}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{277A3C3D-C32D-41CD-89DE-407C97CE29FF}.Release|Win32.ActiveCfg = Release|Any CPU
 		{277A3C3D-C32D-41CD-89DE-407C97CE29FF}.Release|x64.ActiveCfg = Release|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Release|Win32.ActiveCfg = Release|Any CPU
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

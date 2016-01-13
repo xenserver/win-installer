@@ -319,6 +319,10 @@
                   <File Id="hardwaredevice" Name="HardwareDevice.dll" Source="Libraries\HardwareDevice.dll" />
               </Component>
 
+              <Component Id="PVDriversRemovalDLL" Guid="*">
+                  <File Id="pvdriversremoval" Name="PVDriversRemoval.dll" Source="Libraries\PVDriversRemoval.dll" />
+              </Component>
+
           </Directory>
         </Directory>
       </Directory>
@@ -384,6 +388,7 @@
         <ComponentRef Id='PInvokeWrapDLL' />
         <ComponentRef Id='HelperFunctionsDLL' />
         <ComponentRef Id='HardwareDeviceDLL' />
+        <ComponentRef Id='PVDriversRemovalDLL' />
     </Feature>
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>
