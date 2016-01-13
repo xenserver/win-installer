@@ -1,48 +1,15 @@
-﻿using Microsoft.Win32;
+﻿using HelperFunctions;
+using Microsoft.Win32;
 using PInvokeWrap;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace XSToolsInstallation
+namespace SystemDevice
 {
     public static class Device
     {
-        // Use to create a list of strings from the
-        // "byte[] propertyBuffer" variable returned
-        // by SetupDiGetDeviceRegistryProperty()
-        private static string[] MultiByteStringSplit(byte[] mbstr)
-        {
-            List<string> strList = new List<string>();
-            int strStart = 0;
-
-            // One character is represented by 2 bytes.
-            for (int i = 0; i < mbstr.Length; i += 2)
-            {
-                if (mbstr[i] == '\0')
-                {
-                    strList.Add(
-                        System.Text.Encoding.Unicode.GetString(
-                            mbstr,
-                            strStart,
-                            i - strStart
-                        )
-                    );
-
-                    strStart = i + 2;
-
-                    if (strStart < mbstr.Length && mbstr[strStart] == '\0')
-                    {
-                        break;
-                    }
-                }
-            }
-
-            return strList.ToArray();
-        }
-
         public static string GetDevRegPropertyStr(
             SetupApi.DeviceInfoSet devInfoSet,
             SetupApi.SP_DEVINFO_DATA devInfoData,
@@ -102,7 +69,7 @@ namespace XSToolsInstallation
                 out requiredSize
             );
 
-            return MultiByteStringSplit(buffer);
+            return Helpers.StringArrayFromMultiSz(buffer);
         }
 
         public static string GetDriverVersion(

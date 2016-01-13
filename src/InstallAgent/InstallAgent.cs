@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using HelperFunctions;
+using Microsoft.Win32;
 using PInvokeWrap;
 using PVDevice;
 using State;
@@ -8,7 +9,7 @@ using System.IO;
 using System.Reflection;
 using System.ServiceProcess;
 using System.Threading;
-using XSToolsInstallation;
+using SystemDevice;
 
 namespace InstallAgent
 {
@@ -221,7 +222,7 @@ namespace InstallAgent
         {
             if (VM.AllowedToReboot())
             {
-                DriverHandler.BlockUntilNoDriversInstalling(
+                Helpers.BlockUntilNoDriversInstalling(
                     GetTimeoutToReboot()
                 );
 

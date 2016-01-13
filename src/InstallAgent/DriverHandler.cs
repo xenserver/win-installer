@@ -1,15 +1,13 @@
-﻿using Microsoft.Win32;
+﻿using HelperFunctions;
+using Microsoft.Win32;
 using PInvokeWrap;
 using State;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using XSToolsInstallation;
+using SystemDevice;
 
 namespace InstallAgent
 {
@@ -52,45 +50,6 @@ namespace InstallAgent
             @"ROOT\XENEVTCHN"
         };
 
-        public static bool BlockUntilNoDriversInstalling(uint timeout)
-        // Returns true, if no drivers are installing before the timeout
-        // is reached. Returns false, if timeout is reached. To block
-        // until no drivers are installing pass PInvoke.CfgMgr32.INFINITE
-        // 'timeout' is counted in seconds.
-        {
-            CfgMgr32.Wait result;
-
-            Trace.WriteLine("Checking if drivers are currently installing");
-
-            if (timeout != CfgMgr32.INFINITE)
-            {
-                Trace.WriteLine("Blocking for " + timeout + " seconds..");
-                timeout *= 1000;
-            }
-            else
-            {
-                Trace.WriteLine("Blocking until no drivers are installing");
-            }
-
-            result = CfgMgr32.CMP_WaitNoPendingInstallEvents(
-                timeout
-            );
-
-            if (result == CfgMgr32.Wait.OBJECT_0)
-            {
-                Trace.WriteLine("No drivers installing");
-                return true;
-            }
-            else if (result == CfgMgr32.Wait.FAILED)
-            {
-                Win32Error.Set("CMP_WaitNoPendingInstallEvents");
-                throw new Exception(Win32Error.GetFullErrMsg());
-            }
-
-            Trace.WriteLine("Timeout reached - drivers still installing");
-            return false;
-        }
-
         public static void InstallDrivers()
         {
             string build = WinVersion.Is64BitOS() ? @"\x64\" : @"\x86\";
@@ -122,7 +81,7 @@ namespace InstallAgent
                         driver.name + build + driver.name + ".inf"
                     );
 
-                    InstallDriver(infPath);
+                    Helpers.InstallDriver(infPath);
                     Installer.SetFlag(driver.installed);
                 }
             }
@@ -186,30 +145,6 @@ namespace InstallAgent
             }
 
             return true;
-        }
-
-        public static void InstallDriver(
-            string infPath,
-            NewDev.DIIRFLAG flags =
-                NewDev.DIIRFLAG.ZERO)
-        {
-            bool reboot;
-
-            Trace.WriteLine(
-                "Installing driver: \'" + Path.GetFileName(infPath) + "\'"
-            );
-
-            if (!NewDev.DiInstallDriver(
-                    IntPtr.Zero,
-                    infPath,
-                    flags,
-                    out reboot))
-            {
-                Win32Error.Set("DiInstallDriver");
-                throw new Exception(Win32Error.GetFullErrMsg());
-            }
-
-            Trace.WriteLine("Driver installed successfully");
         }
 
         private static void RemovePVDriversFromFilters()
@@ -356,7 +291,7 @@ namespace InstallAgent
 
             foreach (string msiName in msiNameList)
             {
-                string tmpCode = GetMsiProductCode(msiName);
+                string tmpCode = Helpers.GetMsiProductCode(msiName);
 
                 if (!String.IsNullOrEmpty(tmpCode))
                 {
@@ -366,142 +301,7 @@ namespace InstallAgent
 
             foreach (string productCode in toRemove)
             {
-                UninstallMsi(productCode, TRIES);
-            }
-        }
-
-        private static string GetMsiProductCode(string msiName)
-        // Enumerates the MSIs present in the system. If 'msiName'
-        // exists, it returns its product code. If not, it returns
-        // the empty string.
-        {
-            const int GUID_LEN = 39;
-            const int BUF_LEN = 128;
-            int err;
-            int len;
-            StringBuilder productCode = new StringBuilder(GUID_LEN, GUID_LEN);
-            StringBuilder productName = new StringBuilder(BUF_LEN, BUF_LEN);
-
-            Trace.WriteLine(
-                "Checking if \'" + msiName + "\' is present in system.."
-            );
-
-            // ERROR_SUCCESS = 0
-            for (int i = 0;
-                 (err = Msi.MsiEnumProducts(i, productCode)) == 0;
-                 ++i)
-            {
-                len = BUF_LEN;
-
-                // Get ProductName from Product GUID
-                err = Msi.MsiGetProductInfo(
-                    productCode.ToString(),
-                    Msi.INSTALLPROPERTY.INSTALLEDPRODUCTNAME,
-                    productName,
-                    ref len
-                );
-
-                if (err == 0)
-                {
-                    if (msiName.Equals(
-                            productName.ToString(),
-                            StringComparison.OrdinalIgnoreCase))
-                    {
-                        Trace.WriteLine(
-                            "Product found; Code: \'" +
-                            productCode.ToString() + "\'"
-                        );
-                        return productCode.ToString();
-                    }
-                }
-                else
-                {
-                    Win32Error.Set("MsiGetProductInfo", err);
-                    throw new Win32Exception(Win32Error.GetFullErrMsg());
-                }
-            }
-
-            if (err == 259) // ERROR_NO_MORE_ITEMS
-            {
-                Trace.WriteLine("Product not found");
-                return "";
-            }
-            else
-            {
-                Win32Error.Set("MsiEnumProducts", err);
-                throw new Win32Exception(Win32Error.GetFullErrMsg());
-            }
-        }
-
-        private static void UninstallMsi(string msiCode, int tries = 1)
-        // Uses 'msiexec.exe' to uninstall MSI with product code
-        // 'msiCode'. If the exit code is none of 'ERROR_SUCCCESS',
-        // the function sleeps and then retries. The amount of time
-        // sleeping is doubled on every try, starting at 1 second.
-        {
-            if (tries < 1)
-            {
-                throw new Exception("tries = " + tries + " < 1");
-            }
-
-            int secs;
-
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.FileName = "msiexec.exe";
-            startInfo.Arguments = "/x " + msiCode + " /qn /norestart";
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            startInfo.CreateNoWindow = true;
-
-            for (int i = 0; i < tries; ++i)
-            {
-                Trace.WriteLine(
-                    "Running: \'" + startInfo.FileName +
-                    " " + startInfo.Arguments + "\'"
-                );
-
-                using (Process proc = Process.Start(startInfo))
-                {
-                    proc.WaitForExit();
-
-                    switch (proc.ExitCode)
-                    {
-                        case 0:
-                            Trace.WriteLine("ERROR_SUCCESS");
-                            return;
-                        case 1641:
-                            Trace.WriteLine("ERROR_SUCCESS_REBOOT_INITIATED");
-                            return;
-                        case 3010:
-                            Trace.WriteLine("ERROR_SUCCESS_REBOOT_REQUIRED");
-                            return;
-                        default:
-                            if (i == tries - 1)
-                            {
-                                Trace.WriteLine(
-                                    "Tries exhausted; Error: " +
-                                    proc.ExitCode
-                                );
-
-                                throw new Exception(
-                                    "Number of tries exhausted"
-                                );
-                            }
-
-                            secs = (int)Math.Pow(2.0, (double)i);
-
-                            Trace.WriteLine(
-                                "Msi uninstall failed; Error: " +
-                                proc.ExitCode
-                            );
-                            Trace.WriteLine(
-                                "Retrying in " +
-                                secs + " seconds"
-                            );
-
-                            Thread.Sleep(secs * 1000);
-                            break;
-                    }
-                }
+                Helpers.UninstallMsi(productCode, TRIES);
             }
         }
 
@@ -516,7 +316,7 @@ namespace InstallAgent
             {
                 foreach (string hwId in pvHwIds)
                 {
-                    UninstallDriverPackages(hwId);
+                    Helpers.UninstallDriverPackages(hwId);
 
                     Device.RemoveFromSystem(
                         devInfoSet,
@@ -637,56 +437,6 @@ namespace InstallAgent
             foreach (string service in services)
             {
                 Helpers.DeleteService(service);
-            }
-        }
-
-        private static void UninstallDriverPackages(string hwId)
-        // Scans all oem*.inf files present in the system
-        // and uninstalls all that match 'hwId'
-        {
-            string infPath = Path.Combine(
-                Environment.GetEnvironmentVariable("windir"),
-                "inf"
-            );
-
-            Trace.WriteLine(
-                "Searching drivers in system for \'" + hwId + "\'"
-            );
-
-            foreach (string oemFile in Directory.GetFiles(infPath, "oem*.inf"))
-            {
-                // This is currently the only way to ignore case...
-                if (File.ReadAllText(oemFile).IndexOf(
-                        hwId, StringComparison.OrdinalIgnoreCase) == -1)
-                {
-                    continue;
-                }
-
-                Trace.WriteLine(
-                    "\'" + hwId + "\' matches" + "\'" + oemFile + "\';"
-                );
-
-                bool needreboot;
-                Trace.WriteLine("Uninstalling...");
-
-                int err = DIFxAPI.DriverPackageUninstall(
-                    oemFile,
-                    (int)(DIFxAPI.DRIVER_PACKAGE.SILENT |
-                          DIFxAPI.DRIVER_PACKAGE.FORCE |
-                          DIFxAPI.DRIVER_PACKAGE.DELETE_FILES),
-                          // N.B.: Starting with Windows 7,
-                          // 'DELETE_FILES' is ignored
-                    IntPtr.Zero,
-                    out needreboot
-                );
-
-                if (err != 0) // ERROR_SUCCESS
-                {
-                    Win32Error.Set("DriverPackageUninstall", err);
-                    throw new Exception(Win32Error.GetFullErrMsg());
-                }
-
-                Trace.WriteLine("Uninstalled");
             }
         }
     }

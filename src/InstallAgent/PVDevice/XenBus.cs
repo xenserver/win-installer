@@ -1,10 +1,8 @@
-﻿using PInvokeWrap;
+﻿using HelperFunctions;
+using PInvokeWrap;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
-using XSToolsInstallation;
+using SystemDevice;
 
 namespace PVDevice
 {
