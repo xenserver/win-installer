@@ -307,6 +307,22 @@
                   <File Id="difxapi32" Name="difxapi32.dll" Source="$(env.KIT)\Redist\DIFx\DIFxAPI\x86\difxapi.dll" />
               </Component>
 
+              <Component Id="PInvokeWrapDLL" Guid="*">
+                  <File Id="pinvokewrap" Name="PInvokeWrap.dll" Source="Libraries\PInvokeWrap.dll" />
+              </Component>
+
+              <Component Id="HelperFunctionsDLL" Guid="*">
+                  <File Id="helperfunctions" Name="HelperFunctions.dll" Source="Libraries\HelperFunctions.dll" />
+              </Component>
+
+              <Component Id="HardwareDeviceDLL" Guid="*">
+                  <File Id="hardwaredevice" Name="HardwareDevice.dll" Source="Libraries\HardwareDevice.dll" />
+              </Component>
+
+              <Component Id="PVDriversRemovalDLL" Guid="*">
+                  <File Id="pvdriversremoval" Name="PVDriversRemoval.dll" Source="Libraries\PVDriversRemoval.dll" />
+              </Component>
+
           </Directory>
         </Directory>
       </Directory>
@@ -369,6 +385,10 @@
         <?endif ?>
         <ComponentRef Id='InstallAgentReg'/>
         <ComponentRef Id='InstallService' />
+        <ComponentRef Id='PInvokeWrapDLL' />
+        <ComponentRef Id='HelperFunctionsDLL' />
+        <ComponentRef Id='HardwareDeviceDLL' />
+        <ComponentRef Id='PVDriversRemovalDLL' />
     </Feature>
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>

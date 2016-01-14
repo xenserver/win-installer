@@ -1,10 +1,10 @@
-﻿using InstallAgent;
+﻿using HardwareDevice;
+using HelperFunctions;
 using Microsoft.Win32;
 using PInvokeWrap;
 using PVDevice;
 using System;
 using System.Diagnostics;
-using XSToolsInstallation;
 
 namespace State
 {
@@ -111,7 +111,7 @@ namespace State
                 // With a timeout of '0', the function returns instantly
                 // 'true', if no drivers installing
                 // 'false', if it "timed out"
-                tmp = DriverHandler.BlockUntilNoDriversInstalling(0) ? 0 : 1;
+                tmp = Helpers.BlockUntilNoDriversInstalling(0) ? 0 : 1;
 
                 openRegKey.SetValue(
                     regValName,

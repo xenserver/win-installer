@@ -1,10 +1,8 @@
-﻿using PInvokeWrap;
+﻿using HardwareDevice;
+using HelperFunctions;
+using PInvokeWrap;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Text;
-using XSToolsInstallation;
 
 namespace PVDevice
 {
@@ -44,13 +42,6 @@ namespace PVDevice
                            SetupApi.DiGetClassFlags.DIGCF_ALLCLASSES |
                            SetupApi.DiGetClassFlags.DIGCF_PRESENT))
             {
-                if (!devInfoSet.HandleIsValid())
-                {
-                    throw new Exception(
-                        "XenBus static constructor: \'devInfoSet\' is INVALID"
-                    );
-                }
-
                 for (int i = 0; i < hwIDs.Length; ++i)
                 {
                     SetupApi.SP_DEVINFO_DATA xenBusDevInfoData;

@@ -1,4 +1,5 @@
-﻿using Microsoft.Win32;
+﻿using HelperFunctions;
+using Microsoft.Win32;
 using System;
 
 namespace State
@@ -103,11 +104,6 @@ namespace State
             RegistryKey installStateRK =
                 Registry.LocalMachine.CreateSubKey(stateRegKey);
 
-            if (installStateRK == null)
-            {
-                throw new Exception("Failed opening \'InstallAgent\' registry key.");
-            }
-
             currentState = 0;
 
             for (int i = 0; i < statesDefault.Length; ++i)
@@ -122,7 +118,7 @@ namespace State
 
         public static void SetFlag(States flag)
         {
-            int i = XSToolsInstallation.Helpers.BitIdxFromFlag((uint)flag);
+            int i = Helpers.BitIdxFromFlag((uint)flag);
             string flagName = statesDefault[i].Name;
 
             using (RegistryKey installStateRK =
@@ -135,7 +131,7 @@ namespace State
 
         public static void UnsetFlag(States flag)
         {
-            int i = XSToolsInstallation.Helpers.BitIdxFromFlag((uint)flag);
+            int i = Helpers.BitIdxFromFlag((uint)flag);
             string flagName = statesDefault[i].Name;
 
             using (RegistryKey installStateRK =

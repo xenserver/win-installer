@@ -85,11 +85,6 @@ namespace PVDevice
                 break;
             }
 
-            if (bse == null)
-            {
-                throw new Exception("Xen Interface Base Not Found");
-            }
-
             ManagementBaseObject inparam = bse.GetMethodParameters("AddSession");
             inparam["ID"] = "Citrix Xen Install Wizard";
             ManagementBaseObject outparam = bse.InvokeMethod(
@@ -110,11 +105,6 @@ namespace PVDevice
                 _session = obj;
                 break;
             }
-
-            if (SessionIsNull())
-            {
-                throw new Exception("No Session Available");
-            }
         }
 
         public static void DestroySession()
@@ -130,12 +120,6 @@ namespace PVDevice
 
         public static int GetNoChildNodes()
         {
-            if (SessionIsNull())
-            {
-                throw new Exception("No active session"); // or
-                // this.CreateSession();
-            }
-
             int noChildNodes = 0;
 
             try
@@ -159,12 +143,6 @@ namespace PVDevice
 
         public static string Read(string path)
         {
-            if (SessionIsNull())
-            {
-                throw new Exception("No active session"); // or
-                // this.CreateSession();
-            }
-
             ManagementBaseObject inparam =
                 _session.GetMethodParameters("GetValue");
 
@@ -181,12 +159,6 @@ namespace PVDevice
 
         public static void Write(string path, string value)
         {
-            if (SessionIsNull())
-            {
-                throw new Exception("No active session"); // or
-                // this.CreateSession();
-            }
-
             ManagementBaseObject inparam =
                 _session.GetMethodParameters("SetValue");
 
@@ -195,11 +167,6 @@ namespace PVDevice
             inparam["value"] = value;
 
             _session.InvokeMethod("SetValue", inparam, null);
-        }
-
-        public static bool SessionIsNull()
-        {
-            return (_session == null);
         }
     }
 }

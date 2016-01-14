@@ -4,77 +4,37 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}</ProjectGuid>
-    <OutputType>WinExe</OutputType>
+    <ProjectGuid>{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>InstallAgent</RootNamespace>
-    <AssemblyName>InstallAgent</AssemblyName>
+    <RootNamespace>PVDriversRemoval</RootNamespace>
+    <AssemblyName>PVDriversRemoval</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\InstallAgent\</OutputPath>
+    <OutputPath>..\..\Libraries</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\InstallAgent\</OutputPath>
+    <OutputPath>..\..\Libraries</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>InstallAgent.Program</StartupObject>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Configuration.Install" />
-    <Reference Include="System.Management" />
-    <Reference Include="System.ServiceProcess" />
-    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InstallAgent.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="InstallAgent.Designer.cs">
-      <DependentUpon>InstallAgent.cs</DependentUpon>
-    </Compile>
-    <Compile Include="State\Installer.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="ProjectInstaller.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="ProjectInstaller.Designer.cs">
-      <DependentUpon>ProjectInstaller.cs</DependentUpon>
-    </Compile>
+    <Compile Include="PVDriversPurge.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PVDevice\PVDevice.cs" />
-    <Compile Include="PVDevice\XenBus.cs" />
-    <Compile Include="PVDevice\XenIface.cs" />
-    <Compile Include="PVDevice\XenNet.cs" />
-    <Compile Include="PVDevice\XenVbd.cs" />
-    <Compile Include="PVDevice\XenVif.cs" />
-    <Compile Include="TimeDateTraceListener.cs" />
-    <Compile Include="State\VM.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="ProjectInstaller.resx">
-      <DependentUpon>ProjectInstaller.cs</DependentUpon>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="InstallAgent.exe.config">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HardwareDevice\HardwareDevice.csproj">
@@ -88,10 +48,6 @@
     <ProjectReference Include="..\PInvokeWrap\PInvokeWrap.csproj">
       <Project>{ce6ce4a7-c693-4102-bebf-20777ac32d06}</Project>
       <Name>PInvokeWrap</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\PVDriversRemoval\PVDriversRemoval.csproj">
-      <Project>{b75c4d13-ef07-48fc-b028-5ed1ab7146cd}</Project>
-      <Name>PVDriversRemoval</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
