@@ -381,7 +381,7 @@ def generate_signing_script():
         signfile.write("echo. \n")
         signfile.write("echo sign.bat \"signtool sign /a /s my /n \"\"My Company Inc.\"\" /t http://timestamp.verisign.com/scripts/timestamp.dll\"\n")
 
-def make_installers(pack):
+def make_installers(pack, signname):
     src = ".\\src\\drivers"
 
     if os.path.exists('installer'):
@@ -720,7 +720,7 @@ if __name__ == '__main__':
     copyfiles('installwizard', 'netsettings', location,'Win32', debug=False)
     copyfiles('installwizard', 'qnetsettings', location,'x64', debug=False)
     copyfiles('installwizard', 'qnetsettings', location,'Win32', debug=False)
-    make_installers(location)
+    make_installers(location, signname)
 
 
     msbuild('xenprep','Any CPU', False)
