@@ -37,6 +37,7 @@
     >
 
     <?include verinfo.wxi ?>
+    <?include branding.wxi?>
     <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
     <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
     <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
@@ -260,8 +261,8 @@
             <Directory Id='INSTALLDIR' Name='XenTools'>
                 <Directory Id='INSTALLER' Name = 'Installer'>
                     <Component Id="LegacyInstaller" Guid="$(var.legacyid)">
-                        <File Id="LegacyExe" Compressed="no" DiskId='2' Source="XenLegacy.Exe"/> 
-                        <File Id="UninstallerFix" Compressed="no" DiskId='2' Source="xluninstallerfix.exe"/> 
+                        <File Id="LegacyExe" Compressed="no" DiskId='2' Source="$(var.FILENAME_legacy)"/> 
+                        <File Id="UninstallerFix" Compressed="no" DiskId='2' Source="$(var.FILENAME_legacyuninstallerfix)"/> 
                     </Component>
                     <Component Id="Msis" Guid="$(var.msiid)" >
                         <File Id="Drivers32MSI" Compressed="no" DiskId="2" Source="CitrixXenDriversX86.msi" />
@@ -447,7 +448,7 @@
     <CustomAction Id="LaunchApplication" FileKey="InstallguiExe" Impersonate="yes" ExeCommand="[LaunchApplication]" Return="asyncNoWait" />
 
 
-    <CustomAction Id='SetLegacy' Property="LegacyExeProp" Value="[INSTALLER]\XenLegacy.exe" Execute="immediate" />
+    <CustomAction Id='SetLegacy' Property="LegacyExeProp" Value="[INSTALLER]\$(var.FILENAME_legacy)" Execute="immediate" />
     <CustomAction Id='LegacySilent' Property="LaunchLegacy" Value="/norestart /AllowLegacyInstall /S /D=[INSTALLDIR]" Execute="immediate" />
 
 

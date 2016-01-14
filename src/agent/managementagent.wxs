@@ -37,16 +37,17 @@
     >
 
     <?include verinfo.wxi ?>
+    <?include branding.wxi ?>
     <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
     <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
     <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
     <?define CurrentBuildVersion = '$(var.BRANDING_BUILD_NR_STR)' ?>
     <?define CurrentToolsHotfix  = '$(var.TOOLS_HOTFIX_NR_STR)' ?>
 
-    <?define Brand = 'Citrix' ?>
-    <?define Product = 'XenServer' ?>
-    <?define Agent = 'Windows Management Agent' ?>
-    <?define Install = 'Installation and Update Agent' ?>
+    <?define Brand = '$(var.BRANDING_manufacturer)' ?>
+    <?define Product = '$(var.BRANDING_hypervisorProduct)' ?>
+    <?define Agent = '$(var.BRANDING_managementName)' ?>
+    <?define Install = '$(var.BRANDING_managementDesc)' ?>
 
      <?if $(var.arch)=x64 ?>
       <?define UpgradeCode = '48e5492c-6843-452e-97a2-a5fe2d24b141' ?>
@@ -76,20 +77,20 @@
              Platform='$(var.arch)'
              SummaryCodepage='1252' />
 
-   <Icon Id="icon.ico" SourceFile="$(var.Bitmaps)\xen.ico"/>
-   <Property Id="ARPPRODUCTICON" Value="icon.ico" />
+   <Icon Id="icon.ico" SourceFile="$(var.RESOURCES_Bitmaps)\$(var.RESOURCE_icon)"/>
+   <Property Id="ARPPRODUCTICON" Value="$(var.RESOURCE_icon)" />
    <Property Id='ARPSYSTEMCOMPONENT' Value='0'/>
     <Property Id="REINSTALLMODE" Value="dmus" />
 
 
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />     
     <UIRef Id="WixUI_InstallDir" />
-    <WixVariable Id="WixUIBannerBmp" Value="$(var.Bitmaps)\BannrBmp.bmp" />
-    <WixVariable Id="WixUIDialogBmp" Value="$(var.Bitmaps)\DlgBmp.bmp" />
-    <WixVariable Id="WixUIExclamationIco" Value="$(var.Bitmaps)\exclamic.ico" />
-    <WixVariable Id="WixUIInfoIco" Value="$(var.Bitmaps)\info.ico" />
-    <WixVariable Id="WixUINewIco" Value="$(var.Bitmaps)\New.ico" />
-    <WixVariable Id="WixUIUpIco" Value="$(var.Bitmaps)\Up.ico" />
+    <WixVariable Id="WixUIBannerBmp" Value="$(var.RESOURCES_Bitmaps)\BannrBmp.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="$(var.RESOURCES_Bitmaps)\DlgBmp.bmp" />
+    <WixVariable Id="WixUIExclamationIco" Value="$(var.RESOURCES_Bitmaps)\exclamic.ico" />
+    <WixVariable Id="WixUIInfoIco" Value="$(var.RESOURCES_Bitmaps)\info.ico" />
+    <WixVariable Id="WixUINewIco" Value="$(var.RESOURCES_Bitmaps)\New.ico" />
+    <WixVariable Id="WixUIUpIco" Value="$(var.RESOURCES_Bitmaps)\Up.ico" />
 
     <MajorUpgrade
             AllowDowngrades="yes" />
@@ -201,11 +202,19 @@
 
 
 
-    <Media Id='1' Cabinet='XenGuestAgentInstaller.cab' EmbedCab='yes' />
+    <Media Id='1' Cabinet='ManagementAgentInstaller.cab' EmbedCab='yes' />
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='$(var.pf)'>
-        <Directory Id='Citrix' Name='Citrix'>
-          <Directory Id='INSTALLDIR' Name='XenTools'>
+        <Directory Id='Citrix' Name='$(var.BRANDING_manufacturer)'>
+          <Directory Id='INSTALLDIR' Name='$(var.BRANDING_shortTools)'>
+            <Directory Id='BRANDING' Name='Branding'>
+                <Component Id="BrandingCpy" Guid='*'>
+                    <File Id="BrandSatDll" Name='brandsat.dll' DiskId='1' Source='proj\brandsat.dll' />
+                </Component>
+                <Component Id="BrandingSup" Guid='*'>
+                    <File Id="BrandSupportDll" Name="BrandSupport.dll" DiskId='1' Source='BrandSupport\BrandSupport.dll' />
+                </Component>
+            </Directory>
             <Directory Id="netsettings" Name='netsettings'>
                   <Component Id="NetSettingsCpy" Guid="*">
                       <?if $(var.arch)=x86?> 
@@ -248,8 +257,8 @@
             <?if $(var.usecerts)=yes ?>
                 <Directory Id="certsdir" Name="Certs">
                     <Component Id="Certs" Guid="$(var.certs)">
-                        <File Id="CitrixSha1" Name="citrixsha1.cer" Source="$(var.Bitmaps)\citrixsha1.cer" />
-                        <File Id="CitrixSha256" Name="citrixsha256.cer" Source="$(var.Bitmaps)\citrixsha256.cer" />
+                        <File Id="CitrixSha1" Name="citrixsha1.cer" Source="$(var.RESOURCES_Bitmaps)\citrixsha1.cer" />
+                        <File Id="CitrixSha256" Name="citrixsha256.cer" Source="$(var.RESOURCES_Bitmaps)\citrixsha256.cer" />
                     </Component>
                 </Directory>
             <?endif?>
@@ -258,9 +267,9 @@
                 <ServiceInstall Id='XenServiceInstaller'
                       Type='ownProcess'
                       Vital='yes'
-                      Name='XenSvc'
+                      Name='$(var.BRANDING_guestServiceShort)'
                       DisplayName='$(var.Brand) $(var.Product) $(var.Agent)'
-                      Description='Monitors and provides various metrics to XenStore'
+                      Description='$(var.BRANDING_guestServiceDesc)'
                       Start='auto'
                       Account='LocalSystem'
                       ErrorControl='ignore'
@@ -272,7 +281,7 @@
                       Start='install' 
                       Stop='both' 
                       Remove='uninstall' 
-                      Name='XenSvc' 
+                      Name='$(var.BRANDING_guestServiceShort)' 
                       Wait='yes' />
               </Component>
 
@@ -281,9 +290,9 @@
                   <ServiceInstall Id='InstallServiceInstaller'
                       Type='ownProcess'
                       Vital='yes'
-                      Name='InstallAgent'
+                      Name='$(var.BRANDING_installAgentShort)'
                       DisplayName='$(var.Brand) $(var.Product) $(var.Install)'
-                      Description='Installs and updates management agent'
+                      Description='($var.BRANDING_installAgentDesc)'
                       Start='auto'
                       Account='LocalSystem'
                       ErrorControl='ignore'
@@ -295,7 +304,7 @@
                       Start='install' 
                       Stop='both' 
                       Remove='uninstall' 
-                      Name='InstallAgent'
+                      Name='$(var.BRANDING_installAgentShort)'
                       Wait='yes' />
               </Component>
 
@@ -358,7 +367,7 @@
       </Component>
       <Component Id="InstallAgentReg" Guid="15382399-a381-4ff1-8f8d-10ab8a31512e">
           <RegistryKey Root="HKLM"
-              Key='Software\Citrix\InstallAgent'>
+              Key='$(var.BRANDING_installAgentRegKey)'>
               <RegistryValue Type='string' Name='RebootOption' Value='[REBOOTOPTION]' />
           </RegistryKey>
       </Component>
@@ -375,6 +384,12 @@
         <MergeRef Id='Drivers' />
         <ComponentRef Id='NetSettingsCpy' />
         <ComponentRef Id='QNetSettingsCpy' />
+        <ComponentRef Id='BrandingCpy' />
+        <ComponentRef Id='BrandingSup' />
+        <ComponentRef Id='PInvokeWrapDLL' />
+        <ComponentRef Id='HelperFunctionsDLL' />
+        <ComponentRef Id='HardwareDeviceDLL' />
+        <ComponentRef Id='PVDriversRemovalDLL' />
         <ComponentRef Id='RegEntry'/>
         <ComponentRef Id='XenVssComponent'/>
         <ComponentRef Id='XenService'/>
@@ -385,10 +400,6 @@
         <?endif ?>
         <ComponentRef Id='InstallAgentReg'/>
         <ComponentRef Id='InstallService' />
-        <ComponentRef Id='PInvokeWrapDLL' />
-        <ComponentRef Id='HelperFunctionsDLL' />
-        <ComponentRef Id='HardwareDeviceDLL' />
-        <ComponentRef Id='PVDriversRemovalDLL' />
     </Feature>
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>
