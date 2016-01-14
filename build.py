@@ -480,7 +480,7 @@ def make_installers(pack, signname):
         sign("installer\\installwizard.msi", signname, signstr=signstr)
 
 
-    shutil.copy("Setup\\setup.exe", "installer") 
+    shutil.copy("Setup\\Setup.exe", "installer") 
 
     if signfiles:
         for signname in signinstallers:
