@@ -17,9 +17,6 @@ namespace InstallAgent
 {
     public partial class InstallAgent : ServiceBase
     {
-        public static string rootRegKeyName =
-            @Branding.Instance.getString("BRANDING_installAgentRegKey");
-
         public enum RebootType
         {
             NOREBOOT,
@@ -29,6 +26,7 @@ namespace InstallAgent
 
         public static /* readonly */ RebootType rebootOption;
         public static readonly string exeDir;
+        public static readonly string rootRegKeyName;
 
         private Thread installThread = null;
 
@@ -37,6 +35,10 @@ namespace InstallAgent
             exeDir = new DirectoryInfo(
                 Assembly.GetExecutingAssembly().Location
             ).Parent.FullName;
+
+            // Branding's static ctor makes use of 'exeDir',
+            // so it needs to be called after it's populated
+            rootRegKeyName = Branding.GetString("BRANDING_installAgentRegKey");
 
             // Just to kick off the static constructor
             // before we start messing with the VM
@@ -374,24 +376,21 @@ namespace InstallAgent
         }
     }
 
-    public class Branding
+    public static class Branding
     {
-        private static BrandingControl instance;
+        private static BrandingControl handle;
 
-        public static BrandingControl Instance
+        static Branding()
         {
-            get
-            {
-                if (instance == null)
-                {
-                    Assembly assembly = Assembly.GetExecutingAssembly();
-                    string brandsatpath = Path.GetDirectoryName(assembly.Location) + "\\Branding\\brandsat.dll";
-                    instance = new BrandingControl(brandsatpath);
-                }
-
-                return instance;
-            }
+            string brandSatPath = Path.Combine(
+                InstallAgent.exeDir, "Branding\\brandsat.dll"
+            );
+            handle = new BrandingControl(brandSatPath);
         }
 
+        public static string GetString(string key)
+        {
+            return handle.getString(key);
+        }
     }
 }
