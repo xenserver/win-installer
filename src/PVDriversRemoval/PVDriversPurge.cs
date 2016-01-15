@@ -314,22 +314,11 @@ namespace PVDriversRemoval
         public static void CleanUpServices()
         // Properly uninstalls PV drivers' services
         {
-            // On 2k8 if you're going to reinstall straight away,
-            // don't remove 'xenbus' or 'xenfilt' - as 2k8 assumes
-            // their registry entries are still in place
             List<string> services = new List<string> {
                 "xeniface", "xenlite", "xennet", "xenvbd",
-                "xenvif", "xennet6", "xenutil", "xenevtchn"
+                "xenvif", "xennet6", "xenutil", "xenevtchn",
+                "XENBUS", "xenfilt"
             };
-
-            // OS is not Win 2k8
-            if (!(WinVersion.IsServerSKU() &&
-                  WinVersion.GetMajorVersion() == 6 &&
-                  WinVersion.GetMinorVersion() < 2))
-            {
-                services.Add("XENBUS");
-                services.Add("xenfilt");
-            }
 
             foreach (string service in services)
             {
