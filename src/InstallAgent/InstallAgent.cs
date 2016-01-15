@@ -105,7 +105,6 @@ namespace InstallAgent
                 Trace.WriteLine("NetSettings not saved..");
                 XenVif.NetworkSettingsSaveRestore(true);
                 Installer.SetFlag(Installer.States.NetworkSettingsSaved);
-                Trace.WriteLine("NetSettings saved!");
             }
 
             while (!Installer.SystemCleaned())

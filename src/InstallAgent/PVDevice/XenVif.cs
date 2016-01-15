@@ -67,29 +67,17 @@ namespace PVDevice
 
         public static void NetworkSettingsSaveRestore(bool save)
         {
-            // Combined the 2 actions since they
-            // only differ in these 3 words
-            string[] action = save ?
-                new string[] { "Saving", "/save", "saved" } :
-                new string[] { "Restoring", "/restore", "restored" };
+            string action = save ? "/save" : "/restore";
 
-            string qNetExe = Path.Combine(
+            Trace.WriteLine("Network settings: \'" + action + "\'");
+
+            ProcessStartInfo start = new ProcessStartInfo();
+
+            start.Arguments = "/log " + action;
+            start.FileName = Path.Combine(
                 InstallAgent.InstallAgent.exeDir,
                 @"netsettings\QNetSettings.exe"
             );
-
-            if (!File.Exists(qNetExe))
-            {
-                throw new Exception(
-                    String.Format("\'{0}\' does not exist", qNetExe)
-                );
-            }
-
-            Trace.WriteLine(action[0] + " network settings");
-
-            ProcessStartInfo start = new ProcessStartInfo();
-            start.Arguments = "/log " + action[1];
-            start.FileName = qNetExe;
             start.WindowStyle = ProcessWindowStyle.Hidden;
             start.CreateNoWindow = true;
 
@@ -104,7 +92,7 @@ namespace PVDevice
                 VifDisableEnable(true);
             }
 
-            Trace.WriteLine("Network settings " + action[2]);
+            Trace.WriteLine("\'" + action + "\': complete");
         }
 
         public static void FixupAliases()
