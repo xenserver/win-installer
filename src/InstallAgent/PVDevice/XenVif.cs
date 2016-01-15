@@ -169,6 +169,10 @@ namespace PVDevice
 
         private static void VifDisableEnable(bool enable)
         {
+            string action = enable ? "enable" : "disable";
+
+            Trace.WriteLine("===> VifDisableEnable: \'" + action + "\'");
+
             using (SetupApi.DeviceInfoSet devInfoSet =
                        new SetupApi.DeviceInfoSet(
                        IntPtr.Zero,
@@ -182,8 +186,6 @@ namespace PVDevice
 
                 devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
 
-                Trace.WriteLine("DevInfoData Size " + devInfoData.cbSize.ToString());
-
                 for (uint i = 0;
                      SetupApi.SetupDiEnumDeviceInfo(
                          devInfoSet.Get(),
@@ -191,7 +193,6 @@ namespace PVDevice
                          devInfoData);
                      ++i)
                 {
-                    Trace.WriteLine("dev inst: " + devInfoData.devInst.ToString());
                     SetupApi.PropertyChangeParameters pcParams =
                         new SetupApi.PropertyChangeParameters();
 
@@ -219,14 +220,7 @@ namespace PVDevice
                         Marshal.SizeOf(pcParams)
                     );
 
-                    for (int j = 0; j < temp.Length/*Marshal.SizeOf(pcParams)*/; ++j)
-                    {
-                        Trace.WriteLine("[" + temp[j].ToString() + "]");
-                    }
-
                     var pdd = GCHandle.Alloc(devInfoData, GCHandleType.Pinned);
-
-                    Trace.WriteLine(Marshal.SizeOf(pcParams).ToString());
 
                     if (!SetupApi.SetupDiSetClassInstallParams(
                             devInfoSet.Get(),
@@ -251,6 +245,7 @@ namespace PVDevice
                     pinned.Free();
                 }
             }
+            Trace.WriteLine("<=== VifDisableEnable");
         }
     }
 }
