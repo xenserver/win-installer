@@ -59,7 +59,7 @@ def unpack_from_jenkins(filelist, packdir):
 
 
 header = "verinfo.wxi"
-brandingheader = "branding.wxi"
+brandingheader = "branding"
 cppheader = "branding.h"
 
 include ="include"
@@ -138,6 +138,32 @@ def signcatfiles(pack, signname, arch, additionalcert, signstr = None):
     for afile in catfiles:
         sign(afile, signname, additionalcert, signstr=signstr)
 
+def get_cultural_branding(culture):
+    print(os.getcwd())
+    if culture==branding.cultures['default']:
+        (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding",["src\\branding"])
+    else:
+        if not os.path.isfile("src\\branding\\branding."+culture+".py"):
+            print("branding file for culture "+culture+" doesn't exist")
+        (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding."+culture,["src\\branding"])
+    return imp.load_module("branding",brandingFile,brandingPath,brandingDesc)
+
+def make_wxi_header(culture):
+    cbranding = get_cultural_branding(culture)
+    file = open(include+"\\"+brandingheader+"."+culture+".wxi", 'w')
+    file.write("<?xml version='1.0' ?>\n");
+    file.write("<Include xmlns = 'http://schemas.microsoft.com/wix/2006/wi'>\n")
+    for key, value in cbranding.branding.items():
+        file.write("<?define BRANDING_"+key+" =\t\""+value+"\"?>\n")
+    for key, value in cbranding.filenames.items():
+        file.write("<?define FILENAME_"+key+" =\t\""+value+"\"?>\n")
+    for key, value in cbranding.resources.items():
+        file.write("<?define RESOURCE_"+key+" =\t\""+value+"\"?>\n")
+    
+    file.write("<?define RESOURCES_Bitmaps =\t\""+cbranding.bitmaps+"\"?>\n")
+    
+    file.write("</Include>")
+    file.close();
 
 def make_header():
     now = datetime.datetime.now()
@@ -157,20 +183,9 @@ def make_header():
     file.write("</Include>")
     file.close();
 
-    file = open(include+"\\"+brandingheader, 'w')
-    file.write("<?xml version='1.0' ?>\n");
-    file.write("<Include xmlns = 'http://schemas.microsoft.com/wix/2006/wi'>\n")
-    for key, value in branding.branding.items():
-        file.write("<?define BRANDING_"+key+" =\t\""+value+"\"?>\n")
-    for key, value in branding.filenames.items():
-        file.write("<?define FILENAME_"+key+" =\t\""+value+"\"?>\n")
-    for key, value in branding.resources.items():
-        file.write("<?define RESOURCE_"+key+" =\t\""+value+"\"?>\n")
-    
-    file.write("<?define RESOURCES_Bitmaps =\t\""+branding.bitmaps+"\"?>\n")
-    
-    file.write("</Include>")
-    file.close();
+    make_wxi_header(branding.cultures['default'])
+    for culture in branding.cultures['others']:
+        make_wxi_header(culture)
 
     file = open(include+"\\"+cppheader, 'w')
     file.write("#pragma once\n")
@@ -402,16 +417,10 @@ def make_installers(pack, signname):
 
     callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x64","-darch=x64","-o", "installer\\drivergenx64.wixobj"])
     callfn([wix("light.exe"), "installer\\drivergenx64.wixobj","-darch=x64","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx64.msm"])
-    src = ".\\src\\agent"
-
-    callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x64", "-darch=x64", "-o", "installer\\managementagentx64.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
-    callfn([wix("light.exe"), "installer\\managementagentx64.wixobj", "-darch=x64", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['managementx64'], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
     
     callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x86","-darch=x86","-o", "installer\\drivergenx86.wixobj"])
     callfn([wix("light.exe"), "installer\\drivergenx86.wixobj","-darch=x86","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx86.msm"])
     src = ".\\src\\agent"
-    callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-arch","x86", "-darch=x86", "-o", "installer\\managementagentx86.wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
-    callfn([wix("light.exe"), "installer\\managementagentx86.wixobj", "-darch=x86", "-b", ".\\installer", "-o", "installer\\"+branding.filenames['managementx86'], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
     
     src = ".\\src\\drivers"
     callfn([wix("candle.exe"),src+"\\drivers.wxs","-arch","x64","-darch=x64","-ext","WixDifxAppExtension.dll", "-o", "installer\\driversx64.wixobj"])
@@ -479,6 +488,24 @@ def make_installers(pack, signname):
     if signfiles:
         sign("installer\\installwizard.msi", signname, signstr=signstr)
 
+
+    for arch in ["x86", "x64"]:
+        src = ".\\src\\agent"
+
+        culture = branding.cultures['default']
+        callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", "installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
+        callfn([wix("light.exe"), "installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-b", ".\\installer", "-o", "installer\\"+branding.filenames['management'+arch], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:"+branding.cultures['default'], "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+
+    if len(branding.cultures['others']) != 0 :
+        for culture in branding.cultures['others']:
+            cbranding = get_cultural_branding(culture)
+            src = ".\\src\\agent"
+            os.makedirs('installer\\'+culture)
+            for arch in ["x86", "x64"]:
+                callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", "installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
+                callfn([wix("light.exe"), "installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-b", ".\\installer", "-o", "installer\\"+culture+"\\"+branding.filenames['management'+arch], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:"+culture, "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+                callfn(["cscript", "src\\branding\\msidiff.js", "installer\\"+branding.filenames['management'+arch], "installer\\"+culture+"\\"+branding.filenames['management'+arch], "installer\\"+culture+arch+".mst"])
+                callfn(["cscript", "src\\branding\\WiSubStg.vbs", "installer\\"+branding.filenames['management'+arch], "installer\\"+culture+arch+".mst",cbranding.branding["language"]])
 
     shutil.copy("Setup\\Setup.exe", "installer") 
 
