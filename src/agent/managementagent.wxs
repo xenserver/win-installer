@@ -37,7 +37,7 @@
     >
 
     <?include verinfo.wxi ?>
-    <?include branding.wxi ?>
+    <?include branding.$(var.culture).wxi ?>
     <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
     <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
     <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
@@ -67,11 +67,11 @@
     <?define certs= 'f056d833-6b1f-4c9d-9636-f26ff3a75292' ?>
 
   <Product Name='$(var.Brand) $(var.Product) $(var.Agent)' Id='$(var.ProductId)'
-           Language='1033' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='$(var.Brand)'
+           Language='$(var.BRANDING_language)' Codepage='1252' Version='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)' Manufacturer='$(var.Brand)'
            UpgradeCode='$(var.UpgradeCode)' >
     <Package Id='*' Keywords='$(var.Brand) $(var.Product) $(var.Agent)' Description='$(var.Agent)'
              Comments='Installs $(var.Brand) $(var.Product) $(var.Agent)' Manufacturer='$(var.Brand)'
-             InstallerVersion='200' Languages='1033' Compressed='yes'
+             InstallerVersion='200' Languages='$(var.BRANDING_languages)' Compressed='yes'
              InstallScope='perMachine'
              InstallPrivileges="elevated"
              Platform='$(var.arch)'

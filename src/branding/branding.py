@@ -27,7 +27,9 @@ branding = {
         "managementDesc" : "Installation and Update Agent",
         "installAgentShort" : "InstallAgent",
         "installAgentDesc" : "Installs and updates management agent",
-        "installAgentRegKey" : "SOFTWARE\\Citrix\\InstallAgent"
+        "installAgentRegKey" : "SOFTWARE\\Citrix\\InstallAgent",
+        "language" : "1033",
+        "languages" : "1033",
 }
 
 filenames = {
@@ -50,3 +52,10 @@ resources = {
 }
 
 bitmaps = "src\\bitmaps"
+
+cultures = {
+        "default" : "en-us",
+        "others" : [],
+}
+
+

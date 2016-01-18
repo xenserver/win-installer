@@ -37,7 +37,7 @@
     >
 
     <?include verinfo.wxi ?>
-    <?include branding.wxi?>
+    <?include branding.en-us.wxi?>
     <?define CurrentMajorVersion = '$(var.BRANDING_MAJOR_VERSION_STR)' ?>
     <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
     <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
