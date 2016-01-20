@@ -215,10 +215,11 @@ namespace PVDriversRemoval
                 {
                     Helpers.UninstallDriverPackages(hwId);
 
-                    Device.RemoveFromSystem(
-                        devInfoSet,
-                        hwId,
-                        false
+                    while (
+                        Device.RemoveFromSystem(
+                            devInfoSet,
+                            hwId,
+                            false)
                     );
                 }
             }
