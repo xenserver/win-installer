@@ -100,6 +100,8 @@ namespace InstallAgent
                 throw new Exception("WOW64: Do not do that.");
             }
 
+            SetInstallStatus("Installing");
+
             if (!Installer.GetFlag(Installer.States.NetworkSettingsSaved))
             {
                 Trace.WriteLine("NetSettings not saved..");
@@ -168,6 +170,8 @@ namespace InstallAgent
                     this.ServiceName,
                     ServiceStartMode.Manual
                 );
+
+                SetInstallStatus("Installed");
             }
             else
             {
@@ -357,6 +361,46 @@ namespace InstallAgent
             }
 
             return true;
+        }
+
+        private static void SetInstallStatus(string status)
+        // Opens 'XenToolsInstaller' registry keys (both x64/x86)
+        // and writes 'status' to 'InstallStatus'
+        {
+            const string SOFTWARE = @"SOFTWARE\";
+            const string XTINSTALLER = @"Citrix\XenToolsInstaller";
+            const string INSTALLSTATUS = "InstallStatus";
+
+            string regKey = SOFTWARE + XTINSTALLER;
+
+            Trace.WriteLine("Setting \'InstallStatus\': \'" + status + "\'");
+
+            using (RegistryKey rk =
+                Registry.LocalMachine.CreateSubKey(regKey))
+            {
+                rk.SetValue(
+                    INSTALLSTATUS,
+                    status,
+                    RegistryValueKind.String
+                );
+            }
+
+            if (!WinVersion.Is64BitOS())
+            {
+                return;
+            }
+
+            regKey = SOFTWARE + @"Wow6432Node\" + XTINSTALLER;
+
+            using (RegistryKey rk =
+                Registry.LocalMachine.CreateSubKey(regKey))
+            {
+                rk.SetValue(
+                    INSTALLSTATUS,
+                    status,
+                    RegistryValueKind.String
+                );
+            }
         }
     }
 
