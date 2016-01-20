@@ -336,31 +336,16 @@ namespace InstallAgent
                 return false;
             }
 
-            // Do 2 passes to decrease the chance of
-            // something left behind/not being removed
-            const int TIMES = 2;
-
-            for (int i = 0; i < TIMES; ++i)
+            if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
             {
-                if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
-                {
-                    PVDriversPurge.UninstallDriversAndDevices();
+                PVDriversPurge.UninstallMSIs();
+                Installer.SetFlag(Installer.States.MSIsUninstalled);
+            }
 
-                    if (i == TIMES - 1)
-                    {
-                        Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
-                    }
-                }
-
-                if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
-                {
-                    PVDriversPurge.UninstallMSIs();
-
-                    if (i == TIMES - 1)
-                    {
-                        Installer.SetFlag(Installer.States.MSIsUninstalled);
-                    }
-                }
+            if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
+            {
+                PVDriversPurge.UninstallDriversAndDevices();
+                Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
             }
 
             if (!Installer.GetFlag(Installer.States.CleanedUp))
