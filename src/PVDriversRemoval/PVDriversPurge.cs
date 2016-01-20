@@ -175,30 +175,30 @@ namespace PVDriversRemoval
         public static void UninstallMSIs()
         {
             const int TRIES = 5;
-            List<string> toRemove = new List<string>();
 
             // MSIs to uninstall
-            string[] msiNameList = {
-            //    "Citrix XenServer Windows Guest Agent",
-                "Citrix XenServer VSS Provider",
-                "Citrix Xen Windows x64 PV Drivers",
-                "Citrix Xen Windows x86 PV Drivers",
-                "Citrix XenServer Tools Installer"
+            // N.B.: All this happens just because the "Tools Installer"
+            // msi refuses to uninstall if the '/norestart' flag is
+            // given (although it returns ERROR_SUCCESS)
+            var msiList = new[] {
+                new { name = "Citrix XenServer Tools Installer",
+                      args = "/qn"},
+                new { name = "Citrix XenServer VSS Provider",
+                      args = "/qn /norestart"},
+                new { name = "Citrix Xen Windows x64 PV Drivers",
+                      args = "/qn /norestart"},
+                new { name = "Citrix Xen Windows x86 PV Drivers",
+                      args = "/qn /norestart"},
             };
 
-            foreach (string msiName in msiNameList)
+            foreach (var msi in msiList)
             {
-                string tmpCode = Helpers.GetMsiProductCode(msiName);
+                string code = Helpers.GetMsiProductCode(msi.name);
 
-                if (!String.IsNullOrEmpty(tmpCode))
+                if (!String.IsNullOrEmpty(code))
                 {
-                    toRemove.Add(tmpCode);
+                    Helpers.UninstallMsi(code, msi.args, TRIES);
                 }
-            }
-
-            foreach (string productCode in toRemove)
-            {
-                Helpers.UninstallMsi(productCode, TRIES);
             }
         }
 
