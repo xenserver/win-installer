@@ -55,6 +55,7 @@
       <?define dn4id = 'ea3e02ec-df6c-45ae-94a4-a52c5ce39b4c' ?>
       <?define supportid = '3da541d4-ce74-49e9-a838-0e8ad9f2a433' ?>
       <?define XenVssComponentGUID = 'bb4ad259-a748-4a92-b265-5635cae68e42' ?>
+      <?define RegEntryGuid="A42D7BC2-2134-53E1-8046-E2C13B19FF8B" ?>
       <?define pf="ProgramFiles64Folder" ?>
     <?else?>
       <?define UpgradeCode = 'EE3B949D-C431-462b-B6DC-5BEDA078D772' ?>
@@ -63,6 +64,7 @@
       <?define supportid = '10f225c1-bb4e-4e2a-bef9-08ed0c297a15' ?>
       <?define XenVssComponentGUID = 'bb4ad259-a748-4a92-b265-5635cae68e42' ?>
       <?define pf="ProgramFilesFolder" ?>
+      <?define RegEntryGuid="DA4B51DE-1C10-5067-A3EE-58EE9145ED1C" ?>
     <?endif?>
     <?define certs= 'f056d833-6b1f-4c9d-9636-f26ff3a75292' ?>
 
@@ -336,9 +338,10 @@
         </Directory>
       </Directory>
      
-      <Component Id='RegEntry' Guid="*">
+      <Component Id='RegEntry' Guid="$(var.RegEntryGuid)">
           <RegistryKey Root='HKLM'
               Key='Software\Citrix\XenTools' >
+              <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
               <RegistryValue Type='integer' Name='MajorVersion' Value='$(var.CurrentMajorVersion)' />
               <RegistryValue Type='integer' Name='MinorVersion' Value='$(var.CurrentMinorVersion)' />
               <RegistryValue Type='integer' Name='MicroVersion' Value='$(var.CurrentMicroVersion)' />
@@ -346,7 +349,6 @@
               <!-- BuildVersion, above, is the number we report to XAPI, so we report the hardcoded tools hotfix number, not the Jenkins build number -->
               <RegistryValue Type='string' Name='Install_Dir' Value='[INSTALLDIR]' />
               <RegistryValue Type='integer' Name='MsiGuestAgent' Value='1' />
-              <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
               <RegistryValue Type='string' Name='Driver_Install_Dir' Value='[INSTALLDIR]\Drivers' />
           </RegistryKey> 
           <RegistryKey Root='HKLM'
