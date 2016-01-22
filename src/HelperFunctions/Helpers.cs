@@ -386,7 +386,10 @@ namespace HelperFunctions
             return strList.ToArray();
         }
 
-        public static void UninstallMsi(string msiCode, int tries = 1)
+        public static void UninstallMsi(
+            string msiCode,
+            string args = "",
+            int tries = 1)
         // Uses 'msiexec.exe' to uninstall MSI with product code
         // 'msiCode'. If the exit code is none of 'ERROR_SUCCCESS',
         // the function sleeps and then retries. The amount of time
@@ -401,7 +404,7 @@ namespace HelperFunctions
 
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.FileName = "msiexec.exe";
-            startInfo.Arguments = "/x " + msiCode + " /qn /norestart";
+            startInfo.Arguments = "/x " + msiCode + " " + args;
             startInfo.WindowStyle = ProcessWindowStyle.Hidden;
             startInfo.CreateNoWindow = true;
 

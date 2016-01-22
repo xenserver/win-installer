@@ -17,9 +17,6 @@ namespace InstallAgent
 {
     public partial class InstallAgent : ServiceBase
     {
-        public static string rootRegKeyName =
-            @Branding.Instance.getString("BRANDING_installAgentRegKey");
-
         public enum RebootType
         {
             NOREBOOT,
@@ -29,6 +26,7 @@ namespace InstallAgent
 
         public static /* readonly */ RebootType rebootOption;
         public static readonly string exeDir;
+        public static readonly string rootRegKeyName;
 
         private Thread installThread = null;
 
@@ -37,6 +35,10 @@ namespace InstallAgent
             exeDir = new DirectoryInfo(
                 Assembly.GetExecutingAssembly().Location
             ).Parent.FullName;
+
+            // Branding's static ctor makes use of 'exeDir',
+            // so it needs to be called after it's populated
+            rootRegKeyName = Branding.GetString("BRANDING_installAgentRegKey");
 
             // Just to kick off the static constructor
             // before we start messing with the VM
@@ -98,12 +100,13 @@ namespace InstallAgent
                 throw new Exception("WOW64: Do not do that.");
             }
 
+            SetInstallStatus("Installing");
+
             if (!Installer.GetFlag(Installer.States.NetworkSettingsSaved))
             {
                 Trace.WriteLine("NetSettings not saved..");
                 XenVif.NetworkSettingsSaveRestore(true);
                 Installer.SetFlag(Installer.States.NetworkSettingsSaved);
-                Trace.WriteLine("NetSettings saved!");
             }
 
             while (!Installer.SystemCleaned())
@@ -167,6 +170,8 @@ namespace InstallAgent
                     this.ServiceName,
                     ServiceStartMode.Manual
                 );
+
+                SetInstallStatus("Installed");
             }
             else
             {
@@ -335,31 +340,16 @@ namespace InstallAgent
                 return false;
             }
 
-            // Do 2 passes to decrease the chance of
-            // something left behind/not being removed
-            const int TIMES = 2;
-
-            for (int i = 0; i < TIMES; ++i)
+            if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
             {
-                if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
-                {
-                    PVDriversPurge.UninstallDriversAndDevices();
+                PVDriversPurge.UninstallMSIs();
+                Installer.SetFlag(Installer.States.MSIsUninstalled);
+            }
 
-                    if (i == TIMES - 1)
-                    {
-                        Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
-                    }
-                }
-
-                if (!Installer.GetFlag(Installer.States.MSIsUninstalled))
-                {
-                    PVDriversPurge.UninstallMSIs();
-
-                    if (i == TIMES - 1)
-                    {
-                        Installer.SetFlag(Installer.States.MSIsUninstalled);
-                    }
-                }
+            if (!Installer.GetFlag(Installer.States.DrvsAndDevsUninstalled))
+            {
+                PVDriversPurge.UninstallDriversAndDevices();
+                Installer.SetFlag(Installer.States.DrvsAndDevsUninstalled);
             }
 
             if (!Installer.GetFlag(Installer.States.CleanedUp))
@@ -372,26 +362,63 @@ namespace InstallAgent
 
             return true;
         }
-    }
 
-    public class Branding
-    {
-        private static BrandingControl instance;
-
-        public static BrandingControl Instance
+        private static void SetInstallStatus(string status)
+        // Opens 'XenToolsInstaller' registry keys (both x64/x86)
+        // and writes 'status' to 'InstallStatus'
         {
-            get
-            {
-                if (instance == null)
-                {
-                    Assembly assembly = Assembly.GetExecutingAssembly();
-                    string brandsatpath = Path.GetDirectoryName(assembly.Location) + "\\Branding\\brandsat.dll";
-                    instance = new BrandingControl(brandsatpath);
-                }
+            const string SOFTWARE = @"SOFTWARE\";
+            const string XTINSTALLER = @"Citrix\XenToolsInstaller";
+            const string INSTALLSTATUS = "InstallStatus";
 
-                return instance;
+            string regKey = SOFTWARE + XTINSTALLER;
+
+            Trace.WriteLine("Setting \'InstallStatus\': \'" + status + "\'");
+
+            using (RegistryKey rk =
+                Registry.LocalMachine.CreateSubKey(regKey))
+            {
+                rk.SetValue(
+                    INSTALLSTATUS,
+                    status,
+                    RegistryValueKind.String
+                );
+            }
+
+            if (!WinVersion.Is64BitOS())
+            {
+                return;
+            }
+
+            regKey = SOFTWARE + @"Wow6432Node\" + XTINSTALLER;
+
+            using (RegistryKey rk =
+                Registry.LocalMachine.CreateSubKey(regKey))
+            {
+                rk.SetValue(
+                    INSTALLSTATUS,
+                    status,
+                    RegistryValueKind.String
+                );
             }
         }
+    }
 
+    public static class Branding
+    {
+        private static BrandingControl handle;
+
+        static Branding()
+        {
+            string brandSatPath = Path.Combine(
+                InstallAgent.exeDir, "Branding\\brandsat.dll"
+            );
+            handle = new BrandingControl(brandSatPath);
+        }
+
+        public static string GetString(string key)
+        {
+            return handle.getString(key);
+        }
     }
 }

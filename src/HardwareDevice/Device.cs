@@ -174,10 +174,12 @@ namespace HardwareDevice
             throw new Exception(Win32Error.GetFullErrMsg());
         }
 
-        public static void RemoveFromSystem(
+        public static bool RemoveFromSystem(
             SetupApi.DeviceInfoSet devInfoSet,
             string hwID,
             bool strictSearch)
+        // WARNING: Removes ONLY the particular device
+        // instance referenced by 'devInfoSet'
         {
             SetupApi.SP_DEVINFO_DATA devInfoData;
 
@@ -189,7 +191,7 @@ namespace HardwareDevice
 
             if (devInfoData == null)
             {
-                return;
+                return false;
             }
 
             SetupApi.SP_REMOVEDEVICE_PARAMS rparams =
@@ -234,6 +236,7 @@ namespace HardwareDevice
             }
 
             Trace.WriteLine("Remove should have worked");
+            return true;
         }
 
         public static bool ChildrenInstalled(string enumName)

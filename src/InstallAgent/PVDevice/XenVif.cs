@@ -67,29 +67,17 @@ namespace PVDevice
 
         public static void NetworkSettingsSaveRestore(bool save)
         {
-            // Combined the 2 actions since they
-            // only differ in these 3 words
-            string[] action = save ?
-                new string[] { "Saving", "/save", "saved" } :
-                new string[] { "Restoring", "/restore", "restored" };
+            string action = save ? "/save" : "/restore";
 
-            string qNetExe = Path.Combine(
+            Trace.WriteLine("Network settings: \'" + action + "\'");
+
+            ProcessStartInfo start = new ProcessStartInfo();
+
+            start.Arguments = "/log " + action;
+            start.FileName = Path.Combine(
                 InstallAgent.InstallAgent.exeDir,
                 @"netsettings\QNetSettings.exe"
             );
-
-            if (!File.Exists(qNetExe))
-            {
-                throw new Exception(
-                    String.Format("\'{0}\' does not exist", qNetExe)
-                );
-            }
-
-            Trace.WriteLine(action[0] + " network settings");
-
-            ProcessStartInfo start = new ProcessStartInfo();
-            start.Arguments = "/log " + action[1];
-            start.FileName = qNetExe;
             start.WindowStyle = ProcessWindowStyle.Hidden;
             start.CreateNoWindow = true;
 
@@ -104,7 +92,7 @@ namespace PVDevice
                 VifDisableEnable(true);
             }
 
-            Trace.WriteLine("Network settings " + action[2]);
+            Trace.WriteLine("\'" + action + "\': complete");
         }
 
         public static void FixupAliases()
@@ -181,6 +169,10 @@ namespace PVDevice
 
         private static void VifDisableEnable(bool enable)
         {
+            string action = enable ? "enable" : "disable";
+
+            Trace.WriteLine("===> VifDisableEnable: \'" + action + "\'");
+
             using (SetupApi.DeviceInfoSet devInfoSet =
                        new SetupApi.DeviceInfoSet(
                        IntPtr.Zero,
@@ -194,8 +186,6 @@ namespace PVDevice
 
                 devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
 
-                Trace.WriteLine("DevInfoData Size " + devInfoData.cbSize.ToString());
-
                 for (uint i = 0;
                      SetupApi.SetupDiEnumDeviceInfo(
                          devInfoSet.Get(),
@@ -203,7 +193,6 @@ namespace PVDevice
                          devInfoData);
                      ++i)
                 {
-                    Trace.WriteLine("dev inst: " + devInfoData.devInst.ToString());
                     SetupApi.PropertyChangeParameters pcParams =
                         new SetupApi.PropertyChangeParameters();
 
@@ -231,14 +220,7 @@ namespace PVDevice
                         Marshal.SizeOf(pcParams)
                     );
 
-                    for (int j = 0; j < temp.Length/*Marshal.SizeOf(pcParams)*/; ++j)
-                    {
-                        Trace.WriteLine("[" + temp[j].ToString() + "]");
-                    }
-
                     var pdd = GCHandle.Alloc(devInfoData, GCHandleType.Pinned);
-
-                    Trace.WriteLine(Marshal.SizeOf(pcParams).ToString());
 
                     if (!SetupApi.SetupDiSetClassInstallParams(
                             devInfoSet.Get(),
@@ -263,6 +245,7 @@ namespace PVDevice
                     pinned.Free();
                 }
             }
+            Trace.WriteLine("<=== VifDisableEnable");
         }
     }
 }
