@@ -237,20 +237,20 @@ namespace PVDriversRemoval
 
             string rk1Path;
             string rk2Path;
-            string rk3Path;
+            string tmpPath;
 
             if (WinVersion.Is64BitOS())
             {
                 rk1Path = SOFTWARE + WOW6432NODE + UNINSTALL;
-                rk3Path = SOFTWARE + WOW6432NODE + CITRIX_XENTOOLS;
+                tmpPath = SOFTWARE + WOW6432NODE + CITRIX_XENTOOLS;
             }
             else
             {
                 rk1Path = SOFTWARE + UNINSTALL;
-                rk3Path = SOFTWARE + CITRIX_XENTOOLS;
+                tmpPath = SOFTWARE + CITRIX_XENTOOLS;
             }
 
-            rk2Path = rk3Path + INSTALL_DIR;
+            rk2Path = tmpPath + INSTALL_DIR;
 
             try
             {
@@ -271,12 +271,6 @@ namespace PVDriversRemoval
             }
             catch (DirectoryNotFoundException) { }
             catch (ArgumentNullException) { }
-
-            try
-            {
-                Registry.LocalMachine.DeleteSubKeyTree(rk3Path);
-            }
-            catch (ArgumentException) { }
         }
 
         public static void CleanUpDriverFiles()
