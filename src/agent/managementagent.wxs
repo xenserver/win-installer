@@ -179,6 +179,16 @@
                   Property="HOSTTIME"
                   Value="[HOSTTIME64]"
                   Execute="firstSequence" />
+	<CustomAction Id="RegisterUpdateTask"
+				  FileKey="XenUpdaterExe"
+				  ExeCommand="add"
+				  Execute="deferred"
+				  Return="check" />
+	<CustomAction Id="DeregisterUpdateTask"
+				  FileKey="XenUpdaterExe"
+				  ExeCommand="remove"
+				  Execute="deferred"
+				  Return="check" />
 
 
     <CustomAction Id="SetREBOOTOPTION" Property="REBOOTOPTION" Value="DEFAULT" />
@@ -193,6 +203,8 @@
         <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
             CMDLINE_HOSTTIME
         </Custom>
+		 <Custom Action="DeregisterUpdateTask" Before="RemoveFiles" />
+		 <Custom Action="RegisterUpdateTask" After="InstallFiles" />
         <Custom Action="SetREBOOTOPTION" Before="WriteRegistryValues" />
         <Custom Action="RebootOptionForce" After="SetREBOOTOPTION">
             REBOOT="Force"
@@ -242,12 +254,15 @@
                 </Condition>
                 <File Id='XenDprivExeConfig' Name="XenDpriv.Exe.Config" Source='xenguestagent\xendpriv\XenDpriv.Exe.Config' />
                 <File Id='XenGuestAgentExeConfig' Name="XenGuestAgent.Exe.Config" Source='xenguestagent\xenguestagent\XenGuestAgent.Exe.Config' />
+                <File Id='XenUpdaterExeConfig' Name="XenUpdater.Exe.Config" Source='xenguestagent\xenupdater\XenUpdater.Exe.Config' />
 				<File Id='InstallAgentExeConfig' Name="InstallAgent.exe.config" Source='InstallAgent\InstallAgent.exe.config' />
             </Component>
             <Component Id='dotnetagentsupport' Guid='$(var.supportid)'>
                 <File Id="XenDPrivExe" Name="XenDPriv.exe" Source="xenguestagent\xendpriv\XenDPriv.exe" />
                 <File Id="XenGuestLibDll" Name="XenGuestLib.Dll" Source="xenguestagent\xenguestagent\XenGuestLib.Dll" />
                 <File Id="InteropNetFwTypeLibdll" Name="Interop.NetFwTypeLib.dll" Source="xenguestagent\xenguestagent\Interop.NetFwTypeLib.dll" />
+                <File Id="XenUpdaterExe" Name="XenUpdater.exe" Source="xenguestagent\xenupdater\XenUpdater.exe" />
+                <File Id="InteropTaskSchedulerdll" Name="Interop.TaskScheduler.dll" Source="xenguestagent\xenupdater\Interop.TaskScheduler.dll" />
             </Component>
             <Component Id='XenVssComponent' Guid='$(var.XenVssComponentGUID)'>
                  <File Id='xenvss_dll' Name="XenVss.dll" DiskId='1' Source='xenvss\$(var.arch)\xenvss.dll' KeyPath='yes' />
