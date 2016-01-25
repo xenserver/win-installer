@@ -183,11 +183,13 @@
 				  FileKey="XenUpdaterExe"
 				  ExeCommand="add"
 				  Execute="deferred"
+				  Impersontate="no"
 				  Return="check" />
 	<CustomAction Id="DeregisterUpdateTask"
 				  FileKey="XenUpdaterExe"
 				  ExeCommand="remove"
 				  Execute="deferred"
+				  Impersontate="no"
 				  Return="check" />
 
 
@@ -203,8 +205,12 @@
         <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
             CMDLINE_HOSTTIME
         </Custom>
-		 <Custom Action="DeregisterUpdateTask" Before="RemoveFiles" />
-		 <Custom Action="RegisterUpdateTask" After="InstallFiles" />
+		 <Custom Action="DeregisterUpdateTask" Before="RemoveFiles">
+			Installed
+		 </Custom>
+		 <Custom Action="RegisterUpdateTask" After="InstallFiles">
+			NOT Installed
+		 </Custom>
         <Custom Action="SetREBOOTOPTION" Before="WriteRegistryValues" />
         <Custom Action="RebootOptionForce" After="SetREBOOTOPTION">
             REBOOT="Force"
