@@ -175,30 +175,30 @@ namespace PVDriversRemoval
         public static void UninstallMSIs()
         {
             const int TRIES = 5;
-            List<string> toRemove = new List<string>();
 
             // MSIs to uninstall
-            string[] msiNameList = {
-            //    "Citrix XenServer Windows Guest Agent",
-                "Citrix XenServer VSS Provider",
-                "Citrix Xen Windows x64 PV Drivers",
-                "Citrix Xen Windows x86 PV Drivers",
-                "Citrix XenServer Tools Installer"
+            // N.B.: All this happens just because the "Tools Installer"
+            // msi refuses to uninstall if the '/norestart' flag is
+            // given (although it returns ERROR_SUCCESS)
+            var msiList = new[] {
+                new { name = "Citrix XenServer Tools Installer",
+                      args = "/qn"},
+                new { name = "Citrix XenServer VSS Provider",
+                      args = "/qn /norestart"},
+                new { name = "Citrix Xen Windows x64 PV Drivers",
+                      args = "/qn /norestart"},
+                new { name = "Citrix Xen Windows x86 PV Drivers",
+                      args = "/qn /norestart"},
             };
 
-            foreach (string msiName in msiNameList)
+            foreach (var msi in msiList)
             {
-                string tmpCode = Helpers.GetMsiProductCode(msiName);
+                string code = Helpers.GetMsiProductCode(msi.name);
 
-                if (!String.IsNullOrEmpty(tmpCode))
+                if (!String.IsNullOrEmpty(code))
                 {
-                    toRemove.Add(tmpCode);
+                    Helpers.UninstallMsi(code, msi.args, TRIES);
                 }
-            }
-
-            foreach (string productCode in toRemove)
-            {
-                Helpers.UninstallMsi(productCode, TRIES);
             }
         }
 
@@ -215,10 +215,11 @@ namespace PVDriversRemoval
                 {
                     Helpers.UninstallDriverPackages(hwId);
 
-                    Device.RemoveFromSystem(
-                        devInfoSet,
-                        hwId,
-                        false
+                    while (
+                        Device.RemoveFromSystem(
+                            devInfoSet,
+                            hwId,
+                            false)
                     );
                 }
             }
@@ -236,20 +237,20 @@ namespace PVDriversRemoval
 
             string rk1Path;
             string rk2Path;
-            string rk3Path;
+            string tmpPath;
 
             if (WinVersion.Is64BitOS())
             {
                 rk1Path = SOFTWARE + WOW6432NODE + UNINSTALL;
-                rk3Path = SOFTWARE + WOW6432NODE + CITRIX_XENTOOLS;
+                tmpPath = SOFTWARE + WOW6432NODE + CITRIX_XENTOOLS;
             }
             else
             {
                 rk1Path = SOFTWARE + UNINSTALL;
-                rk3Path = SOFTWARE + CITRIX_XENTOOLS;
+                tmpPath = SOFTWARE + CITRIX_XENTOOLS;
             }
 
-            rk2Path = rk3Path + INSTALL_DIR;
+            rk2Path = tmpPath + INSTALL_DIR;
 
             try
             {
@@ -270,12 +271,6 @@ namespace PVDriversRemoval
             }
             catch (DirectoryNotFoundException) { }
             catch (ArgumentNullException) { }
-
-            try
-            {
-                Registry.LocalMachine.DeleteSubKeyTree(rk3Path);
-            }
-            catch (ArgumentException) { }
         }
 
         public static void CleanUpDriverFiles()
@@ -314,22 +309,11 @@ namespace PVDriversRemoval
         public static void CleanUpServices()
         // Properly uninstalls PV drivers' services
         {
-            // On 2k8 if you're going to reinstall straight away,
-            // don't remove 'xenbus' or 'xenfilt' - as 2k8 assumes
-            // their registry entries are still in place
             List<string> services = new List<string> {
                 "xeniface", "xenlite", "xennet", "xenvbd",
-                "xenvif", "xennet6", "xenutil", "xenevtchn"
+                "xenvif", "xennet6", "xenutil", "xenevtchn",
+                "XENBUS", "xenfilt"
             };
-
-            // OS is not Win 2k8
-            if (!(WinVersion.IsServerSKU() &&
-                  WinVersion.GetMajorVersion() == 6 &&
-                  WinVersion.GetMinorVersion() < 2))
-            {
-                services.Add("XENBUS");
-                services.Add("xenfilt");
-            }
 
             foreach (string service in services)
             {
