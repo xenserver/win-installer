@@ -397,7 +397,6 @@
         <?if $(var.usecerts)=yes ?>
             <ComponentRef Id='Certs' />
         <?endif?>
-        <ComponentRef Id='dotnetfouragent'/>
         <ComponentRef Id='dotnetagentsupport'/>
         <MergeRef Id='Drivers' />
         <ComponentRef Id='NetSettingsCpy' />
