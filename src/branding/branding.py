@@ -30,6 +30,18 @@ branding = {
         "installAgentRegKey" : "SOFTWARE\\Citrix\\InstallAgent",
         "language" : "1033",
         "languages" : "1033",
+        "manufacturerLong" : "Citrix Systems, Inc.",
+        "toolsForVMs" : "Citrix Tools For Virtual Machines",
+        "guestLibDesc" : "Citrix Xen Windows Guest Agent Support Library",
+        "copyrightGuestLib" : "Copyright 2012-2016 Citrix Systems, Inc.",
+        "copyrightGuestAgent" : "Copyright 2012-2016 Citrix Systems, Inc.",
+        "copyrightXenDpriv" : "Copyright 2012-2016 Citrix Systems, Inc.",
+        "xenDprivDesc" : "Citrix XenServer Windows Deprivileged Client",
+
+        "setComputerName" : "Set Computer Name",
+        "errNoWMI" : "Citrix XenServer guest Agent cannotfix XenIface WMI interface",
+        "GuestAgentLogName" : "XenGuestAgentLog",
+        "GuestAgentLogSource" : "XenGuestAgent",
 }
 
 filenames = {
@@ -45,6 +57,12 @@ filenames = {
         "managementx64" : "managementagentx64.msi",
         "managementx86" : "managementagentx86.msi",
         "setup" : "setup.exe",
+        "dpriv" : "XenDpriv.exe",
+        "dprivcfg" : "XenDpriv.exe.config",
+        "agent" : "XenGuestAgent.exe",
+        "agentcfg" : "XenGuestAgent.exe.config",
+        "installVSS" : "install-XenProvider.cmd",
+        "uninstallVSS" : "uninstall-XenProvider.cmd",
 }
 
 resources = {

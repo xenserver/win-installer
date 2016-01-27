@@ -102,12 +102,12 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
     ]
     
     noadditionalcertfiles = [
-        pack+"\\xenguestagent\\xenguestagent\\xenguestagent.exe",
+        pack+"\\xenguestagent\\xenguestagent\\"+branding.filenames['agent'],
         pack+"\\xenguestagent\\xenguestagent\\xenguestlib.dll", 
         pack+"\\xenguestagent\\xenguestagent\\Interop.NetFwTypeLib.dll", 
-        pack+"\\xenguestagent\\xendpriv\\xendpriv.exe",
         pack+"\\xenguestagent\\xenupdater\\Interop.TaskScheduler.dll",
         pack+"\\xenguestagent\\xenupdater\\ManagementAgentUpdater.exe",
+        pack+"\\xenguestagent\\xendpriv\\"+branding.filenames['dpriv'],
         pack+"\\xenvif\\"+arch+"\\xenvif_coinst.dll",
         pack+"\\xenvss\\"+arch+"\\vssclient.dll", 
         pack+"\\xenvss\\"+arch+"\\vsstest.exe", 
@@ -783,7 +783,7 @@ if __name__ == '__main__':
     f.close()
  
     if (archiveSrc == True):
-        listfile = callfnout(['git','ls-tree','-r','--name-only','HEAD'])
+        listfile = callfnout(['git','ls-files'])
         archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
     archive('installer.tar', ['installer'])
 
