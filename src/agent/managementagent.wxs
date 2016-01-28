@@ -81,7 +81,6 @@
 
    <Icon Id="icon.ico" SourceFile="$(var.RESOURCES_Bitmaps)\$(var.RESOURCE_icon)"/>
    <Property Id="ARPPRODUCTICON" Value="$(var.RESOURCE_icon)" />
-   <Property Id='ARPSYSTEMCOMPONENT' Value='0'/>
     <Property Id="REINSTALLMODE" Value="dmus" />
 
 
@@ -310,7 +309,7 @@
                       Vital='yes'
                       Name='$(var.BRANDING_installAgentShort)'
                       DisplayName='$(var.Brand) $(var.Product) $(var.Install)'
-                      Description='($var.BRANDING_installAgentDesc)'
+                      Description='$(var.BRANDING_installAgentDesc)'
                       Start='auto'
                       Account='LocalSystem'
                       ErrorControl='ignore'
