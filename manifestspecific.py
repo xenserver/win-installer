@@ -35,7 +35,7 @@ build_tar_source_files = {
        "xenguestagent" : r'xenguestagent.git\168\xenguestagent.tar',
        "xenbus" : r'xenbus-patchq.git\63\xenbus.tar',
        "xenvif" : r'xenvif-patchq.git\59\xenvif.tar',
-       "xennet" : r'xennet-patchq.git\39\xennet.tar',
+       "xennet" : r'xennet-patchq.git\40\xennet.tar',
        "xeniface" : r'xeniface-patchq.git\26\xeniface.tar',
        "xenvbd" : r'xenvbd-patchq.git\124\xenvbd.tar',
        "xenvss" : r'standard-lcm\16\xenvss-7.tar',
