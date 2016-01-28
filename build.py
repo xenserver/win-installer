@@ -102,12 +102,12 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
     ]
     
     noadditionalcertfiles = [
-        pack+"\\xenguestagent\\xenguestagent\\"+branding.filenames['agent'],
+        pack+"\\xenguestagent\\xenguestagent\\XenGuestAgent.exe",
         pack+"\\xenguestagent\\xenguestagent\\xenguestlib.dll", 
         pack+"\\xenguestagent\\xenguestagent\\Interop.NetFwTypeLib.dll", 
         pack+"\\xenguestagent\\xenupdater\\Interop.TaskScheduler.dll",
         pack+"\\xenguestagent\\xenupdater\\ManagementAgentUpdater.exe",
-        pack+"\\xenguestagent\\xendpriv\\"+branding.filenames['dpriv'],
+        pack+"\\xenguestagent\\xendpriv\\XenDpriv.exe",
         pack+"\\xenvif\\"+arch+"\\xenvif_coinst.dll",
         pack+"\\xenvss\\"+arch+"\\vssclient.dll", 
         pack+"\\xenvss\\"+arch+"\\vsstest.exe", 
