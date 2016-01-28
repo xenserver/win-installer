@@ -387,6 +387,26 @@
               Key='$(var.BRANDING_installAgentRegKey)'>
               <RegistryValue Type='string' Name='RebootOption' Value='[REBOOTOPTION]' />
           </RegistryKey>
+          <RemoveRegistryKey Root="HKLM"
+              Key='$(var.BRANDING_installAgentRegKey)'
+              Action="removeOnInstall" />
+          <RemoveRegistryKey Root="HKLM"
+              Key='$(var.BRANDING_installAgentRegKey)'
+              Action="removeOnUninstall" />
+          <RemoveRegistryKey Root="HKLM"
+              Key='Software\Citrix\XenToolsInstaller'
+              Action="removeOnInstall" />
+          <RemoveRegistryKey Root="HKLM"
+              Key='Software\Citrix\XenToolsInstaller'
+              Action="removeOnUninstall" />
+      </Component>
+      <Component Id="InstallAgentReg32" Guid="47883399-450c-40a4-bf4f-55f7a1515877">
+          <RemoveRegistryKey Root="HKLM"
+              Key='Software\Wow6432Node\Citrix\XenToolsInstaller'
+              Action="removeOnInstall" />
+          <RemoveRegistryKey Root="HKLM"
+              Key='Software\Wow6432Node\Citrix\XenToolsInstaller'
+              Action="removeOnUninstall" />
       </Component>
 
     </Directory>
@@ -413,6 +433,7 @@
         <ComponentRef Id="DifXAPIDLL32"/>
         <?if $(sys.BUILDARCH)=x64 ?>
             <ComponentRef Id='RegEntry32'/>
+            <ComponentRef Id="InstallAgentReg32" />
         <?endif ?>
         <ComponentRef Id='InstallAgentReg'/>
         <ComponentRef Id='InstallService' />
@@ -420,7 +441,7 @@
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>
             <ComponentRef Id='RegEntry32'/>
-         <ComponentRef Id='InstallService' /> 
+            <ComponentRef Id="InstallAgentReg32" />
         </Feature>
     <?endif ?>
   </Product>
