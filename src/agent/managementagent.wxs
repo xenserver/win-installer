@@ -81,7 +81,6 @@
 
    <Icon Id="icon.ico" SourceFile="$(var.RESOURCES_Bitmaps)\$(var.RESOURCE_icon)"/>
    <Property Id="ARPPRODUCTICON" Value="$(var.RESOURCE_icon)" />
-   <Property Id='ARPSYSTEMCOMPONENT' Value='0'/>
     <Property Id="REINSTALLMODE" Value="dmus" />
 
 
@@ -255,21 +254,21 @@
             <Merge Id='Drivers' Language='1033' SourceFile='drivergen$(var.arch).msm' DiskId='1' />
 
             <Component Id='dotnetagentsupport' Guid='$(var.supportid)'>
-                <File Id="XenDPrivExe" Name="XenDPriv.exe" Source="xenguestagent\xendpriv\XenDPriv.exe" />
+                <File Id="XenDPrivExe" Name="$(var.FILENAME_dpriv)" Source="xenguestagent\xendpriv\XenDPriv.exe" />
                 <File Id="ManagementAgentUpdaterExe" Name="ManagementAgentUpdater.exe" Source="xenguestagent\xenupdater\ManagementAgentUpdater.exe" />
+                <File Id='XenDprivExeConfig' Name="$(var.FILENAME_dprivcfg)" Source='xenguestagent\xendpriv\XenDpriv.Exe.Config' />
+                <File Id='XenGuestAgentExeConfig' Name="$(var.FILENAME_agentcfg)" Source='xenguestagent\xenguestagent\XenGuestAgent.Exe.Config' />
+                <File Id='InstallAgentExeConfig' Name="InstallAgent.exe.config" Source='InstallAgent\InstallAgent.exe.config' />
                 <File Id="XenGuestLibDll" Name="XenGuestLib.Dll" Source="xenguestagent\xenguestagent\XenGuestLib.Dll" />
                 <File Id="InteropNetFwTypeLibdll" Name="Interop.NetFwTypeLib.dll" Source="xenguestagent\xenguestagent\Interop.NetFwTypeLib.dll" />
                 <File Id="InteropTaskSchedulerdll" Name="Interop.TaskScheduler.dll" Source="xenguestagent\xenupdater\Interop.TaskScheduler.dll" />
-                <File Id='XenDprivExeConfig' Name="XenDpriv.Exe.Config" Source='xenguestagent\xendpriv\XenDpriv.Exe.Config' />
-                <File Id='XenGuestAgentExeConfig' Name="XenGuestAgent.Exe.Config" Source='xenguestagent\xenguestagent\XenGuestAgent.Exe.Config' />
-                <File Id='InstallAgentExeConfig' Name="InstallAgent.exe.config" Source='InstallAgent\InstallAgent.exe.config' />
                 <File Id='ManagementAgentUpdaterExeConfig' Name="ManagementAgentUpdater.Exe.Config" Source='xenguestagent\xenupdater\ManagementAgentUpdater.Exe.Config' />
             </Component>
             <Component Id='XenVssComponent' Guid='$(var.XenVssComponentGUID)'>
                  <File Id='xenvss_dll' Name="XenVss.dll" DiskId='1' Source='xenvss\$(var.arch)\xenvss.dll' KeyPath='yes' />
                  <File Id='vssclient_dll' Name="VssClient.dll" Source='xenvss\$(var.arch)\vssclient.dll' />
-                 <File Id='install_cmd' Name="install-XenProvider.cmd" Source='xenvss\install-XenProvider.cmd' />
-                 <File Id='uninstall_cmd' Name="uninstall-XenProvider.cmd" Source='xenvss\uninstall-XenProvider.cmd' />
+                 <File Id='install_cmd' Name="$(var.FILENAME_installVSS)" Source='xenvss\install-XenProvider.cmd' />
+                 <File Id='uninstall_cmd' Name="$(var.FILENAME_uninstallVSS)" Source='xenvss\uninstall-XenProvider.cmd' />
                  <File Id='regvss_vbs' Name="regvss.vbs" Source='xenvss\regvss.vbs' />
             </Component>
             <?if $(var.usecerts)=yes ?>
@@ -281,7 +280,7 @@
                 </Directory>
             <?endif?>
             <Component Id='XenService' Guid="*">
-                <File Id='XenGuestAgent.Exe' Name='XenGuestAgent.Exe' Source="xenguestagent\xenguestagent\xenguestagent.exe" />
+                <File Id='XenGuestAgent.Exe' Name='$(var.FILENAME_agent)' Source="xenguestagent\xenguestagent\xenguestagent.exe" />
                 <ServiceInstall Id='XenServiceInstaller'
                       Type='ownProcess'
                       Vital='yes'
@@ -310,7 +309,7 @@
                       Vital='yes'
                       Name='$(var.BRANDING_installAgentShort)'
                       DisplayName='$(var.Brand) $(var.Product) $(var.Install)'
-                      Description='($var.BRANDING_installAgentDesc)'
+                      Description='$(var.BRANDING_installAgentDesc)'
                       Start='auto'
                       Account='LocalSystem'
                       ErrorControl='ignore'
