@@ -183,13 +183,13 @@
 				  ExeCommand="add"
 				  Execute="deferred"
 				  Impersonate="no"
-				  Return="check" />
+				  Return="ignore" />
 	<CustomAction Id="DeregisterUpdateTask"
 				  FileKey="ManagementAgentUpdaterExe"
 				  ExeCommand="remove"
 				  Execute="deferred"
 				  Impersonate="no"
-				  Return="check" />
+				  Return="ignore" />
 
 
     <CustomAction Id="SetREBOOTOPTION" Property="REBOOTOPTION" Value="DEFAULT" />
