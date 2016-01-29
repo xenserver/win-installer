@@ -259,6 +259,14 @@
       <Directory Id='$(var.pf)'>
         <Directory Id='CitrixDir' Name='Citrix'>
             <Directory Id='INSTALLDIR' Name='XenTools'>
+                <Directory Id='BRANDING' Name='Branding'>
+                    <Component Id="BrandingCpy" Guid='*'>
+                        <File Id="BrandSatDll" Name='brandsat.dll' DiskId='1' Source='proj\brandsat.dll' />
+                    </Component>
+                    <Component Id="BrandingSup" Guid='*'>
+                        <File Id="BrandSupportDll" Name="BrandSupport.dll" DiskId='1' Source='BrandSupport\BrandSupport.dll' />
+                    </Component>
+                </Directory>
                 <Directory Id='INSTALLER' Name = 'Installer'>
                     <Component Id="LegacyInstaller" Guid="$(var.legacyid)">
                         <File Id="LegacyExe" Compressed="no" DiskId='2' Source="$(var.FILENAME_legacy)"/> 
@@ -393,6 +401,8 @@
         <?endif?>
         <ComponentRef Id='dotnetfouragent'/>
         <ComponentRef Id='dotnetthreefiveagent'/>
+        <ComponentRef Id='BrandingCpy' />
+        <ComponentRef Id='BrandingSup' />
         <ComponentRef Id='InstallGui'/>
         <ComponentRef Id='UIEvent'/>
         <ComponentRef Id='RegEntry'/>
