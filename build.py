@@ -515,6 +515,16 @@ def make_installers(pack, signname):
         for signname in signinstallers:
             sign("installer\\"+branding.filenames[signname], signname, signstr=signstr)
 
+    # Write updates.tsv (url\tversion\tsize\tarch)
+    f = open(os.sep.join(['installer','updates.tsv']),"w")
+    for arch in ["x86", "x64"]:
+        f.write(os.environ['UPDATE_URL']+branding.filenames['management'+arch]+"\t"+
+                os.environ['MAJOR_VERSION']+"."+os.environ['MINOR_VERSION']+"."+os.environ['MICRO_VERSION']+"."+os.environ['BUILD_NUMBER']+"\t"+
+                str(os.stat("installer\\"+branding.filenames['management'+arch]).st_size)+"\t"+
+                arch+
+                "\n")
+    f.close()
+
     # Remove XenLegacy.Exe so that we don't archive the dummy file
     os.remove("installer\\"+branding.filenames['legacy'])    
     os.remove("installer\\"+branding.filenames['legacyuninstallerfix'])    
@@ -618,6 +628,8 @@ if __name__ == '__main__':
     if 'BUILD_NUMBER' not in os.environ.keys():
         os.environ['BUILD_NUMBER'] = '0'
 
+    if 'UPDATE_URL' not in os.environ.keys():
+        os.environ['UPDATE_URL'] = "http://fake.update.url/"
 
 
 
