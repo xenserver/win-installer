@@ -146,21 +146,25 @@
     <Directory Id='TARGETDIR' Name='SourceDir'>
       <Directory Id='$(var.pf)'>
         <Directory Id='Citrix' Name='Citrix'>
-          <Directory Id='INSTALLDIR' Name='XenTools'>
-              <Component Id='dotnetfouragent' Guid='$(var.dn4id)' >
-                  <Condition>
-                      <![CDATA[Installed OR (( NETFRAMEWORK4XFULL OR NETFRAMEWORK4XCLIENT ) AND NOT NETFRAMEWORKX35) ]]>
-                  </Condition>
-                  <File Id='XenDprivExeConfig' Name="XenDpriv.Exe.Config" Source='xenguestagent\xendpriv\XenDpriv.Exe.Config' />
-                  <File Id='XenGuestAgentExeConfig' Name="XenGuestAgent.Exe.Config" Source='xenguestagent\xenguestagent\XenGuestAgent.Exe.Config' />
-                  <File Id='ManagementAgentUpdaterExeConfig' Name="ManagementAgentUpdater.Exe.Config" Source='xenguestagent\xenupdater\ManagementAgentUpdater.Exe.Config' />
-              </Component>
+            <Directory Id='INSTALLDIR' Name='XenTools'>
+                <Directory Id='BRANDING' Name='Branding'>
+                    <Component Id="BrandingCpy" Guid='*'>
+                        <File Id="BrandSatDll" Name='brandsat.dll' DiskId='1' Source='proj\brandsat.dll' />
+                    </Component>
+                    <Component Id="BrandingSup" Guid='*'>
+                        <File Id="BrandSupportDll" Name="BrandSupport.dll" DiskId='1' Source='BrandSupport\BrandSupport.dll' />
+                    </Component>
+                </Directory>
+
               <Component Id='dotnetagentsupport' Guid='$(var.supportid)'>
                   <File Id="XenDPrivExe" Name="XenDPriv.exe" Source="xenguestagent\xendpriv\XenDPriv.exe" />
                   <File Id="XenGuestLibDll" Name="XenGuestLib.Dll" Source="xenguestagent\xenguestagent\XenGuestLib.Dll" />
                   <File Id="InteropNetFwTypeLibdll" Name="Interop.NetFwTypeLib.dll" Source="xenguestagent\xenguestagent\Interop.NetFwTypeLib.dll" />
                   <File Id="ManagementAgentUpdaterExe" Name="ManagementAgentUpdater.exe" Source="xenguestagent\xenupdater\ManagementAgentUpdater.exe" />
                   <File Id="InteropTaskSchedulerdll" Name="Interop.TaskScheduler.dll" Source="xenguestagent\xenupdater\Interop.TaskScheduler.dll" />
+                  <File Id='XenDprivExeConfig' Name="XenDpriv.Exe.Config" Source='xenguestagent\xendpriv\XenDpriv.Exe.Config' />
+                  <File Id='XenGuestAgentExeConfig' Name="XenGuestAgent.Exe.Config" Source='xenguestagent\xenguestagent\XenGuestAgent.Exe.Config' />
+                  <File Id='ManagementAgentUpdaterExeConfig' Name="ManagementAgentUpdater.Exe.Config" Source='xenguestagent\xenupdater\ManagementAgentUpdater.Exe.Config' />
               </Component>
               <Component Id='XenService' Guid="*">
                   <File Id='XenGuestAgent.Exe' Name='XenGuestAgent.Exe' Source="xenguestagent\xenguestagent\xenguestagent.exe" />
@@ -206,9 +210,10 @@
             </Component>
     </Directory>
     <Feature Id='Complete' Level='1'>
-        <ComponentRef Id='dotnetfouragent'/>
         <ComponentRef Id='dotnetagentsupport'/>
         <ComponentRef Id='RegEntry'/>
+        <ComponentRef Id='BrandingCpy'/>
+        <ComponentRef Id='BrandingSup'/>
         <ComponentRef Id='XenService'/>
     </Feature>
   </Product>
