@@ -123,12 +123,14 @@ namespace PVDriversRemoval
                 @"SYSTEM\CurrentControlSet\Services";
             const string START = "Start";
             const string XENFILT_UNPLUG = @"xenfilt\Unplug";
+            const string XENEVTCHN = "xenevtchn";
+            const string NOPVBOOT = "NoPVBoot";
             const int MANUAL = 3;
 
             string[] xenServices = {
                 "XENBUS", "xenfilt", "xeniface", "xenlite",
                 "xennet", "xenvbd", "xenvif", "xennet6",
-                "xenutil", "xenevtchn"
+                "xenutil", XENEVTCHN
             };
 
             Trace.WriteLine("===> " + FUNC_NAME);
@@ -166,6 +168,17 @@ namespace PVDriversRemoval
                     );
                     tmpRK.DeleteValue("DISKS", false);
                     tmpRK.DeleteValue("NICS", false);
+                }
+            }
+
+            using (RegistryKey tmpRK = baseRK.OpenSubKey(XENEVTCHN, true))
+            {
+                if (tmpRK != null)
+                // If this is not set, the VM BSODs at
+                // boot time (only on legacy drivers)
+                {
+                    tmpRK.SetValue(NOPVBOOT, 1, RegistryValueKind.DWord);
+                    Trace.WriteLine(XENEVTCHN + @"\" + NOPVBOOT + " = 1");
                 }
             }
 
