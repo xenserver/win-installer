@@ -42,6 +42,11 @@ branding = {
         "errNoWMI" : "Citrix XenServer guest Agent cannotfix XenIface WMI interface",
         "GuestAgentLogName" : "XenGuestAgentLog",
         "GuestAgentLogSource" : "XenGuestAgent",
+        "setupErr" : "XenServer Setup.exe error",
+        "processFail" : "Failed to create process %s %x", #commandline #windows error code
+        "setupHelp" : "Valid arguments are:\\n /TEST\\n/passive\\n/quiet\\n/norestart\\n/forcerestart",
+        "noSystemDir" : "Unable to read system directory",
+        "setupLogDir" : "XSToolSetup",
 }
 
 filenames = {
@@ -65,11 +70,18 @@ filenames = {
         "uninstallVSS" : "uninstall-XenProvider.cmd",
 }
 
+
 resources = {
         "icon" : "xen.ico",
 }
 
 bitmaps = "src\\bitmaps"
+
+languagecode = {
+        "culture" : "enus",
+        "language" : "0x09",
+        "sublang" : "0x04",
+}
 
 cultures = {
         "default" : "en-us",

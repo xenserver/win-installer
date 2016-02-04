@@ -33,7 +33,9 @@
 #include "shellapi.h"
 #include "shlobj.h"
 #include "shlwapi.h"
-#include "branding.h"
+#include "stdint.h"
+#include <windows.h>
+
 
 TCHAR * _vatallocprintf(const TCHAR *format, va_list args)
 {
@@ -57,6 +59,40 @@ TCHAR * _tallocprintf(const TCHAR *format, ...)
 	return space;
 }
 
+typedef struct {
+	const uint8_t lang;
+	const uint8_t sublang;
+	const TCHAR ** list;
+} dict;
+
+#include "setupbranding.h"
+
+const TCHAR *getBrandingString(int brandindex)
+{
+	static bool brandinit=0;
+	static const dict *uidict = loc_def;
+	if (!brandinit) {
+		int i;
+		LANGID id = GetUserDefaultUILanguage();
+		for (i=0; i<=(sizeof(dicts)/sizeof(dict)); i++) {
+			uint8_t sublang = (id&0xFF00)>>8;
+			uint8_t lang = (id&0xFF);
+			if (lang == dicts[i]->lang) {
+				if (uidict->lang != lang){
+					uidict = dicts[i];
+					continue;
+				}
+				if (sublang == dicts[i]->sublang) {
+					uidict = dicts[i];
+					break;
+				}
+			}
+		}
+		brandinit = 1;
+	}
+	return uidict->list[brandindex];
+}
+
 void ErrMsg(const TCHAR *format, ...)
 {
 	va_list args;
@@ -67,7 +103,7 @@ void ErrMsg(const TCHAR *format, ...)
 		goto fail1;
 
 	va_end(args);
-	MessageBox(NULL, space, _T("XenServer Setup.exe error"), MB_OK);
+	MessageBox(NULL, space, getBrandingString(BRANDING_setupErr), MB_OK);
 	free(space);
 	return;
 fail1:
@@ -84,7 +120,7 @@ bool runProcess(TCHAR* cmdLine, DWORD* exitcode)
 	OutputDebugString(cmdLine);
 
 	if (!CreateProcess(NULL, cmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-		ErrMsg(_T("Failed to create process %s %x"),cmdLine, GetLastError());
+		ErrMsg(getBrandingString(BRANDING_processFail),cmdLine, GetLastError());
 		return false;
 	}
 
@@ -102,6 +138,8 @@ typedef struct {
 	bool forcerestart;
 	bool legacy;
 } arguments;
+
+
 
 bool parseCommandLine(arguments* args)
 {
@@ -136,7 +174,7 @@ bool parseCommandLine(arguments* args)
 			args->forcerestart = true;
 		}
 		else {
-			ErrMsg(_T("Valid arguments are:\n /TEST\n/passive\n/quiet\n/norestart\n/forcerestart"));
+			ErrMsg(getBrandingString(BRANDING_setupHelp));
 			return false;
 		}
 	}
@@ -144,22 +182,24 @@ bool parseCommandLine(arguments* args)
 }
 
 
-TCHAR* ma64 = _T(FILENAME_managementx64);
-TCHAR* ma32 = _T(FILENAME_managementx86);
-TCHAR* iw = _T("installwizard.msi");
+const TCHAR* ma64 = getBrandingString(FILENAME_managementx64);
+const TCHAR* ma32 = getBrandingString(FILENAME_managementx86);
+const TCHAR* iw = _T("installwizard.msi");
 	
-TCHAR* xenlegacy = _T(FILENAME_legacy);
-TCHAR* uninstallerfix = _T(FILENAME_legacyuninstallerfix);
+const TCHAR* xenlegacy = getBrandingString(FILENAME_legacy);
+const TCHAR* uninstallerfix = getBrandingString(FILENAME_legacyuninstallerfix);
 
 TCHAR sysdir[MAX_PATH];
 TCHAR workfile[MAX_PATH];
 TCHAR logfile[MAX_PATH];
 TCHAR* msiexec;
 
+
+
 int getFileLocations()
 {
 	if (!GetSystemDirectory(sysdir, MAX_PATH)) {
-		ErrMsg(_T("Unable to read system directory"));
+		ErrMsg(getBrandingString(BRANDING_noSystemDir));
 		return 0;
 	}
 
@@ -178,9 +218,9 @@ int getFileLocations()
 
 
 	if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, 0 , logfile))) {
-		PathAppend(logfile, _T("Citrix"));
+		PathAppend(logfile, (TCHAR *)getBrandingString(BRANDING_manufacturer));
 		CreateDirectory(logfile, NULL);
-		PathAppend(logfile, _T("XSToolSetup"));
+		PathAppend(logfile, getBrandingString(BRANDING_setupLogDir));
 		CreateDirectory(logfile, NULL);
 		PathAppend(logfile,_T("Install.log"));
 	}
@@ -202,7 +242,7 @@ DWORD installLegacy(arguments *args) {
 	return exitcode;
 }
 
-TCHAR* getInstallMsiName(arguments* args)
+const TCHAR* getInstallMsiName(arguments* args)
 {
 	if (args->test) {
 		BOOL wow64;
@@ -227,7 +267,7 @@ DWORD installMsi(arguments* args)
 {
 	DWORD exitcode;
 
-	TCHAR* installname = getInstallMsiName(args);
+	const TCHAR* installname = getInstallMsiName(args);
 	TCHAR* cmdline = _tallocprintf(_T("\"%s\" /i\"%s\\%s\"%s%s /liwearucmopvx+! \"%s\""),
 		msiexec,
 		workfile,
