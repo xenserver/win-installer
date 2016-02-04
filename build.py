@@ -148,7 +148,7 @@ def get_cultural_branding(culture):
         if not os.path.isfile("src\\branding\\branding."+culture+".py"):
             print("branding file for culture "+culture+" doesn't exist")
         (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding."+culture,["src\\branding"])
-    return imp.load_module("branding",brandingFile,brandingPath,brandingDesc)
+    return imp.load_module("branding"+culture,brandingFile,brandingPath,brandingDesc)
 
 def make_wxi_header(culture):
     cbranding = get_cultural_branding(culture)
@@ -167,6 +167,57 @@ def make_wxi_header(culture):
     file.write("</Include>")
     file.close();
 
+def make_setup_header():
+    culturelist = []
+    culturelist.append(branding) 
+    print("make setup header")
+    print(branding.cultures['others'])
+    print(culturelist)
+
+    for culture in branding.cultures['others']:
+        culturelist.append(get_cultural_branding(culture))
+
+    print(culturelist)
+    
+
+    file=open(include+"\\"+"setupbranding.h",'w')
+    keylist=[]
+    filekeylist=[]
+    pos=0;
+    for key in branding.branding.keys():
+        keylist.append(key)
+        file.write("#define BRANDING_"+key+" "+str(pos)+"\n")
+        pos = pos+1
+    for key in branding.filenames.keys():
+        filekeylist.append(key)
+        file.write("#define FILENAME_"+key+" "+str(pos)+"\n")
+        pos = pos+1
+
+    for culture in culturelist:
+        file.write("const TCHAR * list_"+culture.languagecode['culture']+"[] = {\n")
+        for key in keylist:
+            file.write("_T(\""+culture.branding[key]+"\"),\n")
+        for key in filekeylist:
+            file.write("_T(\""+culture.filenames[key]+"\"),\n")
+        file.write("};\n")
+
+    for culture in culturelist:
+        file.write("const dict loc_"+culture.languagecode['culture']+" = {\n")
+        file.write(culture.languagecode['language']+",\n")
+        file.write(culture.languagecode['sublang']+",\n")
+        file.write("list_"+culture.languagecode['culture']+"\n")
+        file.write("};\n")
+
+    file.write("const dict* dicts[]={\n")
+    for culture in culturelist:
+        file.write("&loc_"+culture.languagecode['culture']+",\n")
+    file.write("};\n")
+
+    file.write("const dict* loc_def = &loc_"+branding.languagecode['culture']+";\n")
+
+    file.close()
+
+
 def make_header():
     now = datetime.datetime.now()
 
@@ -184,6 +235,8 @@ def make_header():
     file.write("<?define TOOLS_HOTFIX_NR_STR =\t\""+os.environ['TOOLS_HOTFIX_NUMBER']+"\"?>\n")
     file.write("</Include>")
     file.close();
+
+    make_setup_header()
 
     make_wxi_header(branding.cultures['default'])
     for culture in branding.cultures['others']:
