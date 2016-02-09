@@ -85,6 +85,35 @@ def sign(filename, signname, additionalcert=None, signstr=None):
             continue
         break;
 
+agenttosign = [
+    'BrandSupport\\brandsat.dll',
+    'BrandSupport\\BrandSupport.dll',
+    'installwizard\\netsettings\\Win32\\netsettings.exe',
+    'installwizard\\netsettings\\x64\\netsettings.exe',
+    'installwizard\\qnetsettings\\Win32\\qnetsettings.exe',
+    'installwizard\\qnetsettings\\x64\\qnetsettings.exe',
+    "xenguestagent\\xendpriv\\XenDPriv.exe",
+    "xenguestagent\\xenupdater\\ManagementAgentUpdater.exe",
+    "xenguestagent\\xenguestagent\\XenGuestLib.Dll" ,
+    'xenvss\\x64\\xenvss.dll',
+    'xenvss\\x86\\xenvss.dll',
+    'xenvss\\x64\\vssclient.dll', 
+    'xenvss\\x86\\vssclient.dll', 
+    "xenguestagent\\xenguestagent\\xenguestagent.exe",
+    "InstallAgent\\InstallAgent.exe",
+    "Libraries\\PInvokeWrap.dll",
+    "Libraries\\HelperFunctions.dll",
+    "Libraries\\HardwareDevice.dll",
+    "Libraries\\PVDriversRemoval.dll",
+]
+
+def sign_builds(outbuilds):
+    cwd = os.getcwd()
+    os.chdir(outbuilds)
+    if signfiles:
+        for afile in agenttosign:
+            sign(afile, signname, signstr=signstr)
+    os.chdir(cwd)
 
 def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr=None):
 
@@ -142,12 +171,15 @@ def signcatfiles(pack, signname, arch, additionalcert, signstr = None):
 
 def get_cultural_branding(culture):
     print(os.getcwd())
+    cwd = os.getcwd()
+    os.chdir(basedir)
     if culture==branding.cultures['default']:
         (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding",["src\\branding"])
     else:
         if not os.path.isfile("src\\branding\\branding."+culture+".py"):
             print("branding file for culture "+culture+" doesn't exist")
         (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding."+culture,["src\\branding"])
+    os.chdir(cwd)
     return imp.load_module("branding"+culture,brandingFile,brandingPath,brandingDesc)
 
 def make_wxi_header(culture):
@@ -218,7 +250,7 @@ def make_setup_header():
     file.close()
 
 
-def make_header():
+def make_header(outbuilds):
     now = datetime.datetime.now()
 
     if not(os.path.lexists(include)):
@@ -265,10 +297,11 @@ def make_header():
     file.write("echo Building satellite dll\n")
     file.write("call \"%VS%\\VC\\vcvarsall.bat\" x86\n")
     file.write("set FrameworkVersion=v3.5\n")
+    file.write("mkdir BrandSupport\n")
     file.write("resgen.exe proj\\textstrings.txt proj\\textstrings.resources\n")
     #file.write("al.exe proj\\branding.mod /embed:proj\\textstrings.resources /embed:"+branding.bitmaps+"\\DlgBmp.bmp /t:lib /out:proj\\brandsat.dll\n")
-    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:proj\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
-    file.write("echo Built satellite dll at proj\\brandsat.dll\n")
+    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:BrandSupport\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+outbuilds+"\\"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
+    file.write("echo Built satellite dll at BrandSupport\\brandsat.dll\n")
     file.close();
     print (callfnout("proj\\buildsat.bat"))
 
@@ -313,18 +346,20 @@ def make_pe(pack):
         shutil.copytree(pack+"\\xenbus", "installer\\pe\\xenbus")
         shutil.copytree("src\\pescripts", "installer\\pe\\scripts")
 
-def make_builds(pack):
-        if (os.path.exists('installer\\builds')):
-                shutil.rmtree('installer\\builds', onerror=remove_readonly)
-        os.makedirs('installer\\builds')
-        shutil.copytree(pack+"\\xenvif", "installer\\builds\\xenvif")
-        shutil.copytree(pack+"\\xenvbd", "installer\\builds\\xenvbd")
-        shutil.copytree(pack+"\\xennet", "installer\\builds\\xennet")
-        shutil.copytree(pack+"\\xenbus", "installer\\builds\\xenbus")
-        shutil.copytree(pack+"\\xeniface", "installer\\builds\\xeniface")
-        shutil.copytree(pack+"\\xenguestagent", "installer\\builds\\xenguestagent")
-        shutil.copytree(pack+"\\xenvss", "installer\\builds\\xenvss")
-        shutil.copytree(pack+"\\xenprep", "installer\\builds\\xenprep")
+def make_builds(pack, outbuilds):
+        shutil.copytree(pack+"\\xenvif", outbuilds+"\\xenvif")
+        shutil.copytree(pack+"\\xenvbd", outbuilds+"\\xenvbd")
+        shutil.copytree(pack+"\\xennet", outbuilds+"\\xennet")
+        shutil.copytree(pack+"\\xenbus", outbuilds+"\\xenbus")
+        shutil.copytree(pack+"\\xeniface", outbuilds+"\\xeniface")
+        shutil.copytree(pack+"\\xenguestagent", outbuilds+"\\xenguestagent")
+        shutil.copytree(pack+"\\xenvss", outbuilds+"\\xenvss")
+        shutil.copytree(pack+"\\xenprep", outbuilds+"\\xenprep")
+        shutil.copytree(pack+"\\installwizard", outbuilds+"\\installwizard")
+        shutil.copytree(pack+"\\BrandSupport", outbuilds+"\\BrandSupport")
+        shutil.copytree(pack+"\\InstallAgent", outbuilds+"\\InstallAgent")
+        shutil.copytree(pack+"\\Libraries", outbuilds+"\\Libraries")
+        shutil.copytree(pack+"\\Setup", outbuilds+"\\Setup")
 
 
 
@@ -451,30 +486,57 @@ def generate_signing_script():
         signfile.write("echo. \n")
         signfile.write("echo sign.bat \"signtool sign /a /s my /n \"\"My Company Inc.\"\" /t http://timestamp.verisign.com/scripts/timestamp.dll\"\n")
 
-def make_installers(pack, signname):
-    src = ".\\src\\drivers"
 
+def generate_intermediate_signing_script():
+    with open('installer\\intermediatesign.bat','w') as signfile:
+        signfile.write("@if \"%~1\"==\"\" goto usage\n")
+        signfile.write("@if \"%~1\"==\"/help\" goto usage\n")
+        signfile.write("@set temp=%~1\n") #Remove Quotes
+        signfile.write("@set temp=%temp:\"\"=\"%\n") #Convert doube quotes to single quotes
+        for signee in agenttosign:
+            signname = signee
+            if signee in branding.filenames:
+                signname=branding.filenames[signee]
+            signfile.write("%temp% "+"%~dp0\\builds\\"+signname+"\n") #dp0 is the pathname of the script
+        signfile.write("@exit /B 0\n")
+        signfile.write(":usage\n")
+        signfile.write("@echo off\n")
+        signfile.write("echo Usage:\n")
+        signfile.write("echo intermediatesign.bat ^<signing command^>\n")
+        signfile.write("echo. \n")
+        signfile.write("echo Example:\n")
+        signfile.write("echo On a system where a certificate for \"My Company Inc.\" has been installed as a personal certificate\n")
+        signfile.write("echo. \n")
+        signfile.write("echo sign.bat \"signtool sign /a /s my /n \"\"My Company Inc.\"\" /t http://timestamp.verisign.com/scripts/timestamp.dll\"\n")
+
+def make_installers_dir():
     if os.path.exists('installer'):
             shutil.rmtree('installer')
     os.makedirs('installer')
 
-    generate_signing_script()
+def make_driver_msm(pack):
+    src = ".\\src\\drivers"
+
+    wix=lambda f: os.environ['WIX']+"bin\\"+f
+    callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x64","-darch=x64","-o", "installer\\drivergenx64.wixobj"])
+    callfn([wix("light.exe"), "installer\\drivergenx64.wixobj","-darch=x64","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx64.msm"])
+    
+    callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x86","-darch=x86","-o", "installer\\drivergenx86.wixobj"])
+    callfn([wix("light.exe"), "installer\\drivergenx86.wixobj","-darch=x86","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx86.msm"])
+
+
+def make_oldmsi_installers(pack, signname):
+
 
     wix=lambda f: os.environ['WIX']+"bin\\"+f
     bitmaps = ".\\src\\bitmaps"
 
-    generate_driver_wxs(pack)
     
     if (all_drivers_signed) :
         use_certs='no'
     else:
         use_certs='yes'
 
-    callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x64","-darch=x64","-o", "installer\\drivergenx64.wixobj"])
-    callfn([wix("light.exe"), "installer\\drivergenx64.wixobj","-darch=x64","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx64.msm"])
-    
-    callfn([wix("candle.exe"),"installer\\drivergen.wxs","-arch","x86","-darch=x86","-o", "installer\\drivergenx86.wixobj"])
-    callfn([wix("light.exe"), "installer\\drivergenx86.wixobj","-darch=x86","-ext","WixUtilExtension.dll","-b",pack,"-o","installer\\drivergenx86.msm"])
     src = ".\\src\\agent"
     
     src = ".\\src\\drivers"
@@ -542,27 +604,45 @@ def make_installers(pack, signname):
 
     if signfiles:
         sign("installer\\installwizard.msi", signname, signstr=signstr)
+    
+    # Remove XenLegacy.Exe so that we don't archive the dummy file
+    os.remove("installer\\"+branding.filenames['legacy'])    
+    os.remove("installer\\"+branding.filenames['legacyuninstallerfix'])    
 
 
+def make_mgmtagent_msi(pack,signname):
+
+
+    wix=lambda f: os.environ['WIX']+"bin\\"+f
+    bitmaps = ".\\src\\bitmaps"
+
+    if (all_drivers_signed) :
+        use_certs='no'
+    else:
+        use_certs='yes'
+
+    cwd = os.getcwd()
+    os.chdir(pack)
+    print(os.getcwd())
     for arch in ["x86", "x64"]:
-        src = ".\\src\\agent"
-
+        src = cwd+"\\.\\src\\agent"
         culture = branding.cultures['default']
-        callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", "installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
-        callfn([wix("light.exe"), "installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-b", ".\\installer", "-o", "installer\\"+branding.filenames['management'+arch], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:"+branding.cultures['default'], "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+        callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
+        callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:"+branding.cultures['default'], "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if len(branding.cultures['others']) != 0 :
         for culture in branding.cultures['others']:
             cbranding = get_cultural_branding(culture)
-            src = ".\\src\\agent"
-            os.makedirs('installer\\'+culture)
+            os.makedirs(cwd+'installer\\'+culture)
             for arch in ["x86", "x64"]:
-                callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", "installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
-                callfn([wix("light.exe"), "installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-b", ".\\installer", "-o", "installer\\"+culture+"\\"+branding.filenames['management'+arch], "-b", pack, "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:"+culture, "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
-                callfn(["cscript", "src\\branding\\msidiff.js", "installer\\"+branding.filenames['management'+arch], "installer\\"+culture+"\\"+branding.filenames['management'+arch], "installer\\"+culture+arch+".mst"])
-                callfn(["cscript", "src\\branding\\WiSubStg.vbs", "installer\\"+branding.filenames['management'+arch], "installer\\"+culture+arch+".mst",cbranding.branding["language"]])
+                callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
+                callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:"+culture, "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+                callfn(["cscript", cwd+"\\src\\branding\\msidiff.js", cwd+"\\installer\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+arch+".mst"])
+                callfn(["cscript", cwd+"\\src\\branding\\WiSubStg.vbs", cwd+"\\installer\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+arch+".mst",cbranding.branding["language"]])
 
-    shutil.copy("Setup\\Setup.exe", "installer") 
+    os.chdir(cwd)
+    
+    shutil.copy(pack+"\\Setup\\Setup.exe", "installer") 
 
     if signfiles:
         for signname in signinstallers:
@@ -577,10 +657,6 @@ def make_installers(pack, signname):
                 arch+
                 "\n")
     f.close()
-
-    # Remove XenLegacy.Exe so that we don't archive the dummy file
-    os.remove("installer\\"+branding.filenames['legacy'])    
-    os.remove("installer\\"+branding.filenames['legacyuninstallerfix'])    
 
 def archive(filename, files, tgz=False):
     access='w'
@@ -642,10 +718,12 @@ def copyfiles(name, subproj, dest, arch="", debug=False):
 
     if not os.path.lexists(dst_path):
         os.makedirs(dst_path)
-
+    print(os.getcwd())
     for file in glob.glob(os.sep.join([src_path, '*'])):
         print("%s -> %s" % (file, dst_path))
         shutil.copy(file, dst_path)
+    if not os.path.lexists(dst_path):
+        print("dstpath not found")
 
     sys.stdout.flush()
 
@@ -667,10 +745,123 @@ def build_tar_source_files(securebuild):
 	return { k:  os.sep.join([server, v]) for k,v in 
 			manifestspecific.build_tar_source_files.items() }
 
+def record_version_details():
+    if 'GIT_COMMIT' in os.environ.keys():
+        f = open(os.sep.join(['installer','revision']),"w")
+        f.write(os.environ['GIT_COMMIT'])
+        print("Revision : "+os.environ['GIT_COMMIT'])
+        f.close()
+
+    f = open(os.sep.join(['installer','buildnumber']),"w")
+    f.write(os.environ['MAJOR_VERSION']+"."+
+            os.environ['MINOR_VERSION']+"."+
+            os.environ['MICRO_VERSION']+"."+
+            os.environ['BUILD_NUMBER'])
+    f.close()
+    f = open(os.sep.join(['installer','hotfixnumber']),"w")
+    f.write(os.environ['MAJOR_VERSION']+"."+
+            os.environ['MINOR_VERSION']+"."+
+            os.environ['MICRO_VERSION']+"."+
+            os.environ['TOOLS_HOTFIX_NUMBER'])
+    f.close()
+ 
+def archive_build_input(archiveSrc):
+    if (archiveSrc == True):
+        listfile = callfnout(['git','ls-files'])
+        archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
+    archive('installer.tar', ['installer'])
+
+def build_installer_apps(location, outbuilds):
+    msbuild('installwizard','x64', False )
+    msbuild('installwizard','Win32', False )
+    msbuild('installwizard','Any CPU', False )
+
+    if (signfiles):
+        sign(os.sep.join([getsrcpath('installwizard', debug=False),"InstallWizard.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('installgui', debug=False),"InstallGui.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('UIEvent', debug=False),"UIEvent.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('netsettings','x64',False),"netsettings.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('netsettings','Win32',False),"netsettings.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('qnetsettings','x64',False),"qnetsettings.exe"]), signname, signstr=signstr)
+        sign(os.sep.join([getsrcpath('qnetsettings','Win32',False),"qnetsettings.exe"]), signname, signstr=signstr)
+    copyfiles('installwizard', 'installwizard', location, debug=False)
+    copyfiles('installwizard', 'installgui', location, debug=False)
+    copyfiles('installwizard', 'UIEvent', location, debug=False)
+    copyfiles('installwizard', 'netsettings', location,'x64', debug=False)
+    copyfiles('installwizard', 'netsettings', location,'Win32', debug=False)
+    copyfiles('installwizard', 'qnetsettings', location,'x64', debug=False)
+    copyfiles('installwizard', 'qnetsettings', location,'Win32', debug=False)
+
+def build_xenprep():
+    msbuild('xenprep','Any CPU', False)
+    if signfiles:
+        sign(os.sep.join([getsrcpath('xenprep', debug=False),"xenprep.exe"]), signname, signstr=signstr)
+    copyfiles('xenprep', 'xenprep', location, debug=False)
+
+
+def perform_autocommit():
+    if ('AUTOCOMMIT' in os.environ):
+        print ("AUTOCOMMIT = ",os.environ['AUTOCOMMIT'])
+        if (os.environ['AUTOCOMMIT'] == "true" or os.environ['AUTOCOMMIT'] == "test"):
+            repository = os.environ['AUTOREPO']
+            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
+            callfn(['hg','clone',repository+"/guest-packages.hg",os.sep.join([location, 'guest-packages.hg'])])
+            insturl = open(os.sep.join([location,'guest-packages.hg\\win-tools-iso\\installer.url']),'w')
+            print (buildlocation, file=insturl, end="")
+            print (buildlocation)
+            insturl.close()
+            commithashpath = os.sep.join([location,'guest-packages.hg\\win-tools-iso\\commithash'])
+            logout = "" 
+
+            hascommithash = os.path.isfile(commithashpath)
+
+            if hascommithash:
+                with open(commithashpath,'r') as temp:
+                    hashdata = temp.read().strip()
+                if (callfnret(['git','merge-base','--is-ancestor',hashdata,os.environ['GIT_COMMIT']])==1):
+                    logout+="REVERTS :\n"
+                    logout+=callfnout(['git','log',os.environ['GIT_COMMIT']+".."+hashdata])
+                    logout+="\n\nCOMMITS :\n"
+                logout+=callfnout(['git','log',hashdata+".."+os.environ['GIT_COMMIT']])
+            else:
+                logout+=callfnout(['git','log',"HEAD~1..HEAD"])
+
+            with open (commithashpath,'w+t') as temp:
+                print(os.environ['GIT_COMMIT'], file=temp)
+
+            pwd = os.getcwd()
+            os.chdir(os.sep.join([location, 'guest-packages.hg']))
+           
+            messagefilename=""
+
+            with tempfile.NamedTemporaryFile(mode='w+t',delete=False) as message:
+                print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n')
+                print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n', file=message)
+                messagefilename=message.name
+    
+            commit=['hg','commit','-l' ,messagefilename,'-u','jenkins@xeniface-build']
+            push=['hg','push']
+            add=['hg','add',os.sep.join([pwd,commithashpath])]
+            print(commit)
+            print(push)
+            print(add)
+            if (os.environ['AUTOCOMMIT'] == "true"):
+                if not hascommithash:
+                    callfn(add)
+                callfn(commit)
+                callfn(push)
+            os.remove(messagefilename)
+            os.chdir(pwd)
+            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
+
+basedir=""
+
 if __name__ == '__main__':
 
     print (sys.argv)
-    
+
+    basedir = os.getcwd()
+
     os.environ['MAJOR_VERSION'] = '6'
     os.environ['MINOR_VERSION'] = '2'
     os.environ['MICRO_VERSION'] = '50'
@@ -712,7 +903,8 @@ if __name__ == '__main__':
         buildlocation = os.environ['BUILD_URL']+"artifact/installer.tar"
 
     archiveSrc = True;
-
+    outbuilds = "installer\\builds"
+    
     while (len(sys.argv) > argptr):
         if (sys.argv[argptr] == "--secure"):
             securebuild = True
@@ -773,8 +965,15 @@ if __name__ == '__main__':
              archiveSrc = False
              argptr +=1
              continue
+        
+        if (sys.argv[argptr] == '--binaryoutputlocation'):
+            outbuilds = sys.argv[argptr+1]
+            argptr +=2
+            continue
 
-    make_header()
+    make_header(outbuilds)
+
+    rebuild_installers_only = False
 
     if (command == '--local'):
         print( "Local Build")
@@ -787,122 +986,47 @@ if __name__ == '__main__':
         print ("Latest Build")
         unpack_from_jenkins(manifestlatest.latest_tar_source_files, location)
         all_drivers_signed = manifestlatest.all_drivers_signed
+    elif (command == "--rebuild-msi"):
+        rebuild_installers_only = True
+        all_drivers_signed = True
     else:
         print("Unknown command: "+command)
         sys.exit(1)
 
-    if (signfiles):
-        signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
-        signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
-        if not all_drivers_signed:
-            signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
-            signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
-
-    msbuild('installwizard','x64', False )
-    msbuild('installwizard','Win32', False )
-    msbuild('installwizard','Any CPU', False )
-
-    if (signfiles):
-        sign(os.sep.join([getsrcpath('installwizard', debug=False),"InstallWizard.exe"]), signname, signstr=signstr)
-        sign(os.sep.join([getsrcpath('installgui', debug=False),"InstallGui.exe"]), signname, signstr=signstr)
-        sign(os.sep.join([getsrcpath('UIEvent', debug=False),"UIEvent.exe"]), signname, signstr=signstr)
-        sign(os.sep.join([getsrcpath('netsettings','x64',False),"netsettings.exe"]), signname, signstr=signstr)
-        sign(os.sep.join([getsrcpath('netsettings','Win32',False),"netsettings.exe"]), signname, signstr=signstr)
-        sign(os.sep.join([getsrcpath('qnetsettings','x64',False),"qnetsettings.exe"]), signname, signstr=signstr)
-        sign(os.sep.join([getsrcpath('qnetsettings','Win32',False),"qnetsettings.exe"]), signname, signstr=signstr)
-    copyfiles('installwizard', 'installwizard', location, debug=False)
-    copyfiles('installwizard', 'installgui', location, debug=False)
-    copyfiles('installwizard', 'UIEvent', location, debug=False)
-    copyfiles('installwizard', 'netsettings', location,'x64', debug=False)
-    copyfiles('installwizard', 'netsettings', location,'Win32', debug=False)
-    copyfiles('installwizard', 'qnetsettings', location,'x64', debug=False)
-    copyfiles('installwizard', 'qnetsettings', location,'Win32', debug=False)
-    make_installers(location, signname)
-
-
-    msbuild('xenprep','Any CPU', False)
-    if signfiles:
-        sign(os.sep.join([getsrcpath('xenprep', debug=False),"xenprep.exe"]), signname, signstr=signstr)
-    copyfiles('xenprep', 'xenprep', location, debug=False)
-
-    make_pe(location)
-    make_builds(location)
-
-    if 'GIT_COMMIT' in os.environ.keys():
-        f = open(os.sep.join(['installer','revision']),"w")
-        f.write(os.environ['GIT_COMMIT'])
-        print("Revision : "+os.environ['GIT_COMMIT'])
-        f.close()
-
-    f = open(os.sep.join(['installer','buildnumber']),"w")
-    f.write(os.environ['MAJOR_VERSION']+"."+
-            os.environ['MINOR_VERSION']+"."+
-            os.environ['MICRO_VERSION']+"."+
-            os.environ['BUILD_NUMBER'])
-    f.close()
-    f = open(os.sep.join(['installer','hotfixnumber']),"w")
-    f.write(os.environ['MAJOR_VERSION']+"."+
-            os.environ['MINOR_VERSION']+"."+
-            os.environ['MICRO_VERSION']+"."+
-            os.environ['TOOLS_HOTFIX_NUMBER'])
-    f.close()
- 
-    if (archiveSrc == True):
-        listfile = callfnout(['git','ls-files'])
-        archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
-    archive('installer.tar', ['installer'])
-
-    if ('AUTOCOMMIT' in os.environ):
-        print ("AUTOCOMMIT = ",os.environ['AUTOCOMMIT'])
-        if (os.environ['AUTOCOMMIT'] == "true" or os.environ['AUTOCOMMIT'] == "test"):
-            repository = os.environ['AUTOREPO']
-            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
-            callfn(['hg','clone',repository+"/guest-packages.hg",os.sep.join([location, 'guest-packages.hg'])])
-            insturl = open(os.sep.join([location,'guest-packages.hg\\win-tools-iso\\installer.url']),'w')
-            print (buildlocation, file=insturl, end="")
-            print (buildlocation)
-            insturl.close()
-            commithashpath = os.sep.join([location,'guest-packages.hg\\win-tools-iso\\commithash'])
-            logout = "" 
-
-            hascommithash = os.path.isfile(commithashpath)
-
-            if hascommithash:
-                with open(commithashpath,'r') as temp:
-                    hashdata = temp.read().strip()
-                if (callfnret(['git','merge-base','--is-ancestor',hashdata,os.environ['GIT_COMMIT']])==1):
-                    logout+="REVERTS :\n"
-                    logout+=callfnout(['git','log',os.environ['GIT_COMMIT']+".."+hashdata])
-                    logout+="\n\nCOMMITS :\n"
-                logout+=callfnout(['git','log',hashdata+".."+os.environ['GIT_COMMIT']])
-            else:
-                logout+=callfnout(['git','log',"HEAD~1..HEAD"])
-
-            with open (commithashpath,'w+t') as temp:
-                print(os.environ['GIT_COMMIT'], file=temp)
-
-            pwd = os.getcwd()
-            os.chdir(os.sep.join([location, 'guest-packages.hg']))
-           
-            messagefilename=""
-
-            with tempfile.NamedTemporaryFile(mode='w+t',delete=False) as message:
-                print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n')
-                print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n', file=message)
-                messagefilename=message.name
     
-            commit=['hg','commit','-l' ,messagefilename,'-u','jenkins@xeniface-build']
-            push=['hg','push']
-            add=['hg','add',os.sep.join([pwd,commithashpath])]
-            print(commit)
-            print(push)
-            print(add)
-            if (os.environ['AUTOCOMMIT'] == "true"):
-                if not hascommithash:
-                    callfn(add)
-                callfn(commit)
-                callfn(push)
-            os.remove(messagefilename)
-            os.chdir(pwd)
-            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
+    make_installers_dir()
+    if not rebuild_installers_only :
+        if (signfiles):
+            signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
+            signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
+            if not all_drivers_signed:
+                signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
+                signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
+
+        build_installer_apps(location,outbuilds)
+        make_builds(location,outbuilds)
+
+        make_pe(location)
+
+        sign_builds(outbuilds)
+
+    if rebuild_installers_only:
+        make_builds(location,outbuilds)
+        generate_signing_script()
+    else:
+        generate_intermediate_signing_script()
+    
+    generate_driver_wxs(outbuilds)
+    make_driver_msm(outbuilds) 
+    if not rebuild_installers_only:
+        make_oldmsi_installers(location, signname)
+        build_xenprep()
+    
+    make_mgmtagent_msi(outbuilds,signname)
+
+    record_version_details()
+
+    archive_build_input(archiveSrc)
+
+    perform_autocommit()
 

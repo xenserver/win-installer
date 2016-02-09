@@ -228,7 +228,7 @@
           <Directory Id='INSTALLDIR' Name='$(var.BRANDING_shortTools)'>
             <Directory Id='BRANDING' Name='Branding'>
                 <Component Id="BrandingCpy" Guid='*'>
-                    <File Id="BrandSatDll" Name='brandsat.dll' DiskId='1' Source='proj\brandsat.dll' />
+                    <File Id="BrandSatDll" Name='brandsat.dll' DiskId='1' Source='BrandSupport\brandsat.dll' />
                 </Component>
                 <Component Id="BrandingSup" Guid='*'>
                     <File Id="BrandSupportDll" Name="BrandSupport.dll" DiskId='1' Source='BrandSupport\BrandSupport.dll' />

@@ -75,7 +75,7 @@ resources = {
         "icon" : "xen.ico",
 }
 
-bitmaps = "src\\bitmaps"
+bitmaps = "..\\..\\src\\bitmaps"
 
 languagecode = {
         "culture" : "enus",
