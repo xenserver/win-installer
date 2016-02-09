@@ -179,8 +179,9 @@ def get_cultural_branding(culture):
         if not os.path.isfile("src\\branding\\branding."+culture+".py"):
             print("branding file for culture "+culture+" doesn't exist")
         (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding."+culture,["src\\branding"])
+    module = imp.load_module("branding"+culture,brandingFile,brandingPath,brandingDesc)
     os.chdir(cwd)
-    return imp.load_module("branding"+culture,brandingFile,brandingPath,brandingDesc)
+    return module
 
 def make_wxi_header(culture):
     cbranding = get_cultural_branding(culture)
