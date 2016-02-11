@@ -86,7 +86,7 @@ namespace PVDevice
             Trace.WriteLine(emulatedDevice + ": checking if reboot needed");
 
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey(
-                @"SYSTEM\CurrentControlSet\services\" +
+                Helpers.REGISTRY_SERVICES_KEY +
                 emulatedDevice + @"\Status"))
             {
                 if (key != null &&
