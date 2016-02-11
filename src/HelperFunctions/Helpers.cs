@@ -7,6 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading;
+using Microsoft.Win32;
 
 namespace HelperFunctions
 {
@@ -112,9 +113,19 @@ namespace HelperFunctions
             return (int)Math.Log((double)flag, 2.0);
         }
 
+        public enum ExpandedServiceStartMode : uint {
+            // Contains service start modes for drivers and user services
+            Boot        = 0,
+            System      = 1,
+            Automatic   = 2,
+            Manual      = 3, //User Services
+            Demand      = 3, //Drivers
+            Disabled    = 4,
+        }
+
         public static bool ChangeServiceStartMode(
             string serviceName,
-            ServiceStartMode mode)
+            ExpandedServiceStartMode mode)
         {
             Trace.WriteLine(
                 "Changing Start Mode of service: \'" + serviceName + "\'"
@@ -172,6 +183,41 @@ namespace HelperFunctions
             );
 
             return true;
+        }
+
+        const string SERVICES_KEY =
+            @"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\";
+
+        public static void EnsureBootStartServicesStartAtBoot()
+        // This is a function which at first glance appears pointless
+        // It runs through all of our services registry entries, and
+        // if it finds they are boot start, it changes their start mode
+        // to be boot start.
+        // The Reason:  If we move xenbus to be non-boot start,
+        // then reinstall the same version of xenbus, it will become boot
+        // start.  But other boot start drivers hanging off it seem to become
+        // forgotten by Windows.  This function reminds Windows about them.
+        {
+            string[] services = {
+                "xenbus", "xendisk", "xenvbd", "xenvif", "xennet", "xeniface",
+            };
+            foreach (string service in services) {
+                if (
+                    (Int32)Registry.GetValue(
+                        SERVICES_KEY + service, 
+                        "start", 
+                        4
+                    )
+                    == (Int32)ExpandedServiceStartMode.Boot)
+                {
+                    Trace.WriteLine("ensure service " + service 
+                            + " is boot start");
+                    ChangeServiceStartMode(
+                            service, 
+                            ExpandedServiceStartMode.Boot
+                    );
+                }
+            }
         }
 
         public static bool DeleteService(string serviceName)
