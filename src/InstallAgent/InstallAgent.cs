@@ -168,13 +168,17 @@ namespace InstallAgent
 
                 Helpers.ChangeServiceStartMode(
                     this.ServiceName,
-                    ServiceStartMode.Manual
+                    Helpers.ExpandedServiceStartMode.Manual
                 );
+
+                Helpers.EnsureBootStartServicesStartAtBoot();
 
                 SetInstallStatus("Installed");
             }
             else
             {
+                Helpers.EnsureBootStartServicesStartAtBoot();
+
                 if (rebootOption == RebootType.AUTOREBOOT)
                 {
                     TryReboot();
