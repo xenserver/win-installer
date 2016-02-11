@@ -195,6 +195,12 @@
     <CustomAction Id="SetREBOOTOPTION" Property="REBOOTOPTION" Value="DEFAULT" />
     <CustomAction Id="RebootOptionForce" Property="REBOOTOPTION" Value="AUTOREBOOT" />
     <CustomAction Id="RebootOptionNone" Property="REBOOTOPTION"  Value="NOREBOOT" />
+    <CustomAction Id="UninstallExe"
+                  FileKey="UninstallerExe"
+                  Execute="deferred"
+                  ExeCommand = ""
+                  Impersonate="no"
+                  Return="ignore" />
 
     <InstallExecuteSequence>
         <Custom Action="SaveCmdLineHosttime" Before="AppSearch"/>
@@ -217,6 +223,12 @@
         <Custom Action="RebootOptionNone" After="SetREBOOTOPTION">
             REBOOT="Suppress" OR REBOOT="ReallySuppress"
         </Custom>
+        <Custom Action="UninstallExe" Before="RemoveFiles">
+            (NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")
+        </Custom>
+        <ScheduleReboot After="InstallFinalize">
+            (NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")
+        </ScheduleReboot>
     </InstallExecuteSequence>
 
 
@@ -263,6 +275,8 @@
                 <File Id="InteropNetFwTypeLibdll" Name="Interop.NetFwTypeLib.dll" Source="xenguestagent\xenguestagent\Interop.NetFwTypeLib.dll" />
                 <File Id="InteropTaskSchedulerdll" Name="Interop.TaskScheduler.dll" Source="xenguestagent\xenupdater\Interop.TaskScheduler.dll" />
                 <File Id='ManagementAgentUpdaterExeConfig' Name="ManagementAgentUpdater.Exe.Config" Source='xenguestagent\xenupdater\ManagementAgentUpdater.Exe.Config' />
+                <File Id='UninstallerExeConfig' Name="Uninstall.Exe.Config" Source='Uninstall\Uninstall.exe.config' />
+                <File Id='UninstallerExe' Name="Uninstall.Exe" Source='Uninstall\Uninstall.Exe' />
             </Component>
             <Component Id='XenVssComponent' Guid='$(var.XenVssComponentGUID)'>
                  <File Id='xenvss_dll' Name="XenVss.dll" DiskId='1' Source='xenvss\$(var.arch)\xenvss.dll' KeyPath='yes' />

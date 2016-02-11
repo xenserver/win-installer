@@ -36,6 +36,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PVDriversRemoval", "..\src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrandSupport", "..\src\BrandSupport\BrandSupport.csproj", "{3C46D5F0-E82E-41B1-849B-D7B0FE335212}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Uninstall", "..\src\Uninstall\Uninstall.csproj", "{5D3269EC-D352-47C1-B696-0E62129E6511}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B75C4D13-EF07-48FC-B028-5ED1AB7146CD} = {B75C4D13-EF07-48FC-B028-5ED1AB7146CD}
+		{6FFF20B4-142B-43B9-83B3-89DDD118E216} = {6FFF20B4-142B-43B9-83B3-89DDD118E216}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -225,6 +231,18 @@ Global
 		{3C46D5F0-E82E-41B1-849B-D7B0FE335212}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{3C46D5F0-E82E-41B1-849B-D7B0FE335212}.Release|Win32.ActiveCfg = Release|Any CPU
 		{3C46D5F0-E82E-41B1-849B-D7B0FE335212}.Release|x64.ActiveCfg = Release|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Release|Win32.ActiveCfg = Release|Any CPU
+		{5D3269EC-D352-47C1-B696-0E62129E6511}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

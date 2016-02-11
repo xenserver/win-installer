@@ -189,7 +189,6 @@ namespace HelperFunctions
             return true;
         }
 
-
         public static void EnsureBootStartServicesStartAtBoot()
         // This is a function which at first glance appears pointless
         // It runs through all of our services registry entries, and

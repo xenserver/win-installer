@@ -105,6 +105,7 @@ agenttosign = [
     "Libraries\\HelperFunctions.dll",
     "Libraries\\HardwareDevice.dll",
     "Libraries\\PVDriversRemoval.dll",
+    "Uninstall\\Uninstall.exe",
 ]
 
 def sign_builds(outbuilds):
@@ -361,6 +362,7 @@ def make_builds(pack, outbuilds):
         shutil.copytree(pack+"\\InstallAgent", outbuilds+"\\InstallAgent")
         shutil.copytree(pack+"\\Libraries", outbuilds+"\\Libraries")
         shutil.copytree(pack+"\\Setup", outbuilds+"\\Setup")
+        shutil.copytree(pack+"\\Uninstall", outbuilds+"\\Uninstall")
 
 
 
