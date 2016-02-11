@@ -1,6 +1,7 @@
 ﻿using HardwareDevice;
 using Microsoft.Win32;
 using PInvokeWrap;
+using HelperFunctions;
 using State;
 using System;
 using System.Diagnostics;
@@ -101,7 +102,7 @@ namespace PVDevice
             // and we don't have any aliases listed,
             // generate aliases as per the coinstaller
             RegistryKey netKey = Registry.LocalMachine.OpenSubKey(
-                @"SYSTEM\CurrentControlSet\services\xennet\enum"
+                Helpers.REGISTRY_SERVICES_KEY + @"xennet\enum"
             );
 
             if (netKey == null)
@@ -140,7 +141,7 @@ namespace PVDevice
         private static void BuildAlias(int index, string devicePath)
         {
             RegistryKey vifKey = Registry.LocalMachine.OpenSubKey(
-                @"SYSTEM\CurrentControlSet\services\xenvif",
+                Helpers.REGISTRY_SERVICES_KEY + @"xenvif",
                 true
             );
 

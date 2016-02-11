@@ -124,8 +124,7 @@ namespace PVDriversRemoval
         public static void DontBootStartPVDrivers()
         {
             const string FUNC_NAME = "DontBootStartPVDrivers";
-            const string BASE_RK_NAME =
-                @"SYSTEM\CurrentControlSet\Services";
+            const string BASE_RK_NAME = Helpers.REGISTRY_SERVICES_KEY;
             const string START = "Start";
             const string XENFILT_UNPLUG = @"xenfilt\Unplug";
             const string XENEVTCHN = "xenevtchn";
