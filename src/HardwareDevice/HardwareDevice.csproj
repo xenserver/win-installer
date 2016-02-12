@@ -35,6 +35,7 @@
   <ItemGroup>
     <Compile Include="Device.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="..\..\include\VerInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HelperFunctions\HelperFunctions.csproj">

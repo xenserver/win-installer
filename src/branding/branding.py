@@ -47,6 +47,26 @@ branding = {
         "setupHelp" : "Valid arguments are:\\n /TEST\\n/passive\\n/quiet\\n/norestart\\n/forcerestart",
         "noSystemDir" : "Unable to read system directory",
         "setupLogDir" : "XSToolSetup",
+        "copyrightInstallAgent" : "Copyright 2015-2016 Citrix Systems, Inc.",
+        "copyrightBrandSupport" : "Copyright 2016 Citrix Systems, Inc.",
+        "copyrightHelperFunctions" : "Copyright 2016 Citrix Systems, Inc.",
+        "copyrightHardwareDevice" : "Copyright 2016 Citrix Systems, Inc.",
+        "copyrightPInvokeWrap" : "Copyright 2016 Citrix Systems, Inc.",
+        "copyrightPVDriversRemoval" : "Copyright 2016 Citrix Systems, Inc.",
+        "copyrightUninstall" : "Copyright 2016 Citrix Systems, Inc.",
+        "errMSINoMem":"Insufficient memory to allocate msiexec string",
+        "errFilePathNoMem":"Insufficient memory to get file path",
+        "errNoLogPath":"Can't get logging path",
+        "errCmdLineNoMem":"Insufficient memory to allocate cmdline string",
+        "errMSIInstallFail":"The MSI Install failed with exit code %d\\nSee %s for more details", #MSI exit code, #Log File Location
+        "errDotNetNeeded":"Microsoft .Net Framework 3.5 or higher is required",
+        "twoCharBrand":"XS",
+        "updater" : "ManagementAgentUpdater",
+        "copyrightUpdater" : "Copyright 2016 Citrix Systems, Inc.",
+        "updaterURL" : "https://pvupdates.vmd.citrix.com/updates.tsv",
+        "updaterLong" : "Citrix Management Agent Auto-Updater",
+        "updaterDesc" : "Automatically checks and updates XenServer tools",
+
 }
 
 filenames = {

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("PInvokeWrap")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Citrix")]
+[assembly: AssemblyCompany(XenVersions.BRANDING_manufacturer)]
 [assembly: AssemblyProduct("PInvokeWrap")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2016")]
+[assembly: AssemblyCopyright(XenVersions.BRANDING_copyrightPInvokeWrap)]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

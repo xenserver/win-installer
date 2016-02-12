@@ -184,6 +184,16 @@ def get_cultural_branding(culture):
     os.chdir(cwd)
     return module
 
+def make_cs_header() :
+    file = open(include+'\\VerInfo.cs', 'w')
+
+    file.write('internal class XenVersions {\n')
+    for key,value in branding.branding.items():
+        file.write("public const string BRANDING_"+key+" = \""+value.replace("\\","\\\\")+"\";\n")
+    file.write("}")
+    file.close()
+
+
 def make_wxi_header(culture):
     cbranding = get_cultural_branding(culture)
     file = open(include+"\\"+brandingheader+"."+culture+".wxi", 'w')
@@ -271,6 +281,8 @@ def make_header(outbuilds):
     file.close();
 
     make_setup_header()
+
+    make_cs_header()
 
     make_wxi_header(branding.cultures['default'])
     for culture in branding.cultures['others']:
