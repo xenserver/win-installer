@@ -59,39 +59,9 @@ TCHAR * _tallocprintf(const TCHAR *format, ...)
 	return space;
 }
 
-typedef struct {
-	const uint8_t lang;
-	const uint8_t sublang;
-	const TCHAR ** list;
-} dict;
 
-#include "setupbranding.h"
 
-const TCHAR *getBrandingString(int brandindex)
-{
-	static bool brandinit=0;
-	static const dict *uidict = loc_def;
-	if (!brandinit) {
-		int i;
-		LANGID id = GetUserDefaultUILanguage();
-		for (i=0; i<=(sizeof(dicts)/sizeof(dict)); i++) {
-			uint8_t sublang = (id&0xFF00)>>8;
-			uint8_t lang = (id&0xFF);
-			if (lang == dicts[i]->lang) {
-				if (uidict->lang != lang){
-					uidict = dicts[i];
-					continue;
-				}
-				if (sublang == dicts[i]->sublang) {
-					uidict = dicts[i];
-					break;
-				}
-			}
-		}
-		brandinit = 1;
-	}
-	return uidict->list[brandindex];
-}
+#include "brandcontrol.h"
 
 void ErrMsg(const TCHAR *format, ...)
 {
@@ -205,13 +175,13 @@ int getFileLocations()
 
 	msiexec = _tallocprintf(_T("%s\\msiexec.exe"), sysdir);
 	if ( msiexec == NULL) {
-		ErrMsg(_T("Insufficient memory to allocate msiexec string"));
+		ErrMsg(getBrandingString(BRANDING_errMSINoMem));
 		return 0;
 	}
 
 	
 	if (GetModuleFileName(NULL, workfile, MAX_PATH)>=MAX_PATH) {
-		ErrMsg(_T("Insufficient memory to get file path"));
+		ErrMsg(getBrandingString(BRANDING_errFilePathNoMem));
 		return 0;
 	}
 	PathRemoveFileSpec(workfile);
@@ -225,7 +195,7 @@ int getFileLocations()
 		PathAppend(logfile,_T("Install.log"));
 	}
 	else {
-		ErrMsg(_T("Can't get logging path"));
+		ErrMsg(getBrandingString(BRANDING_errNoLogPath));
 		return 0;
 	}
 	return 1;
@@ -246,6 +216,7 @@ const TCHAR* getInstallMsiName(arguments* args)
 {
 	if (args->test) {
 		BOOL wow64;
+		args->forcerestart = false;  //Hack because old installer doesn't like forcereboot
 		if (IsWow64Process(GetCurrentProcess(), &wow64)) {
 			if (wow64) {
 				return ma64;
@@ -276,14 +247,14 @@ DWORD installMsi(arguments* args)
 		( args->norestart?_T(" /norestart"):(args->forcerestart?_T(" /forcerestart"):_T(""))),
 		logfile);
 	if (cmdline == NULL) {
-		ErrMsg(_T("Insufficient memory to allocate cmdline string"));
+		ErrMsg(getBrandingString(BRANDING_errCmdLineNoMem));
 		return 0;
 	}
 
 	runProcess(cmdline, &exitcode);
 
 	if (exitcode != 0) {
-		ErrMsg(_T("The MSI Install failed with exit code %d\nSee %s for more details"), exitcode, logfile);
+		ErrMsg(getBrandingString(BRANDING_errMSIInstallFail), exitcode, logfile);
 	}
 
 	return exitcode;
@@ -341,7 +312,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	// We require .net to run
 
 	if (!checkDotNet()) {
-		ErrMsg(_T("Microsoft .Net Framework 3.5 or higher is required"));
+		ErrMsg(getBrandingString(BRANDING_errDotNetNeeded));
 		return 0;
 	}
 

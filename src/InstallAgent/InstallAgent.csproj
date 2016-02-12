@@ -68,6 +68,7 @@
     <Compile Include="PVDevice\XenVif.cs" />
     <Compile Include="TimeDateTraceListener.cs" />
     <Compile Include="State\VM.cs" />
+    <Compile Include="..\..\include\VerInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ProjectInstaller.resx">

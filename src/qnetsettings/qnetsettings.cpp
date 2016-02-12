@@ -38,7 +38,7 @@
 #include "shlobj.h"
 #include <direct.h>
 #include <errno.h>
-
+#include "brandcontrol.h"
 
 #define SAVEARG _T("/save")
 #define RESTOREARG _T("/restore")
@@ -52,7 +52,7 @@
 FILE *logptr = stderr;
 
 int helpCmd(void) {
-	Log(_T("netsettings.exe [ " LOGARG "] < ") SAVEARG _T(" | ") RESTOREARG _T(" | ") HELPARG _T(" >\n"));
+	Log(_T("qnetsettings.exe [ " LOGARG "] < ") SAVEARG _T(" | ") RESTOREARG _T(" | ") HELPARG _T(" >\n"));
 	return 1;
 }
 
@@ -107,11 +107,11 @@ _tWinMain(
 			
 			err = SHGetFolderPath(NULL,CSIDL_COMMON_APPDATA, NULL,  SHGFP_TYPE_CURRENT, Buffer);
 			if (err != ERROR_SUCCESS) {
-				Warning("Unabale to find log folder");
+				Warning("Unable to find log folder");
 				continue;
 			}
 
-			err = sprintf_s(PathName, MAX_PATH, "%s\\Citrix", Buffer);
+			err = sprintf_s(PathName, MAX_PATH, "%s\\%s", Buffer,BRANDING_manufacturer);
 			if (err <= 0 && errno != EEXIST) {
 				Warning("Unable to generate log path name");
 				continue;
@@ -119,11 +119,11 @@ _tWinMain(
 
 			err = _mkdir(PathName);
 			if ((err != 0) && (errno != EEXIST)) {
-				Warning("Unable to open Citrix programdata folder");
+				Warning("Unable to open %s programdata folder",BRANDING_manufacturer);
 				continue;
 			}
 
-			err = sprintf_s(PathName, MAX_PATH, "%s\\Citrix\\XSNetSettings", Buffer);
+			err = sprintf_s(PathName, MAX_PATH, "%s\\%s\\%sNetSettings", Buffer,BRANDING_manufacturer,BRANDING_twoCharBrand);
 			if (err <= 0 ) {
 				Warning("Unable to generate log path name");
 				continue;
@@ -131,7 +131,7 @@ _tWinMain(
 
 			err = _mkdir(PathName);
 			if ((err != 0) && (errno != EEXIST)) {
-				Warning("Unable to open Citrix XSNetSettings ProgramData folder");
+				Warning("Unable to open %s %sNetSettings ProgramData folder", BRANDING_manufacturer, BRANDING_twoCharBrand);
 				continue;
 			}
 

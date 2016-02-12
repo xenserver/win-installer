@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("HardwareDevice")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Citrix")]
+[assembly: AssemblyCompany(XenVersions.BRANDING_manufacturer)]
 [assembly: AssemblyProduct("HardwareDevice")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2016")]
+[assembly: AssemblyCopyright(XenVersions.BRANDING_copyrightHardwareDevice)]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

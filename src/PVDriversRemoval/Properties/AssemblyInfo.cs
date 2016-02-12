@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("PVDriversRemoval")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Citrix")]
+[assembly: AssemblyCompany(XenVersions.BRANDING_manufacturer)]
 [assembly: AssemblyProduct("PVDriversRemoval")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2016")]
+[assembly: AssemblyCopyright(XenVersions.BRANDING_copyrightPVDriversRemoval)]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

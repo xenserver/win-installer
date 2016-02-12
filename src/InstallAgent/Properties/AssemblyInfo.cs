@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("InstallAgent")]
+[assembly: AssemblyTitle(XenVersions.BRANDING_installAgentShort)]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Citrix")]
-[assembly: AssemblyProduct("InstallAgent")]
-[assembly: AssemblyCopyright("Copyright ©  2015")]
+[assembly: AssemblyCompany(XenVersions.BRANDING_manufacturer)]
+[assembly: AssemblyProduct(XenVersions.BRANDING_installAgentShort)]
+[assembly: AssemblyCopyright(XenVersions.BRANDING_copyrightInstallAgent)]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

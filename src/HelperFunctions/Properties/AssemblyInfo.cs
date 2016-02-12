@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("HelperFunctions")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Citrix")]
+[assembly: AssemblyCompany(XenVersions.BRANDING_manufacturer)]
 [assembly: AssemblyProduct("HelperFunctions")]
-[assembly: AssemblyCopyright("Copyright © Microsoft 2016")]
+[assembly: AssemblyCopyright(XenVersions.BRANDING_copyrightHelperFunctions)]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
