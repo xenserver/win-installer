@@ -209,14 +209,12 @@ namespace InstallAgent
 
             if (VM.GetOtherDriverInstallingOnFirstRun())
             {
-                timeout = 20; // arbitrarily chosen;
-
                 Trace.WriteLine(
                     "Something was installing before " +
                     "Install Agent's first run."
                 );
 
-                timeout = 20 * 60; // 20 minutes to seconds
+                timeout = 600; // seconds; arbitrarily chosen
             }
             else
             {
