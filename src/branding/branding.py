@@ -66,6 +66,16 @@ branding = {
         "updaterURL" : "https://pvupdates.vmd.citrix.com/updates.tsv",
         "updaterLong" : "Citrix Management Agent Auto-Updater",
         "updaterDesc" : "Automatically checks and updates XenServer tools",
+        "laterVersion" : "A later version of Windows Management Agent is already installed.  Setup will now exit",
+        "windowsRequired" : "This verison of the XenServer Windows Management Agent requires Windows Vista, Windows Server 2008 or Later",
+        "evtServiceStarting" : "Service Starting",
+        "evtException" : "Exception: ",
+        "evtServiceStopping" : "Service Stopping",
+        "evtStopLock" : "Service Stopping (locked)",
+        "evtStopShutdown" : "Service Stopping (shutdown)",
+        "evtStopNothing" : "Service Stopping (nothing running)",
+        "evtStopJoin" : "Service Stopping (joining thread)",
+        "evtStopped" : "Service Stopping (done)",
 
 }
 
