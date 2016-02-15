@@ -368,7 +368,8 @@ def make_builds(pack, outbuilds):
         shutil.copytree(pack+"\\xeniface", outbuilds+"\\xeniface")
         shutil.copytree(pack+"\\xenguestagent", outbuilds+"\\xenguestagent")
         shutil.copytree(pack+"\\xenvss", outbuilds+"\\xenvss")
-        shutil.copytree(pack+"\\xenprep", outbuilds+"\\xenprep")
+
+def make_installer_builds(pack, outbuilds):
         shutil.copytree(pack+"\\installwizard", outbuilds+"\\installwizard")
         shutil.copytree(pack+"\\BrandSupport", outbuilds+"\\BrandSupport")
         shutil.copytree(pack+"\\InstallAgent", outbuilds+"\\InstallAgent")
@@ -799,13 +800,13 @@ def build_installer_apps(location, outbuilds):
         sign(os.sep.join([getsrcpath('netsettings','Win32',False),"netsettings.exe"]), signname, signstr=signstr)
         sign(os.sep.join([getsrcpath('qnetsettings','x64',False),"qnetsettings.exe"]), signname, signstr=signstr)
         sign(os.sep.join([getsrcpath('qnetsettings','Win32',False),"qnetsettings.exe"]), signname, signstr=signstr)
-    copyfiles('installwizard', 'installwizard', location, debug=False)
-    copyfiles('installwizard', 'installgui', location, debug=False)
-    copyfiles('installwizard', 'UIEvent', location, debug=False)
-    copyfiles('installwizard', 'netsettings', location,'x64', debug=False)
-    copyfiles('installwizard', 'netsettings', location,'Win32', debug=False)
-    copyfiles('installwizard', 'qnetsettings', location,'x64', debug=False)
-    copyfiles('installwizard', 'qnetsettings', location,'Win32', debug=False)
+    copyfiles('installwizard', 'installwizard', ".", debug=False)
+    copyfiles('installwizard', 'installgui', ".", debug=False)
+    copyfiles('installwizard', 'UIEvent', ".", debug=False)
+    copyfiles('installwizard', 'netsettings', ".",'x64', debug=False)
+    copyfiles('installwizard', 'netsettings', ".",'Win32', debug=False)
+    copyfiles('installwizard', 'qnetsettings', ".",'x64', debug=False)
+    copyfiles('installwizard', 'qnetsettings', ".",'Win32', debug=False)
 
 def build_xenprep():
     msbuild('xenprep','Any CPU', False)
@@ -1020,6 +1021,7 @@ if __name__ == '__main__':
 
         build_installer_apps(location,outbuilds)
         make_builds(location,outbuilds)
+        make_installer_builds(".",outbuilds)
 
         make_pe(location)
 
@@ -1027,6 +1029,7 @@ if __name__ == '__main__':
 
     if rebuild_installers_only:
         make_builds(location,outbuilds)
+        make_installer_builds(location,outbuilds)
         generate_signing_script()
     else:
         generate_intermediate_signing_script()
@@ -1035,7 +1038,6 @@ if __name__ == '__main__':
     make_driver_msm(outbuilds) 
     if not rebuild_installers_only:
         make_oldmsi_installers(location, signname)
-        build_xenprep()
     
     make_mgmtagent_msi(outbuilds,signname)
 
