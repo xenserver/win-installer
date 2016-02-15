@@ -111,7 +111,7 @@ _tWinMain(
 				continue;
 			}
 
-			err = sprintf_s(PathName, MAX_PATH, "%s\\%s", Buffer,BRANDING_manufacturer);
+			err = sprintf_s(PathName, MAX_PATH, "%s\\%s", Buffer,getBrandingString(BRANDING_manufacturer));
 			if (err <= 0 && errno != EEXIST) {
 				Warning("Unable to generate log path name");
 				continue;
@@ -119,11 +119,11 @@ _tWinMain(
 
 			err = _mkdir(PathName);
 			if ((err != 0) && (errno != EEXIST)) {
-				Warning("Unable to open %s programdata folder",BRANDING_manufacturer);
+				Warning("Unable to open %s programdata folder",getBrandingString(BRANDING_manufacturer));
 				continue;
 			}
 
-			err = sprintf_s(PathName, MAX_PATH, "%s\\%s\\%sNetSettings", Buffer,BRANDING_manufacturer,BRANDING_twoCharBrand);
+			err = sprintf_s(PathName, MAX_PATH, "%s\\%s\\%sNetSettings", Buffer,getBrandingString(BRANDING_manufacturer),getBrandingString(BRANDING_twoCharBrand));
 			if (err <= 0 ) {
 				Warning("Unable to generate log path name");
 				continue;
@@ -131,7 +131,7 @@ _tWinMain(
 
 			err = _mkdir(PathName);
 			if ((err != 0) && (errno != EEXIST)) {
-				Warning("Unable to open %s %sNetSettings ProgramData folder", BRANDING_manufacturer, BRANDING_twoCharBrand);
+				Warning("Unable to open %s %sNetSettings ProgramData folder", getBrandingString(BRANDING_manufacturer), getBrandingString(BRANDING_twoCharBrand));
 				continue;
 			}
 
