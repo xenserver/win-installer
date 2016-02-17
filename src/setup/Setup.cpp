@@ -216,7 +216,6 @@ const TCHAR* getInstallMsiName(arguments* args)
 {
 	if (args->test) {
 		BOOL wow64;
-		args->forcerestart = false;  //Hack because old installer doesn't like forcereboot
 		if (IsWow64Process(GetCurrentProcess(), &wow64)) {
 			if (wow64) {
 				return ma64;
@@ -230,6 +229,7 @@ const TCHAR* getInstallMsiName(arguments* args)
 		}
 	}
 	else {
+		args->forcerestart = false;  //Hack because old installer doesn't like forcereboot
 		return iw;
 	}
 }
