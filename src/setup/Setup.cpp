@@ -214,7 +214,7 @@ DWORD installLegacy(arguments *args) {
 
 const TCHAR* getInstallMsiName(arguments* args)
 {
-	if (args->test) {
+	if (!args->test) {
 		BOOL wow64;
 		if (IsWow64Process(GetCurrentProcess(), &wow64)) {
 			if (wow64) {
