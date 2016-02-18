@@ -205,19 +205,28 @@ namespace HelperFunctions
 
             foreach (string service in services) 
             {
-                if ((Int32)Registry.GetValue(
-                        HKLM + REGISTRY_SERVICES_KEY + service, 
-                        "start", 
-                        4
-                    ) == (Int32)ExpandedServiceStartMode.Boot)
+                try
                 {
+                    if ((Int32)Registry.GetValue(
+                            HKLM + REGISTRY_SERVICES_KEY + service,
+                            "start",
+                            4
+                        ) == (Int32)ExpandedServiceStartMode.Boot)
+                    {
+                        Trace.WriteLine(
+                            "ensure service \'" + service + "\' is boot start");
+
+                        ChangeServiceStartMode(
+                            service,
+                            ExpandedServiceStartMode.Boot
+                        );
+                    }
+                }
+                catch
+                {
+                    // We fall here if the service does not exist in the registry
                     Trace.WriteLine(
-                        "ensure service \'" + service + "\' is boot start");
-                    
-                    ChangeServiceStartMode(
-                        service, 
-                        ExpandedServiceStartMode.Boot
-                    );
+                        "Unable to ensure service \'" + service + "\' is boot start"); 
                 }
             }
         }
