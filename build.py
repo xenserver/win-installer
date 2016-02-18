@@ -1036,8 +1036,6 @@ if __name__ == '__main__':
     
     generate_driver_wxs(outbuilds)
     make_driver_msm(outbuilds) 
-    if not rebuild_installers_only:
-        make_oldmsi_installers(location, signname)
     
     make_mgmtagent_msi(outbuilds,signname)
 
