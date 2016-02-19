@@ -114,6 +114,8 @@ typedef struct {
 bool parseCommandLine(arguments* args)
 {
 	
+	memset(args, 0, sizeof(args));
+
 	// Check OS
 	OSVERSIONINFO versionInfo;
 	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
@@ -125,7 +127,6 @@ bool parseCommandLine(arguments* args)
 
 	int argCount;
 	LPWSTR *szArgList = CommandLineToArgvW(GetCommandLineW(), &argCount);
-	memset(args, 0, sizeof(arguments));
 
 	for (int i=1; i<argCount ; i++) {
 		if (!wcsncmp(szArgList[i],L"/TEST",sizeof(L"/TEST"))) {
@@ -327,7 +328,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	if (args.legacy) {
 		return installLegacy(&args);
 	}
-
 	return installMsi(&args);
 	
 }
