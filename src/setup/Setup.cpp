@@ -114,11 +114,12 @@ typedef struct {
 bool parseCommandLine(arguments* args)
 {
 	
-	memset(args, 0, sizeof(args));
+	memset(args, 0, sizeof(arguments));
 
 	// Check OS
 	OSVERSIONINFO versionInfo;
 	versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+
 	if (GetVersionEx(&versionInfo)) {
 		if (versionInfo.dwMajorVersion < 6) {
 			args->legacy=true;
@@ -126,8 +127,8 @@ bool parseCommandLine(arguments* args)
 	}
 
 	int argCount;
-	LPWSTR *szArgList = CommandLineToArgvW(GetCommandLineW(), &argCount);
-
+	LPWSTR cli = GetCommandLineW();
+	LPWSTR *szArgList = CommandLineToArgvW(cli, &argCount);
 	for (int i=1; i<argCount ; i++) {
 		if (!wcsncmp(szArgList[i],L"/TEST",sizeof(L"/TEST"))) {
 			args->test = true;
@@ -149,6 +150,7 @@ bool parseCommandLine(arguments* args)
 			return false;
 		}
 	}
+
 	return true;
 }
 
@@ -208,7 +210,7 @@ DWORD installLegacy(arguments *args) {
 	runProcess(cmd, &exitcode);
 	free(cmd);
 	cmd = _tallocprintf(_T("%s\\%s%s"), workfile, xenlegacy, 
-		(args->passive||args->quiet)?" /S":"");
+		(args->passive||args->quiet)?_T(" /S /AllowLegacyInstall"):_T("/AllowLegacyInstall"));
 	runProcess(cmd, &exitcode);
 	return exitcode;
 }
