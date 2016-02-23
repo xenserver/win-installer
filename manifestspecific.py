@@ -1,4 +1,4 @@
-# Copyright (c) Citrix Systems Inc.
+ Copyright (c) Citrix Systems Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms,
@@ -38,7 +38,7 @@ build_tar_source_files = {
        "xennet" : r'xennet-patchq.git\41\xennet.tar',
        "xeniface" : r'xeniface-patchq.git\26\xeniface.tar',
        "xenvbd" : r'xenvbd-patchq.git\124\xenvbd.tar',
-       "xenvss" : r'standard-lcm\16\xenvss-7.tar',
+       "xenvss" : r'xenvss.git\15\xenvss.tar',
 }
 
 all_drivers_signed = False
