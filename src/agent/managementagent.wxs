@@ -194,6 +194,7 @@
 
     <CustomAction Id="SetREBOOTOPTION" Property="REBOOTOPTION" Value="DEFAULT" />
     <CustomAction Id="RebootOptionForce" Property="REBOOTOPTION" Value="AUTOREBOOT" />
+    <CustomAction Id="RebootOptionForceDisableForce" Property="REBOOT" Value="ReallySuppress" />
     <CustomAction Id="RebootOptionNone" Property="REBOOTOPTION"  Value="NOREBOOT" />
     <CustomAction Id="UninstallExe"
                   FileKey="UninstallerExe"
@@ -222,6 +223,9 @@
         </Custom>
         <Custom Action="RebootOptionNone" After="SetREBOOTOPTION">
             REBOOT="Suppress" OR REBOOT="ReallySuppress"
+        </Custom>
+        <Custom Action="RebootOptionForceDisableForce" After="RebootOptionNone">
+            REBOOT="Force"
         </Custom>
         <Custom Action="UninstallExe" Before="RemoveFiles">
             (NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")
