@@ -291,14 +291,14 @@ namespace HelperFunctions
         public static bool BlockUntilNoDriversInstalling(uint timeout)
         // Returns true, if no drivers are installing before the timeout
         // is reached. Returns false, if timeout is reached. To block
-        // until no drivers are installing pass PInvoke.CfgMgr32.INFINITE
+        // until no drivers are installing pass PInvoke.Winbase.INFINITE
         // 'timeout' is counted in seconds.
         {
-            CfgMgr32.Wait result;
+            Winbase.WAIT result;
 
             Trace.WriteLine("Checking if drivers are currently installing");
 
-            if (timeout != CfgMgr32.INFINITE)
+            if (timeout != Winbase.INFINITE)
             {
                 Trace.WriteLine("Blocking for " + timeout + " seconds..");
                 timeout *= 1000;
@@ -312,12 +312,12 @@ namespace HelperFunctions
                 timeout
             );
 
-            if (result == CfgMgr32.Wait.OBJECT_0)
+            if (result == Winbase.WAIT.OBJECT_0)
             {
                 Trace.WriteLine("No drivers installing");
                 return true;
             }
-            else if (result == CfgMgr32.Wait.FAILED)
+            else if (result == Winbase.WAIT.FAILED)
             {
                 Win32Error.Set("CMP_WaitNoPendingInstallEvents");
                 throw new Exception(Win32Error.GetFullErrMsg());

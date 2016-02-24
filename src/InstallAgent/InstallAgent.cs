@@ -236,7 +236,7 @@ namespace InstallAgent
                     "Will wait until active (if any) PV Tools " +
                     "driver installations have finished"
                 );
-                timeout = CfgMgr32.INFINITE;
+                timeout = Winbase.INFINITE;
             }
 
             return timeout;

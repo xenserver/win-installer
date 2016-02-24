@@ -139,7 +139,7 @@ namespace PVDevice
 
         public static bool HasChildren(Devs xenBusDev)
         {
-            SetupApi.CR err;
+            CfgMgr32.CR err;
 
             string xenBusHwId = XenBus.hwIDs[
                 Helpers.BitIdxFromFlag((uint)xenBusDev)
@@ -154,11 +154,11 @@ namespace PVDevice
                 return false;
             }
 
-            err = SetupApi.CM_Get_Child(
+            err = CfgMgr32.CM_Get_Child(
                 out xenBusChild, xenBusNode, 0
             );
 
-            if (err != SetupApi.CR.SUCCESS)
+            if (err != CfgMgr32.CR.SUCCESS)
             {
                 Trace.WriteLine(
                     String.Format("CM_Get_Child() error: {0}", err)
