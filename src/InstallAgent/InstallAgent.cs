@@ -244,6 +244,8 @@ namespace InstallAgent
                 Trace.WriteLine(
                     "VM reached maximum number of allowed reboots"
                 );
+
+                SetInstallStatus("Failed");
             }
         }
 
