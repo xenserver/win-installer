@@ -129,5 +129,11 @@ namespace PInvokeWrap
         public static extern Winbase.WAIT CMP_WaitNoPendingInstallEvents(
             uint timeOut
         );
+
+        [DllImport("cfgmgr32.dll", CharSet = CharSet.Auto)]
+        public static extern int CM_MapCrToWin32Err(
+            CR CmReturnCode,
+            int DefaultErr
+        );
     }
 }

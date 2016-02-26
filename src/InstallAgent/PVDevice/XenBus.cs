@@ -158,13 +158,18 @@ namespace PVDevice
                 out xenBusChild, xenBusNode, 0
             );
 
-            if (err != CfgMgr32.CR.SUCCESS)
+            if (err == CfgMgr32.CR.NO_SUCH_DEVNODE)
             {
-                Trace.WriteLine(
-                    String.Format("CM_Get_Child() error: {0}", err)
-                );
+                Trace.WriteLine("XenBus device has no children");
                 return false;
             }
+            else if (err != CfgMgr32.CR.SUCCESS)
+            {
+                Win32Error.SetCR("CM_Get_Child", err);
+                throw new Exception(Win32Error.GetFullErrMsg());
+            }
+
+            Trace.WriteLine("XenBus device has at least one child");
 
             return true;
         }

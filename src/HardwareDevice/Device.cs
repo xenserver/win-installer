@@ -364,8 +364,8 @@ namespace HardwareDevice
 
             if (err != CfgMgr32.CR.SUCCESS)
             {
-                Trace.WriteLine("CM_Locate_DevNode() error: " + err);
-                return -1;
+                Win32Error.SetCR("CM_Locate_DevNode", err);
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
 
             return devNode;
@@ -402,8 +402,8 @@ namespace HardwareDevice
 
             if (err != CfgMgr32.CR.SUCCESS)
             {
-                Trace.WriteLine("CM_Reenumerate_DevNode() error: " + err);
-                return false;
+                Win32Error.SetCR("CM_Reenumerate_DevNode", err);
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
 
             Trace.WriteLine("Enumeration completed successfully");
