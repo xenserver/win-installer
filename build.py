@@ -968,7 +968,7 @@ if __name__ == '__main__':
             signfiles = True
             signstr = sys.argv[argptr+1]
             crosssignstr = sys.argv[argptr+2]
-            singlesignstr = syst.argv[argptr+3]
+            singlesignstr = sys.argv[argptr+3]
             additionalcert = ""
             argptr += 4
             continue
