@@ -662,7 +662,7 @@ def make_mgmtagent_msi(pack,signname):
 
     if signfiles:
         for signname in signinstallers:
-            sign("installer\\"+branding.filenames[signname], signname, signstr=signstr)
+            sign("installer\\"+branding.filenames[signname], signname, signstr=singlesignstr)
 
     # Write updates.tsv (url\tversion\tsize\tarch)
     f = open(os.sep.join(['installer','updates.tsv']),"w")
@@ -968,8 +968,9 @@ if __name__ == '__main__':
             signfiles = True
             signstr = sys.argv[argptr+1]
             crosssignstr = sys.argv[argptr+2]
+            singlesignstr = syst.argv[argptr+3]
             additionalcert = ""
-            argptr += 3
+            argptr += 4
             continue
 
         if (sys.argv[argptr] == '--buildlocation'):

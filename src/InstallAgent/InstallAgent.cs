@@ -78,6 +78,15 @@ namespace InstallAgent
         protected override void OnStop()
         {
             installThread.Join();
+            base.OnStop();
+        }
+
+        protected override void OnShutdown()
+        {
+            Trace.WriteLine("Shutting down");
+            installThread.Join();
+            base.OnShutdown();
+            Trace.WriteLine("Shut down");
         }
 
         public void InstallThreadHandler()
