@@ -35,7 +35,7 @@
 #include "shlwapi.h"
 #include "stdint.h"
 #include <windows.h>
-
+#include "setupapi.h"
 
 TCHAR * _vatallocprintf(const TCHAR *format, va_list args)
 {
@@ -263,6 +263,49 @@ DWORD installMsi(arguments* args)
 	return exitcode;
 }
 
+#define installStatus _T("Software\\Citrix\\XenToolsInstaller")
+void waitForStatus() {
+	for(;;) {
+		HKEY outkey;
+		TCHAR status[256];
+		DWORD statussize = 256;
+		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, installStatus, 0, KEY_READ, &outkey) != ERROR_SUCCESS)
+		{
+			goto needcontinue;
+		}
+
+		if (RegQueryValueEx(outkey, _T("InstallStatus"), NULL, NULL, (LPBYTE)status, &statussize) == ERROR_SUCCESS)
+		{
+			if (_tcsicmp(status, _T("Installed")) == 0) {
+				MessageBox(NULL,
+						   _T("Tools installed successfully"),
+						   _T("Tools installer"),
+						   MB_OK);
+				goto done;
+			}
+			else if (_tcsicmp(status, _T("Failed")) == 0) {
+				MessageBox(NULL, 
+					       _T("Tools installation failed"),
+						   _T("Tools installer"), 
+					       MB_OK);
+				goto done;
+			}
+			else if (_tcsicmp(status, _T("NeedsRebootDlg")) == 0) {
+				int res;
+				SetupPromptReboot(NULL, NULL, FALSE);
+				goto done;
+			}
+			goto needcontinue;
+		}
+
+needcontinue:
+		SleepEx(2000, TRUE);
+		continue;
+done:
+		RegCloseKey(outkey);
+		return;
+	}
+}
 
 #define dotnet4 _T("Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Client")
 #define dotnet35 _T("Software\\Microsoft\\NET Framework Setup\\NDP\\v3.5")
@@ -297,7 +340,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-
+	DWORD msiResult;
 
 	// Parse command line
 	// Acceptable options:
@@ -330,7 +373,12 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	if (args.legacy) {
 		return installLegacy(&args);
 	}
-	return installMsi(&args);
 	
+	if ((msiResult = installMsi(&args))!=0) {
+		return msiResult;
+	}
+	
+	waitForStatus();
+
 }
 
