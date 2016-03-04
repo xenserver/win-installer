@@ -153,6 +153,7 @@ namespace InstallAgent
                     else // NOREBOOT
                     {
                         VM.SetRebootNeeded();
+                        SetInstallStatus("NeedsRebootDlg");
                     }
 
                     return;
