@@ -156,6 +156,8 @@ namespace InstallAgent
                         SetInstallStatus("NeedsRebootDlg");
                     }
 
+                    ShowInstallAgentStatusUI(0); // infinite timeout
+
                     return;
                 }
 
@@ -198,6 +200,8 @@ namespace InstallAgent
                     VM.SetRebootNeeded();
                 }
             }
+
+            ShowInstallAgentStatusUI(0); // infinite timeout
         }
 
         private static RebootType GetTrueRebootType(RebootType rt)
@@ -414,6 +418,79 @@ namespace InstallAgent
                     status,
                     RegistryValueKind.String
                 );
+            }
+        }
+
+        private static void ShowInstallAgentStatusUI(uint timeout)
+        {
+            RegistryKey rk = Registry.LocalMachine.OpenSubKey(
+                @"SOFTWARE\Citrix\XenToolsInstaller"
+            );
+
+            if (rk == null)
+            {
+                return;
+            }
+
+            string installStatus = (string)rk.GetValue("InstallStatus");
+
+            rk.Close();
+
+            if (installStatus == null)
+            {
+                return;
+            }
+
+            string text =
+                Branding.GetString("BRANDING_managementName");
+
+            string caption =
+                Branding.GetString("BRANDING_manufacturer") + " " +
+                Branding.GetString("BRANDING_hypervisorProduct") + " " +
+                Branding.GetString("BRANDING_managementName") + " " +
+                "Setup";
+
+            if (installStatus.Equals("Installed"))
+            {
+                text += " installed successfully";
+            }
+            else if (installStatus.Equals("Failed"))
+            {
+                text += " failed to install";
+            }
+            else
+            // If 'InstallStatus' is none of the
+            // above, don't display anything
+            {
+                return;
+            }
+
+            WtsApi32.ID resp;
+
+            WtsApi32.WTS_SESSION_INFO[] sessions = Helpers.GetWTSSessions(
+                WtsApi32.WTS_CURRENT_SERVER_HANDLE
+            );
+
+            foreach (WtsApi32.WTS_SESSION_INFO si in sessions)
+            {
+                if (si.State == WtsApi32.WTS_CONNECTSTATE_CLASS.WTSActive)
+                {
+                    if (!WtsApi32.WTSSendMessage(
+                            IntPtr.Zero,
+                            si.SessionID,
+                            caption,
+                            (uint)caption.Length,
+                            text,
+                            (uint)text.Length,
+                            WtsApi32.MB.OK | WtsApi32.MB.ICONINFORMATION,
+                            timeout,
+                            out resp,
+                            false))
+                    {
+                        Win32Error.Set("WTSSendMessage");
+                        throw new Exception(Win32Error.GetFullErrMsg());
+                    }
+                }
             }
         }
     }
