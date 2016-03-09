@@ -1,13 +1,13 @@
-﻿using PInvokeWrap;
+﻿using Microsoft.Win32;
+using PInvokeWrap;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
-using System.ServiceProcess;
 using System.Text;
 using System.Threading;
-using Microsoft.Win32;
 
 namespace HelperFunctions
 {
@@ -214,7 +214,8 @@ namespace HelperFunctions
                         ) == (Int32)ExpandedServiceStartMode.Boot)
                     {
                         Trace.WriteLine(
-                            "ensure service \'" + service + "\' is boot start");
+                            "ensure service \'" + service + "\' is boot start"
+                        );
 
                         ChangeServiceStartMode(
                             service,
@@ -223,10 +224,13 @@ namespace HelperFunctions
                     }
                 }
                 catch
+                // We fall here if the service does
+                // not exist in the registry
                 {
-                    // We fall here if the service does not exist in the registry
                     Trace.WriteLine(
-                        "Unable to ensure service \'" + service + "\' is boot start"); 
+                        "Unable to ensure service \'" +
+                        service + "\' is boot start"
+                    );
                 }
             }
         }
@@ -562,6 +566,45 @@ namespace HelperFunctions
 
                 Trace.WriteLine("Uninstalled");
             }
+        }
+
+        public static WtsApi32.WTS_SESSION_INFO[] GetWTSSessions(IntPtr server)
+        {
+            List<WtsApi32.WTS_SESSION_INFO> ret =
+                new List<WtsApi32.WTS_SESSION_INFO>();
+            int structSize = Marshal.SizeOf(typeof(WtsApi32.WTS_SESSION_INFO));
+
+            IntPtr ppSessionInfo;
+            uint count;
+
+            if (!WtsApi32.WTSEnumerateSessions(
+                    server,
+                    0,
+                    1,
+                    out ppSessionInfo,
+                    out count))
+            {
+                Win32Error.Set("WTSEnumerateSessions");
+                throw new Exception(Win32Error.GetFullErrMsg());
+            }
+
+            IntPtr element = ppSessionInfo;
+
+            for (uint i = 0; i < count; ++i)
+            {
+                ret.Add(
+                    (WtsApi32.WTS_SESSION_INFO)Marshal.PtrToStructure(
+                        element,
+                        typeof(WtsApi32.WTS_SESSION_INFO)
+                    )
+                );
+
+                element = (IntPtr)((Int64)element + structSize);
+            }
+
+            WtsApi32.WTSFreeMemory(ppSessionInfo);
+
+            return ret.ToArray();
         }
     }
 }
