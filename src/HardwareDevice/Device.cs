@@ -165,7 +165,7 @@ namespace HardwareDevice
             }
 
             Win32Error.Set("SetupDiEnumDeviceInfo");
-            if (Win32Error.GetErrorNo() == 259) // ERROR_NO_MORE_ITEMS
+            if (Win32Error.GetErrorNo() == WinError.ERROR_NO_MORE_ITEMS)
             {
                 Trace.WriteLine("Device not found");
                 return null;

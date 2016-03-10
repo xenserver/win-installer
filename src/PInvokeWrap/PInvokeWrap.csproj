@@ -45,6 +45,7 @@
     <Compile Include="User32.cs" />
     <Compile Include="Win32ErrorMessage.cs" />
     <Compile Include="Winbase.cs" />
+    <Compile Include="WinError.cs" />
     <Compile Include="WinVersion.cs" />
     <Compile Include="..\..\include\VerInfo.cs" />
     <Compile Include="WtsApi32.cs" />

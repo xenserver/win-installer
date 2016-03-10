@@ -343,9 +343,9 @@ namespace HelperFunctions
                 "Checking if \'" + msiName + "\' is present in system.."
             );
 
-            // ERROR_SUCCESS = 0
             for (int i = 0;
-                 (err = Msi.MsiEnumProducts(i, productCode)) == 0;
+                 (err = Msi.MsiEnumProducts(i, productCode)) ==
+                    WinError.ERROR_SUCCESS;
                  ++i)
             {
                 len = BUF_LEN;
@@ -358,7 +358,7 @@ namespace HelperFunctions
                     ref len
                 );
 
-                if (err != 0)
+                if (err != WinError.ERROR_SUCCESS)
                 {
                     Win32Error.Set("MsiGetProductInfo", err);
                     throw new Exception(Win32Error.GetFullErrMsg());
@@ -376,7 +376,7 @@ namespace HelperFunctions
                 }
             }
 
-            if (err == 259) // ERROR_NO_MORE_ITEMS
+            if (err == WinError.ERROR_NO_MORE_ITEMS)
             {
                 Trace.WriteLine("Product not found");
                 return "";
@@ -479,32 +479,29 @@ namespace HelperFunctions
                 using (Process proc = Process.Start(startInfo))
                 {
                     proc.WaitForExit();
+                    Win32Error.Set(proc.ExitCode);
 
                     switch (proc.ExitCode)
                     {
-                    case 0:
-                        Trace.WriteLine("ERROR_SUCCESS");
-                        return;
-                    case 1641:
-                        Trace.WriteLine("ERROR_SUCCESS_REBOOT_INITIATED");
-                        return;
-                    case 3010:
-                        Trace.WriteLine("ERROR_SUCCESS_REBOOT_REQUIRED");
+                    case WinError.ERROR_SUCCESS:
+                    case WinError.ERROR_SUCCESS_REBOOT_INITIATED:
+                    case WinError.ERROR_SUCCESS_REBOOT_REQUIRED:
+                        Trace.WriteLine(Win32Error.GetFullErrMsg());
                         return;
                     default:
                         if (i == tries - 1)
                         {
                             throw new Exception(
-                                "Tries exhausted; Error: " +
-                                proc.ExitCode
+                                "Tries exhausted; " +
+                                Win32Error.GetFullErrMsg()
                             );
                         }
 
                         secs = (int)Math.Pow(2.0, (double)i);
 
                         Trace.WriteLine(
-                            "Msi uninstall failed; Error: " +
-                            proc.ExitCode
+                            "Msi uninstall failed; " +
+                            Win32Error.GetFullErrMsg()
                         );
                         Trace.WriteLine(
                             "Retrying in " +
@@ -558,7 +555,7 @@ namespace HelperFunctions
                     out needreboot
                 );
 
-                if (err != 0) // ERROR_SUCCESS
+                if (err != WinError.ERROR_SUCCESS)
                 {
                     Win32Error.Set("DriverPackageUninstall", err);
                     throw new Exception(Win32Error.GetFullErrMsg());
