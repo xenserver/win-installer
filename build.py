@@ -240,9 +240,9 @@ def make_setup_header():
     for culture in culturelist:
         file.write("const TCHAR * list_"+culture.languagecode['culture']+"[] = {\n")
         for key in keylist:
-            file.write("_T(\""+culture.branding[key]+"\"),\n")
+            file.write("_T(\"" + culture.branding[key].replace("\\", "\\\\") + "\"),\n")
         for key in filekeylist:
-            file.write("_T(\""+culture.filenames[key]+"\"),\n")
+            file.write("_T(\"" + culture.filenames[key].replace("\\", "\\\\") + "\"),\n")
         file.write("};\n")
 
     for culture in culturelist:

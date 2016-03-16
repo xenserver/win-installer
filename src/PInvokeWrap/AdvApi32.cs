@@ -28,6 +28,63 @@ namespace PInvokeWrap
             public LUID_AND_ATTRIBUTES[] Privileges;
         }
 
+        public enum TOKEN_INFORMATION_CLASS
+        {
+            TokenUser                             = 1,
+            TokenGroups,
+            TokenPrivileges,
+            TokenOwner,
+            TokenPrimaryGroup,
+            TokenDefaultDacl,
+            TokenSource,
+            TokenType,
+            TokenImpersonationLevel,
+            TokenStatistics,
+            TokenRestrictedSids,
+            TokenSessionId,
+            TokenGroupsAndPrivileges,
+            TokenSessionReference,
+            TokenSandBoxInert,
+            TokenAuditPolicy,
+            TokenOrigin,
+            TokenElevationType,
+            TokenLinkedToken,
+            TokenElevation,
+            TokenHasRestrictions,
+            TokenAccessInformation,
+            TokenVirtualizationAllowed,
+            TokenVirtualizationEnabled,
+            TokenIntegrityLevel,
+            TokenUIAccess,
+            TokenMandatoryPolicy,
+            TokenLogonSid,
+            TokenIsAppContainer,
+            TokenCapabilities,
+            TokenAppContainerSid,
+            TokenAppContainerNumber,
+            TokenUserClaimAttributes,
+            TokenDeviceClaimAttributes,
+            TokenRestrictedUserClaimAttributes,
+            TokenRestrictedDeviceClaimAttributes,
+            TokenDeviceGroups,
+            TokenRestrictedDeviceGroups,
+            TokenSecurityAttributes,
+            TokenIsRestricted,
+            MaxTokenInfoClass
+        }
+
+        public struct TOKEN_USER
+        {
+            public SID_AND_ATTRIBUTES User;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SID_AND_ATTRIBUTES
+        {
+            public IntPtr Sid;
+            public int Attributes;
+        }
+
         // The place/naming of the following constants
         // may not be the best, but will do for now.
         public const string SE_SHUTDOWN_NAME = "SeShutdownPrivilege";
@@ -235,5 +292,21 @@ namespace PInvokeWrap
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool DeleteService(IntPtr hService);
         // ------------- End -------------
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool GetTokenInformation(
+                IntPtr                  TokenHandle,
+                TOKEN_INFORMATION_CLASS TokenInformationClass,
+                IntPtr                  TokenInformation,
+                UInt32                  TokenInformationLength,
+            out UInt32                  ReturnLength
+        );
+
+        // Using IntPtr for pSID insted of Byte[]
+        [DllImport("advapi32", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern bool ConvertSidToStringSid(
+                IntPtr pSID,
+            out IntPtr ptrSid
+        );
     }
 }

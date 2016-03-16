@@ -36,6 +36,7 @@
 #include "stdint.h"
 #include <windows.h>
 #include "setupapi.h"
+#include "Sddl.h"
 
 TCHAR * _vatallocprintf(const TCHAR *format, va_list args)
 {
@@ -161,6 +162,7 @@ const TCHAR* iw = _T("installwizard.msi");
 	
 const TCHAR* xenlegacy = getBrandingString(FILENAME_legacy);
 const TCHAR* uninstallerfix = getBrandingString(FILENAME_legacyuninstallerfix);
+const TCHAR* INSTALL_AGENT_REG_KEY = getBrandingString(BRANDING_installAgentRegKey);
 
 TCHAR sysdir[MAX_PATH];
 TCHAR workfile[MAX_PATH];
@@ -263,36 +265,155 @@ DWORD installMsi(arguments* args)
 	return exitcode;
 }
 
-#define installStatus _T("Software\\Citrix\\XenToolsInstaller")
-void waitForStatus() {
-	for(;;) {
-		HKEY outkey;
-		TCHAR status[256];
-		DWORD statussize = 256;
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, installStatus, 0, KEY_READ, &outkey) != ERROR_SUCCESS)
-		{
-			goto needcontinue;
-		}
+BOOL WriteCurrentUserSidToRegistry(void)
+{
+	HANDLE      processHandle = GetCurrentProcess();
+	HANDLE      tokenHandle   = NULL;
+	DWORD       tokenInfLen   = 0;
+	PTOKEN_USER pTokenUser    = NULL;
+	LPTSTR      strSid        = NULL;
+	BOOL        success       = FALSE;
+	HKEY        regKey;
 
-		if (RegQueryValueEx(outkey, _T("InstallStatus"), NULL, NULL, (LPBYTE)status, &statussize) == ERROR_SUCCESS)
+	if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle))
+	{
+		goto fail1;
+	}
+
+	/* Get buffer length */
+	GetTokenInformation(
+		tokenHandle,
+		TokenUser,
+		NULL,
+		0,
+		&tokenInfLen
+	);
+
+	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+	{
+		goto fail2;
+	}
+
+	pTokenUser = (PTOKEN_USER)malloc(tokenInfLen);
+
+	if (!GetTokenInformation(
+			tokenHandle,
+			TokenUser,
+			(LPVOID)pTokenUser,
+			tokenInfLen,
+			&tokenInfLen))
+	{
+		goto fail3;
+	}
+
+	if (!ConvertSidToStringSid(pTokenUser->User.Sid, &strSid))
+	{
+		goto fail3;
+	}
+
+	if (RegCreateKeyEx(
+			HKEY_LOCAL_MACHINE,
+			INSTALL_AGENT_REG_KEY,
+			0,
+			NULL,
+			REG_OPTION_NON_VOLATILE,
+			KEY_WRITE | KEY_WOW64_64KEY,
+			NULL,
+			&regKey,
+			NULL) != ERROR_SUCCESS)
+	{
+		goto fail4;
+	}
+
+	if (RegSetValueEx(
+			regKey,
+			_T("InstallerInitiatorSid"),
+			0,
+			REG_SZ,
+			(BYTE*)strSid,
+			_tcslen(strSid) * sizeof(TCHAR)) != ERROR_SUCCESS)
+	{
+		goto fail5;
+	}
+
+	success = TRUE;
+
+fail5:
+	RegCloseKey(regKey);
+fail4:
+	LocalFree(strSid);
+fail3:
+	free(pTokenUser);
+	pTokenUser = NULL;
+fail2:
+	CloseHandle(tokenHandle);
+fail1:
+	return success;
+}
+
+void waitForStatus() {
+	HKEY  insAgntKey;
+	HKEY  vmStateKey;
+	TCHAR status[256];
+	DWORD statusSize = 256;
+	DWORD pvToolsOnFirstRun;
+	DWORD pvToolsVerSize = sizeof(pvToolsOnFirstRun);
+
+	TCHAR *VM_STATE_REG_KEY = _tallocprintf(
+		_T("%s\\%s"),
+		INSTALL_AGENT_REG_KEY,
+		_T("VMState")
+	);
+
+	if (VM_STATE_REG_KEY == NULL)
+	{
+		return;
+	}
+
+	while (RegOpenKeyEx(
+			HKEY_LOCAL_MACHINE,
+			INSTALL_AGENT_REG_KEY,
+			0,
+			KEY_READ | KEY_WOW64_64KEY,
+			&insAgntKey) != ERROR_SUCCESS)
+	{
+		SleepEx(1000, TRUE);
+	}
+
+	while (RegOpenKeyEx(
+			HKEY_LOCAL_MACHINE,
+			VM_STATE_REG_KEY,
+			0,
+			KEY_READ | KEY_WOW64_64KEY,
+			&vmStateKey) != ERROR_SUCCESS)
+	{
+		SleepEx(1000, TRUE);
+	}
+
+	for(;;) {
+		if (RegQueryValueEx(
+				insAgntKey,
+				_T("InstallStatus"),
+				NULL,
+				NULL,
+				(LPBYTE)status,
+				&statusSize) == ERROR_SUCCESS &&
+		    RegQueryValueEx(
+				vmStateKey,
+				_T("PVToolsVersionOnFirstRun"),
+				NULL,
+				NULL,
+				(LPBYTE)&pvToolsOnFirstRun,
+				&pvToolsVerSize) == ERROR_SUCCESS)
 		{
-			if (_tcsicmp(status, _T("Installed")) == 0) {
-				MessageBox(NULL,
-						   _T("Tools installed successfully"),
-						   _T("Tools installer"),
-						   MB_OK);
-				goto done;
-			}
-			else if (_tcsicmp(status, _T("Failed")) == 0) {
-				MessageBox(NULL, 
-					       _T("Tools installation failed"),
-						   _T("Tools installer"), 
-					       MB_OK);
-				goto done;
-			}
-			else if (_tcsicmp(status, _T("NeedsRebootDlg")) == 0) {
-				int res;
-				SetupPromptReboot(NULL, NULL, FALSE);
+			if (_tcsicmp(status, _T("NeedsReboot")) == 0) {
+				// If PV drivers other than the latest
+				// (currently 8.x) are found, we should prompt
+				// for reboot after removing them from
+				// filters and disabling their bootstart
+				if (pvToolsOnFirstRun == 7) {
+					SetupPromptReboot(NULL, NULL, FALSE);
+				}
 				goto done;
 			}
 			goto needcontinue;
@@ -302,7 +423,9 @@ needcontinue:
 		SleepEx(2000, TRUE);
 		continue;
 done:
-		RegCloseKey(outkey);
+		RegCloseKey(insAgntKey);
+		RegCloseKey(vmStateKey);
+		free(VM_STATE_REG_KEY);
 		return;
 	}
 }
@@ -378,7 +501,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		return msiResult;
 	}
 	
+	WriteCurrentUserSidToRegistry();
 	waitForStatus();
-
 }
 
