@@ -152,11 +152,8 @@ namespace InstallAgent
                     }
                     else // NOREBOOT
                     {
-                        VM.SetRebootNeeded();
-                        SetInstallStatus("NeedsRebootDlg");
+                        SetInstallStatus("NeedsReboot");
                     }
-
-                    ShowInstallAgentStatusUI(0); // infinite timeout
 
                     return;
                 }
@@ -176,13 +173,6 @@ namespace InstallAgent
 
             if (PVDevice.PVDevice.AllFunctioning())
             {
-                VM.UnsetRebootNeeded();
-
-                Helpers.ChangeServiceStartMode(
-                    this.ServiceName,
-                    Helpers.ExpandedServiceStartMode.Manual
-                );
-
                 Helpers.EnsureBootStartServicesStartAtBoot();
 
                 SetInstallStatus("Installed");
@@ -197,11 +187,31 @@ namespace InstallAgent
                 }
                 else
                 {
-                    VM.SetRebootNeeded();
+                    SetInstallStatus("NeedsReboot");
                 }
             }
 
-            ShowInstallAgentStatusUI(0); // infinite timeout
+            string installStatus = GetInstallStatus();
+
+            if (!installStatus.Equals("Installed") &&
+                !installStatus.Equals("Failed"))
+            {
+                return;
+            }
+
+            for (;;)
+            {
+                if (InformInstallerInitiator(installStatus))
+                {
+                    Helpers.ChangeServiceStartMode(
+                        this.ServiceName,
+                        Helpers.ExpandedServiceStartMode.Manual
+                    );
+
+                    break;
+                }
+                Thread.Sleep(15000); // 15 seconds
+            }
         }
 
         private static RebootType GetTrueRebootType(RebootType rt)
@@ -382,19 +392,34 @@ namespace InstallAgent
         }
 
         private static void SetInstallStatus(string status)
-        // Opens 'XenToolsInstaller' registry keys (both x64/x86)
-        // and writes 'status' to 'InstallStatus'
+        // Writes value 'status' to 'rootRegKeyName\InstallStatus'
+        // For backwards compatibility with 3rd party applications,
+        // the same value is also written under the 'XenToolsInstaller'
+        // registry keys (both x64/x86)
         {
             const string SOFTWARE = @"SOFTWARE\";
             const string XTINSTALLER = @"Citrix\XenToolsInstaller";
             const string INSTALLSTATUS = "InstallStatus";
+            string       xenToolsKey;
 
-            string regKey = SOFTWARE + XTINSTALLER;
+            Trace.WriteLine(
+                "Setting \'" + INSTALLSTATUS + "\': \'" + status + "\'"
+            );
 
-            Trace.WriteLine("Setting \'InstallStatus\': \'" + status + "\'");
+            using (RegistryKey rootRK =
+                Registry.LocalMachine.CreateSubKey(rootRegKeyName))
+            {
+                rootRK.SetValue(
+                    INSTALLSTATUS,
+                    status,
+                    RegistryValueKind.String
+                );
+            }
+
+            xenToolsKey = SOFTWARE + XTINSTALLER;
 
             using (RegistryKey rk =
-                Registry.LocalMachine.CreateSubKey(regKey))
+                Registry.LocalMachine.CreateSubKey(xenToolsKey))
             {
                 rk.SetValue(
                     INSTALLSTATUS,
@@ -408,10 +433,10 @@ namespace InstallAgent
                 return;
             }
 
-            regKey = SOFTWARE + @"Wow6432Node\" + XTINSTALLER;
+            xenToolsKey = SOFTWARE + @"Wow6432Node\" + XTINSTALLER;
 
             using (RegistryKey rk =
-                Registry.LocalMachine.CreateSubKey(regKey))
+                Registry.LocalMachine.CreateSubKey(xenToolsKey))
             {
                 rk.SetValue(
                     INSTALLSTATUS,
@@ -421,34 +446,54 @@ namespace InstallAgent
             }
         }
 
-        private static void ShowInstallAgentStatusUI(uint timeout)
+        private static string GetInstallStatus()
         {
-            RegistryKey rk = Registry.LocalMachine.OpenSubKey(
-                @"SOFTWARE\Citrix\XenToolsInstaller"
-            );
+            string installStatus;
 
-            if (rk == null)
+            using (RegistryKey rootRK =
+                Registry.LocalMachine.CreateSubKey(rootRegKeyName))
             {
-                return;
+                installStatus = (string)rootRK.GetValue("InstallStatus");
             }
 
-            string installStatus = (string)rk.GetValue("InstallStatus");
-
-            rk.Close();
-
-            if (installStatus == null)
+            if (String.IsNullOrEmpty(installStatus))
             {
-                return;
+                throw new Exception("InstallStatus key is empty");
             }
 
+            return installStatus;
+        }
+
+        private static string GetInstallerInitiatorSid()
+        // Gets the Security Identifier (SID)
+        // of the user who ran Setup.exe
+        {
+            string sid;
+
+            using (RegistryKey rootRK =
+                Registry.LocalMachine.CreateSubKey(rootRegKeyName))
+            {
+                sid = (string)rootRK.GetValue("InstallerInitiatorSid");
+            }
+
+            if (String.IsNullOrEmpty(sid))
+            {
+                throw new Exception("InstallerInitiatorSid key is empty");
+            }
+
+            return sid;
+        }
+
+        private static bool InformInstallerInitiator(
+            string installStatus,
+            uint timeout = 0)
+        // Informs the user who ran Setup.exe about the overall
+        // success or failure of the 'InstallAgent'
+        // Returns 'true' if the user was successfully informed;
+        // 'false' otherwise
+        {
             string text =
                 Branding.GetString("BRANDING_managementName");
-
-            string caption =
-                Branding.GetString("BRANDING_manufacturer") + " " +
-                Branding.GetString("BRANDING_hypervisorProduct") + " " +
-                Branding.GetString("BRANDING_managementName") + " " +
-                "Setup";
 
             if (installStatus.Equals("Installed"))
             {
@@ -459,11 +504,19 @@ namespace InstallAgent
                 text += " failed to install";
             }
             else
-            // If 'InstallStatus' is none of the
-            // above, don't display anything
             {
-                return;
+                throw new Exception(
+                    "InstallStatus: \'" + installStatus + "\' not supported"
+                );
             }
+
+            string caption =
+                Branding.GetString("BRANDING_manufacturer") + " " +
+                Branding.GetString("BRANDING_hypervisorProduct") + " " +
+                Branding.GetString("BRANDING_managementName") + " " +
+                "Setup";
+
+            string sid = GetInstallerInitiatorSid();
 
             WtsApi32.ID resp;
 
@@ -473,15 +526,16 @@ namespace InstallAgent
 
             foreach (WtsApi32.WTS_SESSION_INFO si in sessions)
             {
-                if (si.State == WtsApi32.WTS_CONNECTSTATE_CLASS.WTSActive)
+                if (si.State == WtsApi32.WTS_CONNECTSTATE_CLASS.WTSActive &&
+                    sid.Equals(Helpers.GetUserSidFromSessionId(si.SessionID)))
                 {
                     if (!WtsApi32.WTSSendMessage(
-                            IntPtr.Zero,
+                            WtsApi32.WTS_CURRENT_SERVER_HANDLE,
                             si.SessionID,
                             caption,
-                            (uint)caption.Length,
+                            (uint)caption.Length * sizeof(Char),
                             text,
-                            (uint)text.Length,
+                            (uint)text.Length * sizeof(Char),
                             WtsApi32.MB.OK | WtsApi32.MB.ICONINFORMATION,
                             timeout,
                             out resp,
@@ -490,8 +544,11 @@ namespace InstallAgent
                         Win32Error.Set("WTSSendMessage");
                         throw new Exception(Win32Error.GetFullErrMsg());
                     }
+
+                    return true;
                 }
             }
+            return false;
         }
     }
 

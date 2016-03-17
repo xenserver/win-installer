@@ -85,13 +85,13 @@ namespace PInvokeWrap
         }
 
         public static readonly IntPtr WTS_CURRENT_SERVER_HANDLE = IntPtr.Zero;
-        // public const int WTS_CURRENT_SESSION = 1;
+        public static readonly uint   WTS_CURRENT_SESSION       = 0xFFFFFFFF;
+        //                                                        ((DWORD) - 1)
 
         [DllImport(
             "wtsapi32.dll",
-            //CharSet = CharSet.Auto,
-            SetLastError = true,
-            EntryPoint = "WTSSendMessageA")]
+            CharSet = CharSet.Auto,
+            SetLastError = true)]
         public static extern bool WTSSendMessage(
                 IntPtr hServer,
                 uint   SessionId,
@@ -107,9 +107,8 @@ namespace PInvokeWrap
 
         [DllImport(
             "wtsapi32.dll",
-            //CharSet = CharSet.Auto,
-            SetLastError = true,
-            EntryPoint = "WTSEnumerateSessionsW")]
+            CharSet = CharSet.Auto,
+            SetLastError = true)]
         public static extern bool WTSEnumerateSessions(
                 IntPtr hServer,
                 uint   Reserved, // always 0
@@ -120,5 +119,11 @@ namespace PInvokeWrap
 
         [DllImport("wtsapi32.dll")]
         public static extern void WTSFreeMemory(IntPtr pMemory);
+
+        [DllImport("wtsapi32.dll", SetLastError = true)]
+        public static extern bool WTSQueryUserToken(
+                ulong  SessionId,
+            out IntPtr phToken
+        );
     }
 }

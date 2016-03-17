@@ -603,5 +603,88 @@ namespace HelperFunctions
 
             return ret.ToArray();
         }
+
+        public static string GetUserSidFromSessionId(ulong sessionId)
+        // Gets the unique Security Identifier (SID)
+        // of the User logged on to 'sessionId'
+        {
+            IntPtr token       = IntPtr.Zero;
+            IntPtr tokenInf    = IntPtr.Zero;
+            uint   tokenInfLen = 0;
+            IntPtr szSid       = IntPtr.Zero;
+            string sid;
+
+            try
+            {
+                if (!WtsApi32.WTSQueryUserToken(sessionId, out token))
+                {
+                    Win32Error.Set("WTSQueryUserToken");
+                    throw new Exception(Win32Error.GetFullErrMsg());
+                }
+
+                // Get tokenInfLen
+                AdvApi32.GetTokenInformation(
+                    token,
+                    AdvApi32.TOKEN_INFORMATION_CLASS.TokenUser,
+                    tokenInf,
+                    tokenInfLen,
+                    out tokenInfLen
+                );
+
+                Win32Error.Set("GetTokenInformation");
+
+                if (Win32Error.GetErrorNo() !=
+                    WinError.ERROR_INSUFFICIENT_BUFFER)
+                {
+                    throw new Exception(Win32Error.GetFullErrMsg());
+                }
+
+                tokenInf = Marshal.AllocHGlobal((int)tokenInfLen);
+
+                if (!AdvApi32.GetTokenInformation(
+                        token,
+                        AdvApi32.TOKEN_INFORMATION_CLASS.TokenUser,
+                        tokenInf,
+                        tokenInfLen,
+                        out tokenInfLen))
+                {
+                    Win32Error.Set("GetTokenInformation");
+                    throw new Exception(Win32Error.GetFullErrMsg());
+                }
+
+                AdvApi32.TOKEN_USER tokenUser =
+                    (AdvApi32.TOKEN_USER)Marshal.PtrToStructure(
+                        tokenInf,
+                        typeof(AdvApi32.TOKEN_USER)
+                    );
+
+                if (!AdvApi32.ConvertSidToStringSid(
+                        tokenUser.User.Sid,
+                        out szSid))
+                {
+                    Win32Error.Set("ConvertSidToStringSid");
+                    throw new Exception(Win32Error.GetFullErrMsg());
+                }
+
+                sid = Marshal.PtrToStringAuto(szSid);
+
+                return sid;
+            }
+            finally
+            {
+                if (szSid != IntPtr.Zero)
+                {
+                    Kernel32.LocalFree(szSid);
+                }
+                if (tokenInf != IntPtr.Zero)
+                {
+                    Marshal.FreeHGlobal(tokenInf);
+                }
+                if (token != IntPtr.Zero)
+                {
+                    Kernel32.CloseHandle(token);
+                }
+            }
+        }
     }
 }
