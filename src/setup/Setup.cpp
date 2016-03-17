@@ -258,10 +258,6 @@ DWORD installMsi(arguments* args)
 
 	runProcess(cmdline, &exitcode);
 
-	if (exitcode != 0) {
-		ErrMsg(getBrandingString(BRANDING_errMSIInstallFail), exitcode, logfile);
-	}
-
 	return exitcode;
 }
 
@@ -497,7 +493,16 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		return installLegacy(&args);
 	}
 	
-	if ((msiResult = installMsi(&args))!=0) {
+	msiResult = installMsi(&args);
+
+	if (msiResult != ERROR_SUCCESS &&
+			msiResult != ERROR_SUCCESS_REBOOT_INITIATED &&
+			msiResult != ERROR_SUCCESS_REBOOT_REQUIRED) {
+		ErrMsg(
+			getBrandingString(BRANDING_errMSIInstallFail),
+			msiResult,
+			logfile
+		);
 		return msiResult;
 	}
 	
