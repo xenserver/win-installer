@@ -189,7 +189,7 @@ def make_cs_header() :
 
     file.write('internal class XenVersions {\n')
     for key,value in branding.branding.items():
-        file.write("public const string BRANDING_"+key+" = \""+value.replace("\\","\\\\")+"\";\n")
+        file.write("public const string BRANDING_"+key+" = \""+value+"\";\n")
     file.write("}")
     file.close()
 
@@ -200,7 +200,7 @@ def make_wxi_header(culture):
     file.write("<?xml version='1.0' ?>\n");
     file.write("<Include xmlns = 'http://schemas.microsoft.com/wix/2006/wi'>\n")
     for key, value in cbranding.branding.items():
-        file.write("<?define BRANDING_"+key+" =\t\""+value+"\"?>\n")
+        file.write("<?define BRANDING_"+key+" =\t\""+value.replace("\\\\","\\")+"\"?>\n")
     for key, value in cbranding.filenames.items():
         file.write("<?define FILENAME_"+key+" =\t\""+value+"\"?>\n")
     for key, value in cbranding.resources.items():
@@ -240,9 +240,9 @@ def make_setup_header():
     for culture in culturelist:
         file.write("const TCHAR * list_"+culture.languagecode['culture']+"[] = {\n")
         for key in keylist:
-            file.write("_T(\"" + culture.branding[key].replace("\\", "\\\\") + "\"),\n")
+            file.write("_T(\"" + culture.branding[key] + "\"),\n")
         for key in filekeylist:
-            file.write("_T(\"" + culture.filenames[key].replace("\\", "\\\\") + "\"),\n")
+            file.write("_T(\"" + culture.filenames[key] + "\"),\n")
         file.write("};\n")
 
     for culture in culturelist:

@@ -27,7 +27,7 @@ branding = {
         "managementDesc" : "Installation and Update Agent",
         "installAgentShort" : "InstallAgent",
         "installAgentDesc" : "Installs and updates management agent",
-        "installAgentRegKey" : "SOFTWARE\\Citrix\\InstallAgent",
+        "installAgentRegKey" : R"SOFTWARE\\Citrix\\InstallAgent",
         "language" : "1033",
         "languages" : "1033",
         "manufacturerLong" : "Citrix Systems, Inc.",
