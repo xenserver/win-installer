@@ -9,26 +9,6 @@ namespace PInvokeWrap
         private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
         public const uint DI_REMOVE_DEVICE_GLOBAL = 1;
 
-        public enum CR
-        {
-            SUCCESS = 0,
-        }
-
-        [Flags]
-        public enum CM_REENUMERATE
-        {
-            NORMAL = 0x00000000,
-            SYNCHRONOUS = 0x00000001,
-            RETRY_INSTALLATION = 0x00000002,
-            ASYNCHRONOUS = 0x00000004,
-            BITS = 0x00000007
-        }
-
-        public enum CM_LOCATE_DEVNODE
-        {
-            NORMAL = 0,
-        }
-
         [Flags]
         public enum DiGetClassFlags : uint
         {
@@ -385,34 +365,6 @@ namespace PInvokeWrap
             IntPtr deviceInfoData,
             IntPtr paramaters,
             int ClassInstallParamsSize
-        );
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern CR CM_Locate_DevNode(
-            out int pdnDevInst,
-            string pDeviceID,
-            CM_LOCATE_DEVNODE ulFlags
-        );
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern CR CM_Get_Child(
-            out int pdnDevInst,
-            int dnDevInst,
-            int ulFlags // always 0
-        );
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern CR CM_Reenumerate_DevNode(
-            int pdnDevInst,
-            CM_REENUMERATE ulFlags
-        );
-
-        [DllImport("setupapi.dll", SetLastError = true)]
-        public static extern uint CM_Get_DevNode_Status(
-            out UInt32 status,
-            out UInt32 probNum,
-            UInt32 devInst,
-            int flags
         );
 
         // Originally: SPOST_NONE, etc..

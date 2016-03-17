@@ -165,7 +165,7 @@ namespace HardwareDevice
             }
 
             Win32Error.Set("SetupDiEnumDeviceInfo");
-            if (Win32Error.GetErrorNo() == 259) // ERROR_NO_MORE_ITEMS
+            if (Win32Error.GetErrorNo() == WinError.ERROR_NO_MORE_ITEMS)
             {
                 Trace.WriteLine("Device not found");
                 return null;
@@ -263,7 +263,7 @@ namespace HardwareDevice
                          devInfoData);
                      ++i)
                 {
-                    SetupApi.CM_Get_DevNode_Status(
+                    CfgMgr32.CM_Get_DevNode_Status(
                         out devStatus,
                         out devProblemCode,
                         devInfoData.devInst,
@@ -337,7 +337,7 @@ namespace HardwareDevice
         // If it is the empty string, the root of the device
         // tree will be returned
         {
-            SetupApi.CR err;
+            CfgMgr32.CR err;
             int devNode;
             string deviceInstanceId;
 
@@ -356,16 +356,16 @@ namespace HardwareDevice
                 deviceInstanceId = "";
             }
 
-            err = SetupApi.CM_Locate_DevNode(
+            err = CfgMgr32.CM_Locate_DevNode(
                 out devNode,
                 deviceInstanceId,
-                SetupApi.CM_LOCATE_DEVNODE.NORMAL
+                CfgMgr32.CM_LOCATE_DEVNODE.NORMAL
             );
 
-            if (err != SetupApi.CR.SUCCESS)
+            if (err != CfgMgr32.CR.SUCCESS)
             {
-                Trace.WriteLine("CM_Locate_DevNode() error: " + err);
-                return -1;
+                Win32Error.SetCR("CM_Locate_DevNode", err);
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
 
             return devNode;
@@ -381,13 +381,13 @@ namespace HardwareDevice
         // If 'installDevices' is 'true', PnP will try to complete
         // installation of any not-fully-installed devices.
         {
-            SetupApi.CR err;
+            CfgMgr32.CR err;
             int devNode = GetDevNode(enum_device);
-            SetupApi.CM_REENUMERATE ulFlags = SetupApi.CM_REENUMERATE.NORMAL;
+            CfgMgr32.CM_REENUMERATE ulFlags = CfgMgr32.CM_REENUMERATE.NORMAL;
 
             if (installDevices)
             {
-                ulFlags |= SetupApi.CM_REENUMERATE.RETRY_INSTALLATION;
+                ulFlags |= CfgMgr32.CM_REENUMERATE.RETRY_INSTALLATION;
             }
 
             if (devNode == -1)
@@ -398,12 +398,12 @@ namespace HardwareDevice
 
             Helpers.AcquireSystemPrivilege(AdvApi32.SE_LOAD_DRIVER_NAME);
 
-            err = SetupApi.CM_Reenumerate_DevNode(devNode, ulFlags);
+            err = CfgMgr32.CM_Reenumerate_DevNode(devNode, ulFlags);
 
-            if (err != SetupApi.CR.SUCCESS)
+            if (err != CfgMgr32.CR.SUCCESS)
             {
-                Trace.WriteLine("CM_Reenumerate_DevNode() error: " + err);
-                return false;
+                Win32Error.SetCR("CM_Reenumerate_DevNode", err);
+                throw new Exception(Win32Error.GetFullErrMsg());
             }
 
             Trace.WriteLine("Enumeration completed successfully");
