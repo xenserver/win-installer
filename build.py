@@ -44,6 +44,7 @@ import errno
 import stat
 import tempfile
 import imp
+import io
 
 (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding",["src\\branding"])
 branding = imp.load_module("branding",brandingFile,brandingPath,brandingDesc)
@@ -196,7 +197,7 @@ def make_cs_header() :
 
 def make_wxi_header(culture):
     cbranding = get_cultural_branding(culture)
-    file = open(include+"\\"+brandingheader+"."+culture+".wxi", 'w')
+    file = io.open(include+"\\"+brandingheader+"."+culture+".wxi", mode='w', encoding="utf8")
     file.write("<?xml version='1.0' ?>\n");
     file.write("<Include xmlns = 'http://schemas.microsoft.com/wix/2006/wi'>\n")
     for key, value in cbranding.branding.items():
@@ -224,7 +225,7 @@ def make_setup_header():
     print(culturelist)
     
 
-    file=open(include+"\\"+"setupbranding.h",'w')
+    file=io.open(include+"\\"+"setupbranding.h",mode='w', encoding="utf8" )
     keylist=[]
     filekeylist=[]
     pos=0;
