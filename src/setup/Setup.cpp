@@ -271,9 +271,27 @@ BOOL WriteCurrentUserSidToRegistry(void)
 	BOOL        success       = FALSE;
 	HKEY        regKey;
 
-	if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle))
-	{
+	/*
+	 * We try to open the registry key first as a means of
+	 * checking if we are installing or uninstalling:
+	 * if we are installing, the key gets created in the
+	 * InstallAgent static constructor - before calling
+	 * the service's OnStart() method;
+	 * if we are uninstalling, the key will not exist
+	 * (msi removes all reg keys and has to return before
+	 * this function is called)
+	 */
+	if (RegOpenKeyEx(
+			HKEY_LOCAL_MACHINE,
+			INSTALL_AGENT_REG_KEY,
+			0,
+			KEY_WRITE | KEY_WOW64_64KEY,
+			&regKey) != ERROR_SUCCESS) {
 		goto fail1;
+	}
+
+	if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
+		goto fail2;
 	}
 
 	/* Get buffer length */
@@ -285,9 +303,8 @@ BOOL WriteCurrentUserSidToRegistry(void)
 		&tokenInfLen
 	);
 
-	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-	{
-		goto fail2;
+	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
+		goto fail3;
 	}
 
 	pTokenUser = (PTOKEN_USER)malloc(tokenInfLen);
@@ -297,27 +314,11 @@ BOOL WriteCurrentUserSidToRegistry(void)
 			TokenUser,
 			(LPVOID)pTokenUser,
 			tokenInfLen,
-			&tokenInfLen))
-	{
-		goto fail3;
+			&tokenInfLen)) {
+		goto fail4;
 	}
 
-	if (!ConvertSidToStringSid(pTokenUser->User.Sid, &strSid))
-	{
-		goto fail3;
-	}
-
-	if (RegCreateKeyEx(
-			HKEY_LOCAL_MACHINE,
-			INSTALL_AGENT_REG_KEY,
-			0,
-			NULL,
-			REG_OPTION_NON_VOLATILE,
-			KEY_WRITE | KEY_WOW64_64KEY,
-			NULL,
-			&regKey,
-			NULL) != ERROR_SUCCESS)
-	{
+	if (!ConvertSidToStringSid(pTokenUser->User.Sid, &strSid)) {
 		goto fail4;
 	}
 
@@ -327,22 +328,21 @@ BOOL WriteCurrentUserSidToRegistry(void)
 			0,
 			REG_SZ,
 			(BYTE*)strSid,
-			_tcslen(strSid) * sizeof(TCHAR)) != ERROR_SUCCESS)
-	{
+			_tcslen(strSid) * sizeof(TCHAR)) != ERROR_SUCCESS) {
 		goto fail5;
 	}
 
 	success = TRUE;
 
 fail5:
-	RegCloseKey(regKey);
-fail4:
 	LocalFree(strSid);
-fail3:
+fail4:
 	free(pTokenUser);
 	pTokenUser = NULL;
-fail2:
+fail3:
 	CloseHandle(tokenHandle);
+fail2:
+	RegCloseKey(regKey);
 fail1:
 	return success;
 }
@@ -361,29 +361,40 @@ void waitForStatus() {
 		_T("VMState")
 	);
 
-	if (VM_STATE_REG_KEY == NULL)
-	{
-		return;
+	if (VM_STATE_REG_KEY == NULL) {
+		goto fail1;
 	}
 
-	while (RegOpenKeyEx(
+	if (RegOpenKeyEx(
 			HKEY_LOCAL_MACHINE,
 			INSTALL_AGENT_REG_KEY,
 			0,
 			KEY_READ | KEY_WOW64_64KEY,
-			&insAgntKey) != ERROR_SUCCESS)
-	{
-		SleepEx(1000, TRUE);
+			&insAgntKey) != ERROR_SUCCESS) {
+		goto fail2;
 	}
 
-	while (RegOpenKeyEx(
+	if (RegOpenKeyEx(
 			HKEY_LOCAL_MACHINE,
 			VM_STATE_REG_KEY,
 			0,
 			KEY_READ | KEY_WOW64_64KEY,
-			&vmStateKey) != ERROR_SUCCESS)
-	{
-		SleepEx(1000, TRUE);
+			&vmStateKey) != ERROR_SUCCESS) {
+		goto fail3;
+	}
+
+	/*
+	 * Gets populated in
+	 * InstallAgent static ctor => State.VM static ctor
+	 */
+	if (RegQueryValueEx(
+			vmStateKey,
+			_T("PVToolsVersionOnFirstRun"),
+			NULL,
+			NULL,
+			(LPBYTE)&pvToolsOnFirstRun,
+			&pvToolsVerSize) != ERROR_SUCCESS) {
+		goto fail4;
 	}
 
 	for(;;) {
@@ -393,35 +404,35 @@ void waitForStatus() {
 				NULL,
 				NULL,
 				(LPBYTE)status,
-				&statusSize) == ERROR_SUCCESS &&
-		    RegQueryValueEx(
-				vmStateKey,
-				_T("PVToolsVersionOnFirstRun"),
-				NULL,
-				NULL,
-				(LPBYTE)&pvToolsOnFirstRun,
-				&pvToolsVerSize) == ERROR_SUCCESS)
-		{
-			if (_tcsicmp(status, _T("NeedsReboot")) == 0) {
-				// If PV drivers other than the latest
-				// (currently 8.x) are found, we should prompt
-				// for reboot after removing them from
-				// filters and disabling their bootstart
-				if (pvToolsOnFirstRun == 7) {
-					SetupPromptReboot(NULL, NULL, FALSE);
-				}
-				goto done;
-			}
+				&statusSize) != ERROR_SUCCESS ||
+		    _tcsicmp(status, _T("Installing")) == 0) {
 			goto needcontinue;
+		}
+
+		if (_tcsicmp(status, _T("NeedsReboot")) == 0) {
+			/*
+			 * If PV drivers other than the latest
+			 * (currently 8.x) are found, we should prompt
+			 * for reboot after removing them from
+			 * filters and disabling their bootstart
+			 */
+			if (pvToolsOnFirstRun == 7) {
+				SetupPromptReboot(NULL, NULL, FALSE);
+			}
+			goto done;
 		}
 
 needcontinue:
 		SleepEx(2000, TRUE);
 		continue;
 done:
-		RegCloseKey(insAgntKey);
+fail4:
 		RegCloseKey(vmStateKey);
+fail3:
+		RegCloseKey(insAgntKey);
+fail2:
 		free(VM_STATE_REG_KEY);
+fail1:
 		return;
 	}
 }
@@ -506,7 +517,10 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		return msiResult;
 	}
 	
-	WriteCurrentUserSidToRegistry();
+	if (!WriteCurrentUserSidToRegistry()) {
+		return 0;
+	}
+
 	waitForStatus();
 }
 
