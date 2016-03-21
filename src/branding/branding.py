@@ -67,7 +67,7 @@ branding = {
         "updaterLong" : "Citrix Management Agent Auto-Updater",
         "updaterDesc" : "Automatically checks and updates XenServer tools",
         "laterVersion" : "A later version of Windows Management Agent is already installed.  Setup will now exit",
-        "windowsRequired" : "This verison of the XenServer Windows Management Agent requires Windows Vista, Windows Server 2008 or Later",
+        "windowsRequired" : "This version of the XenServer Windows Management Agent requires Windows Vista, Windows Server 2008 or Later",
         "evtServiceStarting" : "Service Starting",
         "evtException" : "Exception: ",
         "evtServiceStopping" : "Service Stopping",
