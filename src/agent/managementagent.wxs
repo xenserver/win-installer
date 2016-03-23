@@ -201,6 +201,18 @@
     <CustomAction Id="InstallModeQuiet" Property="INSTALLMODE" Value="QUIET" />
     <CustomAction Id="InstallModePassive" Property="INSTALLMODE" Value="PASSIVE" />
 
+    <Binary Id="ManagementAgentCA"
+            SourceFile="Libraries\ManagementAgentCA.dll" />
+
+    <Property Id="INITIATORSID" Secure="yes" />
+
+    <CustomAction Id="SetINITIATORSID"
+                  BinaryKey="ManagementAgentCA"
+                  DllEntry="SetInitiatorSidProperty"
+                  Execute="immediate"
+                  Impersonate="yes"
+                  Return="check" />
+
     <CustomAction Id="UninstallExe"
                   FileKey="UninstallerExe"
                   Execute="deferred"
@@ -239,6 +251,7 @@
         <Custom Action="InstallModePassive" After="SetINSTALLMODE">
             UILevel=3 OR UILevel=4
         </Custom>
+        <Custom Action="SetINITIATORSID" Before="WriteRegistryValues" />
         <Custom Action="UninstallExe" Before="RemoveFiles">
             (NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")
         </Custom>
@@ -420,6 +433,10 @@
           <RegistryKey Root="HKLM"
               Key='$(var.BRANDING_installAgentRegKey)'>
               <RegistryValue Type='string' Name='InstallMode' Value='[INSTALLMODE]' />
+          </RegistryKey>
+          <RegistryKey Root="HKLM"
+              Key='$(var.BRANDING_installAgentRegKey)'>
+              <RegistryValue Type='string' Name='InstallerInitiatorSid' Value='[INITIATORSID]' />
           </RegistryKey>
           <RemoveRegistryKey Root="HKLM"
               Key='$(var.BRANDING_installAgentRegKey)'

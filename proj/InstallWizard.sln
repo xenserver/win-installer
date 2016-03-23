@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qnetsettings", "qnetsetting
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Setup", "..\src\setup\Setup.vcxproj", "{C7C87326-BDA6-46FC-9011-ECA10470342D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ManagementAgentCA", "..\src\ManagementAgentCA\ManagementAgentCA.vcxproj", "{E3E26001-64A5-43FC-AF92-ADB8DADFA971}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallAgent", "..\src\InstallAgent\InstallAgent.csproj", "{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}"
 	ProjectSection(ProjectDependencies) = postProject
 		{3C46D5F0-E82E-41B1-849B-D7B0FE335212} = {3C46D5F0-E82E-41B1-849B-D7B0FE335212}
@@ -159,6 +161,22 @@ Global
 		{C7C87326-BDA6-46FC-9011-ECA10470342D}.Release|Win32.Build.0 = Release|Win32
 		{C7C87326-BDA6-46FC-9011-ECA10470342D}.Release|Win32.Deploy.0 = Release|Win32
 		{C7C87326-BDA6-46FC-9011-ECA10470342D}.Release|x64.ActiveCfg = Release|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Debug|Mixed Platforms.Deploy.0 = Debug|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Debug|Win32.Build.0 = Debug|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Debug|Win32.Deploy.0 = Debug|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Debug|x64.ActiveCfg = Debug|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Release|Any CPU.ActiveCfg = Release|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Release|Mixed Platforms.Deploy.0 = Release|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Release|Win32.ActiveCfg = Release|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Release|Win32.Build.0 = Release|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Release|Win32.Deploy.0 = Release|Win32
+		{E3E26001-64A5-43FC-AF92-ADB8DADFA971}.Release|x64.ActiveCfg = Release|Win32
 		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D2F6A94-6F1D-4A53-8468-9CE77D28724A}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU

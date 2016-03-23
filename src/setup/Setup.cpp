@@ -261,90 +261,26 @@ DWORD installMsi(arguments* args)
 	return exitcode;
 }
 
-BOOL WriteCurrentUserSidToRegistry(void)
+/*
+ * WARNING: Call this function ONLY BEFORE installMsi()
+ *          (and preferably save the value for later use)
+ */
+BOOL Installing(void)
 {
-	HANDLE      processHandle = GetCurrentProcess();
-	HANDLE      tokenHandle   = NULL;
-	DWORD       tokenInfLen   = 0;
-	PTOKEN_USER pTokenUser    = NULL;
-	LPTSTR      strSid        = NULL;
-	BOOL        success       = FALSE;
-	HKEY        regKey;
+	HKEY regKey;
 
-	/*
-	 * We try to open the registry key first as a means of
-	 * checking if we are installing or uninstalling:
-	 * if we are installing, the key gets created in the
-	 * InstallAgent static constructor - before calling
-	 * the service's OnStart() method;
-	 * if we are uninstalling, the key will not exist
-	 * (msi removes all reg keys and has to return before
-	 * this function is called)
-	 */
 	if (RegOpenKeyEx(
 			HKEY_LOCAL_MACHINE,
 			INSTALL_AGENT_REG_KEY,
 			0,
-			KEY_WRITE | KEY_WOW64_64KEY,
+			KEY_READ | KEY_WOW64_64KEY,
 			&regKey) != ERROR_SUCCESS) {
-		goto fail1;
+		RegCloseKey(regKey);
+		return TRUE; /* installing */
+	} else {
+		return FALSE; /* uninstalling */
 	}
 
-	if (!OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle)) {
-		goto fail2;
-	}
-
-	/* Get buffer length */
-	GetTokenInformation(
-		tokenHandle,
-		TokenUser,
-		NULL,
-		0,
-		&tokenInfLen
-	);
-
-	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-		goto fail3;
-	}
-
-	pTokenUser = (PTOKEN_USER)malloc(tokenInfLen);
-
-	if (!GetTokenInformation(
-			tokenHandle,
-			TokenUser,
-			(LPVOID)pTokenUser,
-			tokenInfLen,
-			&tokenInfLen)) {
-		goto fail4;
-	}
-
-	if (!ConvertSidToStringSid(pTokenUser->User.Sid, &strSid)) {
-		goto fail4;
-	}
-
-	if (RegSetValueEx(
-			regKey,
-			_T("InstallerInitiatorSid"),
-			0,
-			REG_SZ,
-			(BYTE*)strSid,
-			_tcslen(strSid) * sizeof(TCHAR)) != ERROR_SUCCESS) {
-		goto fail5;
-	}
-
-	success = TRUE;
-
-fail5:
-	LocalFree(strSid);
-fail4:
-	free(pTokenUser);
-	pTokenUser = NULL;
-fail3:
-	CloseHandle(tokenHandle);
-fail2:
-	RegCloseKey(regKey);
-fail1:
-	return success;
 }
 
 void waitForStatus() {
@@ -482,6 +418,8 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 	arguments args;
 
+	BOOL installing = Installing();
+
 	if (!parseCommandLine(&args))
 		return 0;
 
@@ -503,7 +441,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	if (args.legacy) {
 		return installLegacy(&args);
 	}
-	
+
 	msiResult = installMsi(&args);
 
 	if (msiResult != ERROR_SUCCESS &&
@@ -517,10 +455,10 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		return msiResult;
 	}
 	
-	if (!WriteCurrentUserSidToRegistry()) {
-		return 0;
+	if (installing) {
+		waitForStatus();
 	}
 
-	waitForStatus();
+	return 0;
 }
 
