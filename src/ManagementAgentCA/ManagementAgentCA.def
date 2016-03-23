@@ -1,0 +1,5 @@
+LIBRARY "ManagementAgentCA"
+
+EXPORTS
+
+SetInitiatorSidProperty
