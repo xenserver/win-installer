@@ -83,7 +83,7 @@
    <Property Id="ARPPRODUCTICON" Value="$(var.RESOURCE_icon)" />
     <Property Id="REINSTALLMODE" Value="dmus" />
 
-
+    <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />     
     <UIRef Id="WixUI_InstallDir" />
     <WixVariable Id="WixUIBannerBmp" Value="$(var.RESOURCES_Bitmaps)\BannrBmp.bmp" />
