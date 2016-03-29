@@ -146,7 +146,7 @@
             Name="Install"
             Type="raw" />
     </Property>
-    <Condition Message="$(var.BRANDING_laterVersion)">
+    <Condition Message="$(var.BRANDING_windowsRequired)">
         <![CDATA[Installed OR (VersionNT>=600)]]>
     </Condition>
     
