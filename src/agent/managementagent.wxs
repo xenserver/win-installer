@@ -109,6 +109,11 @@
         <![CDATA[((NOT UPGRADINGNEWERVERSION) OR (FORCEINSTALL="1"))]]>
     </Condition>
 
+    <?if $(var.arch)=x86?>
+      <Condition Message="$(var.BRANDING_32BitNotOn64)">
+          <![CDATA[Not VersionNT64]]>
+      </Condition>
+    <?endif?>
     <Property Id="NETFRAMEWORK4XFULL">
         <RegistrySearch Id="NetFramework4xFull" Root="HKLM" 
             Key="Software\Microsoft\NET Framework Setup\NDP\v4\Full"

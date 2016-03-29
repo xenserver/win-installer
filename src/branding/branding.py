@@ -76,7 +76,7 @@ branding = {
         "evtStopNothing" : "Service Stopping (nothing running)",
         "evtStopJoin" : "Service Stopping (joining thread)",
         "evtStopped" : "Service Stopping (done)",
-
+        "32BitNotOn64" : "Please install the 64 bit version of this package on 64 bit systems",
 }
 
 filenames = {
