@@ -28,6 +28,8 @@ namespace PVDevice
         // Static constructor
         static XenBus()
         {
+            Trace.WriteLine("===> PVDevice.XenBus cctor");
+
             hwIDs = new string[
                 Enum.GetNames(typeof(Devs)).Length // == # of devs
             ];
@@ -83,6 +85,8 @@ namespace PVDevice
                     preferredXenBus = Devs.DEV_0002;
                 }
             }
+
+            Trace.WriteLine("<=== PVDevice.XenBus cctor");
         }
 
         public static bool IsFunctioning()
