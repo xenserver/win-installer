@@ -966,6 +966,14 @@ namespace InstallWizard
             }
         }
 
+        static public void stopNetworkSettingCopying()
+        {
+            using (RegistryKey store = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Citrix\\XenToolsNetSettings"))
+            {
+                store.SetValue("Status", "DontUpdate");
+            }
+        }
+
         static public void RestoreNetSettings()
         {
 
@@ -2172,6 +2180,7 @@ namespace InstallWizard
             //addcerts(installdir);
 
             workaroundSystemStartOptions();
+            VifConfig.stopNetworkSettingCopying();
 
             Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\partmgr\Parameters", true).SetValue("SanPolicy", 0x00000001);
             base.install(args, logfile, installstate);

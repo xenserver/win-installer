@@ -268,10 +268,12 @@ RestoreCmd(
 		}
 	}
 
-	done:
-		return err;
 
-	fail:
-		Fail(err);
-		return err;
+done:
+	RegistryAllowGuestAgentCopy();
+	return err;
+
+fail:
+	Fail(err);
+	return err;
 }
