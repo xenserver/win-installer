@@ -926,6 +926,14 @@ namespace InstallWizard
             }
         }
 
+        static public void stopNetworkSettingCopying()
+        {
+            using (RegistryKey store = Registry.LocalMachine.CreateSubKey("SOFTWARE\\Citrix\\XenToolsNetSettings"))
+            {
+                store.SetValue("Status", "DontUpdate");
+            }
+        }
+
         static public void RestoreNetSettings()
         {
 
@@ -2144,6 +2152,7 @@ namespace InstallWizard
             //addcerts(installdir);
 
             workaroundSystemStartOptions();
+            VifConfig.stopNetworkSettingCopying();
             if (driverupgrade)
             {
                 XenPrepSupport.DontBootStartPVDrivers();
