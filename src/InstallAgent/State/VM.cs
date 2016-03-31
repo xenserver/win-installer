@@ -18,7 +18,6 @@ namespace State
         private static /* readonly */ bool othDrvInstalling;
 
         private static int rebootsSoFar;
-        private static bool rebootNeeded;
         public const int REBOOTS_MAX = 5;
 
         public enum PVToolsVersion : int
@@ -63,38 +62,6 @@ namespace State
             }
 
             ++rebootsSoFar;
-        }
-
-        public static bool GetRebootNeeded() { return rebootNeeded; }
-
-        public static void SetRebootNeeded()
-        {
-            using (RegistryKey rk =
-                       Registry.LocalMachine.OpenSubKey(regKeyName, true))
-            {
-                rk.SetValue(
-                    "RebootNeeded",
-                    1,
-                    RegistryValueKind.DWord
-                );
-            }
-
-            rebootNeeded = true;
-        }
-
-        public static void UnsetRebootNeeded()
-        {
-            using (RegistryKey rk =
-                       Registry.LocalMachine.OpenSubKey(regKeyName, true))
-            {
-                rk.SetValue(
-                    "RebootNeeded",
-                    0,
-                    RegistryValueKind.DWord
-                );
-            }
-
-            rebootNeeded = false;
         }
 
         private static void SetOtherDriverInstallingOnFirstRun(
@@ -270,6 +237,8 @@ namespace State
 
         static VM()
         {
+            Trace.WriteLine("===> State.VM cctor");
+
             using (RegistryKey rk =
                        Registry.LocalMachine.CreateSubKey(regKeyName))
             {
@@ -284,7 +253,7 @@ namespace State
                 SetRebootsSoFar(rk);
             }
 
-            UnsetRebootNeeded();
+            Trace.WriteLine("<=== State.VM cctor");
         }
     }
 }
