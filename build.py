@@ -641,10 +641,6 @@ def make_mgmtagent_msi(pack,signname):
     cwd = os.getcwd()
     os.chdir(pack)
     print(os.getcwd())
-    src = cwd+"\\.\\src\\qa"
-    for arch in ["x86", "x64"]:
-        callfn([wix("candle.exe"), src+"\\test.wxs", "-o", cwd+"\\installer\\test"+arch+".wixobj","-arch",arch, "-darch="+arch] )
-        callfn([wix("light.exe"), cwd+"\\installer\\test"+arch+".wixobj", "-o", cwd+"\\installer\\test"+arch+".msi"])
     for arch in ["x86", "x64"]:
         src = cwd+"\\.\\src\\agent"
         culture = branding.cultures['default']
