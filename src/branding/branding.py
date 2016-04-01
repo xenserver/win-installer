@@ -98,6 +98,8 @@ filenames = {
         "agentcfg" : "XenGuestAgent.exe.config",
         "installVSS" : "install-XenProvider.cmd",
         "uninstallVSS" : "uninstall-XenProvider.cmd",
+        "testx86" : "testx86.msi",
+        "testx64" : "testx64.msi"
 }
 
 
