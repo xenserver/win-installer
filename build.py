@@ -481,9 +481,7 @@ def driverarchfiles_wxs(pack, driver, arch):
 signinstallers = [
     'managementx64',
     'managementx86',
-    'setup',
-    'testx86',
-    'testx64'
+    'setup'
 ]
 
 def generate_signing_script():
