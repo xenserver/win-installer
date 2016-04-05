@@ -94,7 +94,8 @@
     <WixVariable Id="WixUIUpIco" Value="$(var.RESOURCES_Bitmaps)\Up.ico" />
 
     <MajorUpgrade
-            AllowDowngrades="yes" />
+        AllowDowngrades="yes" 
+        Schedule="afterInstallExecute" />
 
     <Upgrade Id='$(var.UpgradeCode)'>
         <UpgradeVersion Minimum='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)'
