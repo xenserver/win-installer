@@ -34,6 +34,7 @@
 
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'
     xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension"
+    xmlns:util="http://schemas.microsoft.com/wix/UtilExtension"
     >
 
     <?include verinfo.wxi ?>
@@ -94,7 +95,8 @@
     <WixVariable Id="WixUIUpIco" Value="$(var.RESOURCES_Bitmaps)\Up.ico" />
 
     <MajorUpgrade
-            AllowDowngrades="yes" />
+        AllowDowngrades="yes" 
+        Schedule="afterInstallInitialize" />
 
     <Upgrade Id='$(var.UpgradeCode)'>
         <UpgradeVersion Minimum='$(var.CurrentMajorVersion).$(var.CurrentMinorVersion).$(var.CurrentBuildVersion)'
@@ -205,6 +207,8 @@
     <CustomAction Id="SetINSTALLMODE" Property="INSTALLMODE" Value="FULL" />
     <CustomAction Id="InstallModeQuiet" Property="INSTALLMODE" Value="QUIET" />
     <CustomAction Id="InstallModePassive" Property="INSTALLMODE" Value="PASSIVE" />
+    <Property Id="QtExecCmdLine" Value="&quot;[SystemFolder]\net.exe&quot; stop $(var.BRANDING_guestServiceShort)" />
+    <CustomAction Id="StopServ" BinaryKey="WixCA" DllEntry="CAQuietExec" Execute="immediate" Impersonate="no" Return="ignore" />
 
     <Binary Id="ManagementAgentCA"
             SourceFile="Libraries\ManagementAgentCA.dll" />
@@ -225,11 +229,12 @@
                   Impersonate="no"
                   Return="ignore" />
 
-    <InstallExecuteSequence>
+        <InstallExecuteSequence>
         <Custom Action="SaveCmdLineHosttime" Before="AppSearch"/>
         <Custom Action="SetFromHosttime64" After="AppSearch">
             ((NOT HOSTTIME64="") AND (NOT CMDLINE_HOSTTIME))
         </Custom>
+        <Custom Action="StopServ" Before="InstallInitialize"/>
         <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
             CMDLINE_HOSTTIME
         </Custom>
@@ -269,6 +274,7 @@
 
     <Media Id='1' Cabinet='ManagementAgentInstaller.cab' EmbedCab='yes' />
     <Directory Id='TARGETDIR' Name='SourceDir'>
+      <Directory Id="SystemFolder" Name="SystemFolder" />
       <Directory Id='$(var.pf)'>
         <Directory Id='Citrix' Name='$(var.BRANDING_manufacturer)'>
           <Directory Id='INSTALLDIR' Name='$(var.BRANDING_shortTools)'>
