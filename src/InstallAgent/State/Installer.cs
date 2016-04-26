@@ -99,20 +99,19 @@ namespace State
         // state of the installer and initializes itself.
         static Installer()
         {
-            // In .NET 3.5: Creates a new subkey or opens an
-            //              existing subkey for write access
-            RegistryKey installStateRK =
-                Registry.LocalMachine.CreateSubKey(stateRegKey);
-
             currentState = 0;
 
-            for (int i = 0; i < statesDefault.Length; ++i)
+            using (RegistryKey installStateRK =
+                    Registry.LocalMachine.CreateSubKey(stateRegKey))
             {
-                int flag = (int) installStateRK.GetValue(
-                    statesDefault[i].Name, statesDefault[i].DefaultValue
-                );
+                for (int i = 0; i < statesDefault.Length; ++i)
+                {
+                    int flag = (int)installStateRK.GetValue(
+                        statesDefault[i].Name, statesDefault[i].DefaultValue
+                    );
 
-                currentState |= flag << i;
+                    currentState |= flag << i;
+                }
             }
         }
 
