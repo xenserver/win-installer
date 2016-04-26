@@ -604,7 +604,7 @@ def make_oldmsi_installers(pack, signname):
     bitmaps = ".\\src\\bitmaps"
     
     
-    callfn([wix("candle.exe"), src+"\\installwizard.wxs",  "-o", "installer\\installwizard.wixobj", "-ext", "WixUtilExtension", "-ext", "WixUIExtension", "-ext", "WixNetFxExtension.dll", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
+    callfn([wix("candle.exe"), src+"\\installwizard.wxs",  "-o", "installer\\installwizard.wixobj", "-ext", "WixUtilExtension", "-ext", "WixUIExtension", "-I"+include, "-dBitmaps="+bitmaps, "-dusecerts="+use_certs])
     
     # We put a blank file in called XenLegacy.Exe - this doesn't get sucked
     # into the installer, but it is needed to keep light happy (XenLegacy.exe
@@ -617,7 +617,7 @@ def make_oldmsi_installers(pack, signname):
     f.write("DUMMY FILE")
     f.close()
    
-    callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
+    callfn([wix("light.exe"), "installer\\installwizard.wixobj", "-b", ".\\installer", "-o", "installer\\installwizard.msi", "-b", pack, "-ext", "WixUtilExtension.dll", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:en-us", "-dWixUILicenseRtf="+src+"\\..\\bitmaps\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if signfiles:
         sign("installer\\installwizard.msi", signname, signstr=signstr)
@@ -644,16 +644,17 @@ def make_mgmtagent_msi(pack,signname):
     for arch in ["x86", "x64"]:
         src = cwd+"\\.\\src\\agent"
         culture = branding.cultures['default']
-        callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll","-ext","WixUtilExtension",  "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
-        callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext","WixUtilExtension", "-cultures:"+branding.cultures['default'], "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
+        
+        callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
+        callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext", "WixUtilExtension.dll", "-cultures:"+branding.cultures['default'], "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if len(branding.cultures['others']) != 0 :
         for culture in branding.cultures['others']:
             cbranding = get_cultural_branding(culture)
             os.makedirs(cwd+'installer\\'+culture)
             for arch in ["x86", "x64"]:
-                callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
-                callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-cultures:"+culture, "-dWixUILicenseRtf="+cbranding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
+                callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-ext", "WixUtilExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
+                callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext", "WixUtilExtension.dll", "-cultures:"+culture, "-dWixUILicenseRtf="+cbranding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
                 callfn(["cscript", cwd+"\\src\\branding\\msidiff.js", cwd+"\\installer\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+arch+".mst"])
                 callfn(["cscript", cwd+"\\src\\branding\\WiSubStg.vbs", cwd+"\\installer\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+arch+".mst",cbranding.branding["language"]])
 
