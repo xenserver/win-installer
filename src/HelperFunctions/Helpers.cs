@@ -327,6 +327,50 @@ namespace HelperFunctions
             return false;
         }
 
+        public static bool BlockUntilMsiMutexAvailable(TimeSpan timeout)
+        // Returns 'true', if it can get hold of '_MSIExecute' mutex
+        // before the timeout is reached, 'false' otherwise
+        {
+            Mutex msiExecuteMutex;
+
+            Trace.WriteLine("Checking if MSI mutex is available");
+
+            try
+            {
+                msiExecuteMutex = Mutex.OpenExisting(@"Global\_MSIExecute");
+            }
+            catch (WaitHandleCannotBeOpenedException)
+            // Mutex not set
+            {
+                Trace.WriteLine("MSI mutex doesn't exist");
+                return true;
+            }
+
+            if (timeout.Equals(TimeSpan.Zero))
+            {
+                Trace.WriteLine(
+                    "Blocking indefinitely, until getting hold of MSI mutex"
+                );
+            }
+            else
+            {
+                Trace.WriteLine(
+                    "Blocking for \'" + timeout.ToString() + "\'"
+                );
+            }
+
+            if (msiExecuteMutex.WaitOne(timeout, false))
+            // Received signal; got mutex
+            {
+                Trace.WriteLine("MSI mutex is available");
+                msiExecuteMutex.ReleaseMutex();
+                return true;
+            }
+
+            Trace.WriteLine("Timeout reached; unable to obtain MSI mutex");
+            return false;
+        }
+
         public static string GetMsiProductCode(string msiName)
         // Enumerates the MSIs present in the system. If 'msiName'
         // exists, it returns its product code. If not, it returns
