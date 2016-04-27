@@ -259,6 +259,9 @@ namespace InstallAgent
                     GetTimeoutToReboot()
                 );
 
+                // 'timeout' arbitrarily set to 30 minutes
+                Helpers.BlockUntilMsiMutexAvailable(new TimeSpan(0, 30, 0));
+
                 VM.IncrementRebootCount();
                 Helpers.Reboot();
 
