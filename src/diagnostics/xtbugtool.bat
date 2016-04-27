@@ -42,15 +42,15 @@ SET UTC_DATE_TIME= null
 SET LOCAL_DATE_TIME= null
 
 REM Get the UTC date-time string to use
-CALL :GetFormattedCurrentUTCDate UTC_DATE_TIME
+CALL :GetUTCDate UTC_DATE_TIME
 
 REM Get the Local date-time string to use
-CALL :GetFormattedCurrentLocalDate LOCAL_DATE_TIME
+CALL :GetLocalDate LOCAL_DATE_TIME
 
 GOTO :bugtool
 
 REM Sub routine to get the current UTC date as formatted string YYY-MM-DDTHH:MM:SSZ
-:GetFormattedCurrentUTCDate outString
+:GetUTCDate outString
  FOR /F "tokens=* DELIMS=^=" %%a IN ('WMIC Path Win32_UTCTime Get Year^,Month^,Day^,Hour^,Minute^,Second /Value') DO (
   SET LINE=%%a
   FOR /f "tokens=1-2 delims=^=" %%i IN ("!LINE!") DO (
@@ -76,7 +76,7 @@ Exit /b
 
 
 REM Sub routine to get the current Local date as formatted string MM/DD/YYYY HH:MM:SS
-:GetFormattedCurrentLocalDate outString
+:GetLocalDate outString
  FOR /F "tokens=* DELIMS=^=" %%a IN ('WMIC Path Win32_LocalTime Get Year^,Month^,Day^,Hour^,Minute^,Second /Value') DO (
   SET LINE=%%a
   FOR /f "tokens=1-2 delims=^=" %%i IN ("!LINE!") DO (
@@ -192,9 +192,7 @@ if %ERRORLEVEL% == 0 goto ver_vista
 
 goto warnthenexit
 
-:ver_10
-:Run Windows 10 specific commands here.
-echo Windows 10
+:copylogs
 cd %bugpath%
 echo %MajorVerReg%.%MinorVerReg%.%MicroVerReg%.%BuildVerReg% > xt-reg-version.txt
 echo %XTInstallDir% > xt-install-dir.txt
@@ -207,6 +205,7 @@ mkdir programfiles64
 mkdir programfiles
 mkdir programdata
 xcopy /Y /C /S c:\programdata\citrix\* programdata  > NUL 2>&1
+xcopy /Y /C /S "c:\programdata\Citrix Systems, Inc" programdata > NUL 2>&1
 copy "c:\Program Files (x86)\Citrix\XenTools\*.txt" programfiles64  > NUL 2>&1
 copy "c:\Program Files (x86)\Citrix\XenTools\*.log" programfiles64  > NUL 2>&1
 copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.config" programfiles64  > NUL 2>&1
@@ -215,8 +214,6 @@ copy "c:\Program Files\Citrix\XenTools\*.txt" programfiles  > NUL 2>&1
 copy "c:\Program Files\Citrix\XenTools\*.log" programfiles  > NUL 2>&1
 copy "C:\Program Files\Citrix\XenTools\Installer\*.config" programfiles  > NUL 2>&1
 copy "C:\Program Files\Citrix\XenTools\Installer\*.install*" programfiles  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.dev.log  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.setup.log  > NUL 2>&1
 echo Capturing pnputil -e output...
 pnputil.exe -e > pnputil-e.out
 echo Capturing state of WMI repository (will fail if not ran as administrator)...
@@ -227,204 +224,74 @@ echo Exporting Application event log...
 wevtutil epl Application application.evtx
 cd ..
 echo Finalizing process and creating ZIP file...
+exit /b
+
+:vp_setupapicopy
+REM Copy setupapi on vista plus
+xcopy /Y /C C:\Windows\Inf\setupapi.dev.log  > NUL 2>&1
+xcopy /Y /C C:\Windows\Inf\setupapi.setup.log  > NUL 2>&1
+exit /b
+
+:pv_setupapicopy
+REM Cop setupapi on pre-vista 
+xcopy /Y /C C:\Windows\setupapi.log  > NUL 2>&1
+exit /b
+
+:ver_10
+:Run Windows 10 specific commands here.
+echo Windows 10
+call :copylogs
+call :vp_setupapicopy
 goto manifest
 
 :ver_8
 :Run Windows 8 specific commands here.
 echo Windows 8
-cd %bugpath%
-echo %MajorVerReg%.%MinorVerReg%.%MicroVerReg%.%BuildVerReg% > xt-reg-version.txt
-echo %XTInstallDir% > xt-install-dir.txt
-echo Generating MSInfo file as NFO - human readable version of data
-msinfo32 /nfo msinfo.nfo
-echo Generating MSInfo file as text file - script friendly version of data
-msinfo32 /report msinfo.txt
-echo Copying logfiles to bugtool...
-mkdir programfiles64
-mkdir programfiles
-mkdir programdata
-xcopy /Y /C /S c:\programdata\citrix\* programdata  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.txt" programfiles64  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.log" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.config" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.install*" programfiles64  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.txt" programfiles  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.log" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.config" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.install*" programfiles  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.dev.log  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.setup.log  > NUL 2>&1
-echo Capturing pnputil -e output...
-pnputil.exe -e > pnputil-e.out
-echo Capturing state of WMI repository (will fail if not ran as administrator)...
-C:\Windows\System32\wbem\winmgmt /verifyrepository > wmistate.out
-echo Exporting System event log...
-wevtutil epl System system.evtx
-echo Exporting Application event log...
-wevtutil epl Application application.evtx
-cd ..
-echo Finalizing process and creating ZIP file...
+call :copylogs
+call :vp_setupapicopy
+
 goto manifest
 
 :ver_2012
 :Run Windows 2012 specific commands here.
 echo Windows 2012
-cd %bugpath%
-echo %MajorVerReg%.%MinorVerReg%.%MicroVerReg%.%BuildVerReg% > xt-reg-version.txt
-echo %XTInstallDir% > xt-install-dir.txt
-echo Generating MSInfo file as NFO - human readable version of data
-msinfo32 /nfo msinfo.nfo
-echo Generating MSInfo file as text file - script friendly version of data
-msinfo32 /report msinfo.txt
-echo Copying logfiles to bugtool...
-mkdir programfiles64
-mkdir programfiles
-mkdir programdata
-xcopy /Y /C /S c:\programdata\citrix\* programdata  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.txt" programfiles64  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.log" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.config" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.install*" programfiles64  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.txt" programfiles  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.log" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.config" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.install*" programfiles  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.dev.log  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.setup.log  > NUL 2>&1
-echo Capturing pnputil -e output...
-pnputil.exe -e > pnputil-e.out
-echo Capturing state of WMI repository (will fail if not ran as administrator)...
-C:\Windows\System32\wbem\winmgmt /verifyrepository > wmistate.out
-echo Exporting System event log...
-wevtutil epl System system.evtx
-echo Exporting Application event log...
-wevtutil epl Application application.evtx
-cd ..
-echo Finalizing process and creating ZIP file...
+call :copylogs
+call :vp_setupapicopy
 goto manifest
-
 
 :ver_7
 :Run Windows 7 specific commands here.
 echo Windows 7
-cd %bugpath%
-echo %MajorVerReg%.%MinorVerReg%.%MicroVerReg%.%BuildVerReg% > xt-reg-version.txt
-echo %XTInstallDir% > xt-install-dir.txt
-echo Generating MSInfo file as NFO - human readable version of data
-msinfo32 /nfo msinfo.nfo
-echo Generating MSInfo file as text file - script friendly version of data
-msinfo32 /report msinfo.txt
-echo Copying logfiles to bugtool...
-mkdir programfiles64
-mkdir programfiles
-mkdir programdata
-xcopy /Y /C /S c:\programdata\citrix\* programdata  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.txt" programfiles64  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.log" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.config" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.install*" programfiles64  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.txt" programfiles  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.log" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.config" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.install*" programfiles  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.dev.log  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.setup.log  > NUL 2>&1
-echo Capturing pnputil -e output...
-pnputil.exe -e > pnputil-e.out
-echo Capturing state of WMI repository (will fail if not ran as administrator)...
-C:\Windows\System32\wbem\winmgmt /verifyrepository > wmistate.out
-echo Exporting System event log...
-wevtutil epl System system.evtx
-echo Exporting Application event log...
-wevtutil epl Application application.evtx
-cd ..
-echo Finalizing process and creating ZIP file...
+call :copylogs
+call :vp_setupapicopy
 goto manifest
-
 
 :ver_2008
 :Run Windows Server 2008 specific commands here.
 echo Windows Server 2008
-cd %bugpath%
-echo %MajorVerReg%.%MinorVerReg%.%MicroVerReg%.%BuildVerReg% > xt-reg-version.txt
-echo %XTInstallDir% > xt-install-dir.txt
-echo Generating MSInfo file as NFO - human readable version of data
-msinfo32 /nfo msinfo.nfo
-echo Generating MSInfo file as text file - script friendly version of data
-msinfo32 /report msinfo.txt
-echo Copying logfiles to bugtool...
-mkdir programfiles64
-mkdir programfiles
-mkdir programdata
-xcopy /Y /C /S c:\programdata\citrix\* programdata  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.txt" programfiles64  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.log" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.config" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.install*" programfiles64  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.txt" programfiles  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.log" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.config" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.install*" programfiles  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.dev.log  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.setup.log  > NUL 2>&1
-echo Capturing pnputil -e output...
-pnputil.exe -e > pnputil-e.out
-echo Capturing state of WMI repository (will fail if not ran as administrator)...
-C:\Windows\System32\wbem\winmgmt /verifyrepository > wmistate.out
-echo Exporting System event log...
-wevtutil epl System system.evtx
-echo Exporting Application event log...
-wevtutil epl Application application.evtx
-cd ..
-echo Finalizing process and creating ZIP file...
+call :copylogs
+call :vp_setupapicopy
 goto manifest
 
 :ver_vista
 :Run Windows Vista specific commands here.
 echo Windows Vista
-goto exit
+call :copylogs
+call :vp_setupapicopy
+goto manifest
 
 :ver_2003
 :Run Windows Server 2003 specific commands here.
-echo Windows Server 2003
-cd %bugpath%
-echo %MajorVerReg%.%MinorVerReg%.%MicroVerReg%.%BuildVerReg% > xt-reg-version.txt
-echo %XTInstallDir% > xt-install-dir.txt
-echo Generating MSInfo file as NFO - human readable version of data
-msinfo32 /nfo msinfo.nfo
-echo Generating MSInfo file as text file - script friendly version of data
-msinfo32 /report msinfo.txt
-echo Copying logfiles to bugtool...
-mkdir programfiles64
-mkdir programfiles
-mkdir programdata
-xcopy /Y /C /S c:\programdata\citrix\* programdata  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.txt" programfiles64  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.log" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.config" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.install*" programfiles64  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.txt" programfiles  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.log" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.config" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.install*" programfiles  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.dev.log  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.setup.log  > NUL 2>&1
-echo Capturing pnputil -e output...
-pnputil.exe -e > pnputil-e.out
-echo Capturing state of WMI repository (will fail if not ran as administrator)...
-C:\Windows\System32\wbem\winmgmt /verifyrepository > wmistate.out
-echo Exporting System event log...
-wevtutil epl System system.evtx
-echo Exporting Application event log...
-wevtutil epl Application application.evtx
-cd ..
-echo Finalizing process and creating ZIP file...
+call :copylogs
+call :pv_setupapicopy
 goto manifest
 
 :ver_xp
 :Run Windows XP specific commands here.
 echo Windows XP
-goto exit
+call :copylogs
+call :pv_setupapicopy
+goto manifest
 
 :ver_2000
 :Run Windows 2000 specific commands here.
@@ -438,6 +305,8 @@ goto exit
 
 :warnthenexit
 echo Machine undetermined.
+call :copylogs
+call :vp_setupapicopy
 
 :manifest
 cd %bugpath%
@@ -458,7 +327,7 @@ echo ZipFile = objArgs(1) >> _zipIt.vbs
 echo CreateObject("Scripting.FileSystemObject").CreateTextFile(ZipFile, True).Write "PK" ^& Chr(5) ^& Chr(6) ^& String(18, vbNullChar) >> _zipIt.vbs
 echo Set objShell = CreateObject("Shell.Application") >> _zipIt.vbs
 echo Set source = objShell.NameSpace(InputFolder).Items >> _zipIt.vbs
-echo objShell.NameSpace(ZipFile).CopyHere(source) >> _zipIt.vbs
+echo objShell.NameSpace(ZipFile).CopyHere source >> _zipIt.vbs
 echo wScript.Sleep 20000 >> _zipIt.vbs
 echo WScript.Quit >> _zipIt.vbs
 CScript  _zipIt.vbs  %bugpath%  %TEMP%\xt-bugtool-%dtstring%.zip
