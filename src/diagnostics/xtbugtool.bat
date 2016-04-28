@@ -1,6 +1,7 @@
 @echo off
 REM XenTools bugtool generator - v1.7 by Blaine A. Anaya
-REM This script collects necessary files used to identify where a XenTools installation issue has occurred
+REM This script collects necessary files used to identify 
+REM where a XenTools installation issue has occurred
 REM and places them in a ZIP file determined at runtime.
 REM Usage: xtbugtool.bat <Destination Path for ZIP file>
 REM Copyright (c) Citrix Systems Inc.
@@ -32,7 +33,7 @@ REM WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 REM NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
 REM OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 REM SUCH DAMAGE.
-SET ToolVersion=1.7
+SET ToolVersion=1.8
 IF "%1"=="" GOTO usage
 set zippath=%1
 
@@ -144,6 +145,12 @@ reg export "HKLM\SYSTEM\CurrentControlSet\Services\tcpip6" "%bugpath%\registry\t
 reg export "HKLM\SYSTEM\CurrentControlSet\Services\netbt" "%bugpath%\registry\netbt.reg" /y > NUL 2>&1
 reg export "HKLM\SYSTEM\CurrentControlSet\Services\LanmanWorkstation" "%bugpath%\registry\lanmanworkstation.reg" /y > NUL 2>&1
 reg export "HKLM\SYSTEM\CurrentControlSet\Enum" "%bugpath%\registry\enum.reg" /y > NUL 2>&1
+reg export "HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate" "%bugpath%\registry\wupolicy.reg" /y > NUL 2>&1
+reg export "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" "%bugpath%\registry\userexplorerpolicy.reg" /y > NUL 2>&1
+reg export "HKLM\SYSTEM\Internet Communication Management\Internet Communication" "%bugpath%\registry\internetcom.reg" /y > NUL 2>&1
+reg export "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\WindowsUpdate" "%bugpath%\registry\userwupolicy.reg" /y > NUL 2>&1
+REM See https://technet.microsoft.com/en-us/library/dd939844 for details
+reg export "HKLM\Software\Microsoft\Windows\CurrentVersion\WindowsUpdate" "%bugpath%\registry\wu.reg" /y > NUL 2>&1
 
 REM Check for 64 Bit Keys
 reg query HKLM\Software\Wow6432node\Citrix > NUL 2>&1
@@ -200,12 +207,18 @@ echo Generating MSInfo file as NFO - human readable version of data
 msinfo32 /nfo msinfo.nfo
 echo Generating MSInfo file as text file - script friendly version of data
 msinfo32 /report msinfo.txt
+if NOT %ERRORLEVEL%==0 echo "msi info failed" >> xtbugtool.log
 echo Copying logfiles to bugtool...
 mkdir programfiles64
 mkdir programfiles
 mkdir programdata
+mkdir tasks
 xcopy /Y /C /S c:\programdata\citrix\* programdata  > NUL 2>&1
+if NOT %ERRORLEVEL%==0 echo "No programdata found" >> xtbugtool.log
 xcopy /Y /C /S "c:\programdata\Citrix Systems, Inc" programdata > NUL 2>&1
+if NOT %ERRORLEVEL%==0 echo "No agent logs found" >> xtbugtool.log
+xcopy /Y /C /S "c:\windows\system32\tasks" tasks > NUL 2>&1
+if NOT %ERRORLEVEL%==0 echo "No task logs found" >> xtbugtool.log
 copy "c:\Program Files (x86)\Citrix\XenTools\*.txt" programfiles64  > NUL 2>&1
 copy "c:\Program Files (x86)\Citrix\XenTools\*.log" programfiles64  > NUL 2>&1
 copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.config" programfiles64  > NUL 2>&1
@@ -216,12 +229,16 @@ copy "C:\Program Files\Citrix\XenTools\Installer\*.config" programfiles  > NUL 2
 copy "C:\Program Files\Citrix\XenTools\Installer\*.install*" programfiles  > NUL 2>&1
 echo Capturing pnputil -e output...
 pnputil.exe -e > pnputil-e.out
+if NOT %ERRORLEVEL%==0 echo "pnputil failed" >> xtbugtool.log
 echo Capturing state of WMI repository (will fail if not ran as administrator)...
 C:\Windows\System32\wbem\winmgmt /verifyrepository > wmistate.out
+if NOT %ERRORLEVEL%==0 echo "wmi failed" >> xtbugtool.log
 echo Exporting System event log...
 wevtutil epl System system.evtx
+if NOT %ERRORLEVEL%==0 echo "system log failed" >> xtbugtool.log
 echo Exporting Application event log...
 wevtutil epl Application application.evtx
+if NOT %ERRORLEVEL%==0 echo "application log failed" >> xtbugtool.log
 cd ..
 echo Finalizing process and creating ZIP file...
 exit /b
@@ -304,9 +321,10 @@ echo Windows NT
 goto exit
 
 :warnthenexit
-echo Machine undetermined.
+echo  Windows version undetermined.
 call :copylogs
 call :vp_setupapicopy
+got :manifest
 
 :manifest
 cd %bugpath%
@@ -321,6 +339,7 @@ cd %TEMP%
 goto zipit
 
 :zipit
+REM Write a VBS script to zip the directory
 echo Set objArgs = WScript.Arguments > _zipIt.vbs
 echo InputFolder = objArgs(0) >> _zipIt.vbs
 echo ZipFile = objArgs(1) >> _zipIt.vbs
@@ -330,6 +349,9 @@ echo Set source = objShell.NameSpace(InputFolder).Items >> _zipIt.vbs
 echo objShell.NameSpace(ZipFile).CopyHere source >> _zipIt.vbs
 echo wScript.Sleep 20000 >> _zipIt.vbs
 echo WScript.Quit >> _zipIt.vbs
+REM Delete all empty folders (via a robocopy trick)
+ROBOCOPY %bugpath% %bugpath% /S /MOVE > NUL 2>&1
+REM And run the script we have written
 CScript  _zipIt.vbs  %bugpath%  %TEMP%\xt-bugtool-%dtstring%.zip
 goto cleanup
 
