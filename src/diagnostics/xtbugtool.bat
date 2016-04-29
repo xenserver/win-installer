@@ -35,6 +35,39 @@ REM OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 REM SUCH DAMAGE.
 SET ToolVersion=1.8
 IF "%1"=="" GOTO usage
+
+:checkPrivileges
+NET FILE 1>NUL 2>NUL
+if '%errorlevel%' == '0' ( goto gotPrivileges ) else ( goto getPrivileges )
+
+:getPrivileges
+if '%1'=='ELEV' (echo ELEV & shift /1 & goto gotPrivileges)
+echo *** This script needs to be run with administrator priviledges ***
+
+setlocal DisableDelayedExpansion
+set "batchPath=%~0"
+setlocal EnableDelayedExpansion
+ECHO Set UAC = CreateObject^("Shell.Application"^) > "%temp%\OEgetPrivileges.vbs"
+ECHO args = "ELEV %USERNAME% " >> "%temp%\OEgetPrivileges.vbs"
+ECHO For Each strArg in WScript.Arguments >> "%temp%\OEgetPrivileges.vbs"
+ECHO args = args ^& strArg ^& " "  >> "%temp%\OEgetPrivileges.vbs"
+ECHO Next >> "%temp%\OEgetPrivileges.vbs"
+ECHO UAC.ShellExecute "!batchPath!", args, "", "runas", 1 >> "%temp%\OEgetPrivileges.vbs"
+"%SystemRoot%\System32\WScript.exe" "%temp%\OEgetPrivileges.vbs" %*
+exit /B
+
+:gotPrivileges
+if NOT '%1'=='ELEV' goto :noelev
+set USER=%2
+shift /1
+shift /1
+goto :cont
+:noelev
+set USER=%USERNAME%
+:cont
+setlocal & pushd .
+cd /d %~dp0
+
 set zippath=%1
 
 SETLOCAL ENABLEDELAYEDEXPANSION
@@ -357,6 +390,7 @@ goto cleanup
 
 :cleanup
 move /Y xt-bugtool-%dtstring%.zip %zippath%
+echo y|cacls %zippath% /G %USER%:F 
 del _zipIt.vbs
 rmdir /S /Q %dtstring%
 goto exit
