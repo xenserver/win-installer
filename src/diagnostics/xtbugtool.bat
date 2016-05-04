@@ -281,13 +281,20 @@ exit /b
 
 :vp_setupapicopy
 REM Copy setupapi on vista plus
-xcopy /Y /C C:\Windows\Inf\setupapi.dev.log  > NUL 2>&1
-xcopy /Y /C C:\Windows\Inf\setupapi.setup.log  > NUL 2>&1
+xcopy /Y /C C:\Windows\Inf\setupapi.dev.log %bugpath% > NUL 2>&1
+if NOT %ERRORLEVEL%==0 echo "No setupapi.dev.log found" >> %bugpath%\xtbugtool.log
+
+xcopy /Y /C C:\Windows\Inf\setupapi.setup.log %bugpath% > NUL 2>&1
+if NOT %ERRORLEVEL%==0 echo "No setupapi.setup.log found" >> %bugpath%\xtbugtool.log
+
+xcopy /Y /C C:\Windows\Inf\setupapi.app.log %bugpath% > NUL 2>&1
+if NOT %ERRORLEVEL%==0 echo "No setupapi.app.log found" >> %bugpath%\xtbugtool.log
 exit /b
 
 :pv_setupapicopy
 REM Cop setupapi on pre-vista 
-xcopy /Y /C C:\Windows\setupapi.log  > NUL 2>&1
+xcopy /Y /C C:\Windows\setupapi.log %bugpath% > NUL 2>&1
+if NOT %ERRORLEVEL%==0 echo "No setupapi.log found" >> %bugpath%\xtbugtool.log
 exit /b
 
 :ver_10
@@ -302,7 +309,6 @@ goto manifest
 echo Windows 8
 call :copylogs
 call :vp_setupapicopy
-
 goto manifest
 
 :ver_2012
@@ -360,7 +366,7 @@ goto exit
 echo  Windows version undetermined.
 call :copylogs
 call :vp_setupapicopy
-got :manifest
+goto :manifest
 
 :manifest
 cd %bugpath%
