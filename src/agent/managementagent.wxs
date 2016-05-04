@@ -286,6 +286,11 @@
                     <File Id="BrandSupportDll" Name="BrandSupport.dll" DiskId='1' Source='BrandSupport\BrandSupport.dll' />
                 </Component>
             </Directory>
+            <Directory Id="diagnostics" Name="diagnostics">
+                <Component Id="xtbugtool" Guid="*">
+                    <File Id="xtbugtoolbat" Name="xtbugtool.bat" DiskId="1" Source="diagnostics\xtbugtool.bat" />
+                </Component>
+            </Directory>
             <Directory Id="netsettings" Name='netsettings'>
                   <Component Id="NetSettingsCpy" Guid="*">
                       <?if $(var.arch)=x86?> 
@@ -475,6 +480,7 @@
       
       
     <Feature Id='Complete' Level='1'>
+        <ComponentRef Id="xtbugtool" />
         <?if $(var.usecerts)=yes ?>
             <ComponentRef Id='Certs' />
         <?endif?>
