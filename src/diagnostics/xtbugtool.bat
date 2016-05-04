@@ -1,8 +1,9 @@
 @echo off
-REM XenTools bugtool generator - v1.7 by Blaine A. Anaya
+REM XT-bugtool generator - v1.7 by Blaine A. Anaya
 REM This script collects necessary files used to identify 
-REM where a XenTools installation issue has occurred
+REM where a PV tools installation issue has occurred
 REM and places them in a ZIP file determined at runtime.
+
 REM Usage: xtbugtool.bat <Destination Path for ZIP file>
 REM Copyright (c) Citrix Systems Inc.
 REM All rights reserved.
@@ -34,6 +35,8 @@ REM NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 REM OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
 REM SUCH DAMAGE.
 SET ToolVersion=1.8
+
+CALL :I18N
 IF "%1"=="" GOTO usage
 
 :checkPrivileges
@@ -139,29 +142,29 @@ Exit /b
 REM Start of Bugtool Data Collection
 set bugpath=%temp%\%dtstring%
 mkdir %bugpath%
-REM Set XenTools install directory as identified in the registry
-FOR /F "usebackq skip=2 tokens=1-2*" %%A IN (`REG QUERY HKLM\SOFTWARE\Citrix\Xentools /v Install_Dir 2^>nul`) DO (
+REM Set PV Tools install directory as identified in the registry
+FOR /F "usebackq skip=2 tokens=1-2*" %%A IN (`REG QUERY HKLM\SOFTWARE\%REGKEY% /v Install_Dir 2^>nul`) DO (
     set XTInstallDir=%%C
 	)
-REM Collect XenTools version information from registry
-FOR /F "usebackq skip=2 tokens=1-3" %%A IN (`REG QUERY HKLM\SOFTWARE\Citrix\Xentools /v MajorVersion 2^>nul`) DO (
+REM Collect PV Tools version information from registry
+FOR /F "usebackq skip=2 tokens=1-3" %%A IN (`REG QUERY HKLM\SOFTWARE\%REGKEY% /v MajorVersion 2^>nul`) DO (
     set /a MajorVerReg=%%C
 )
 
-FOR /F "usebackq skip=2 tokens=1-3" %%A IN (`REG QUERY HKLM\SOFTWARE\Citrix\Xentools /v MinorVersion 2^>nul`) DO (
+FOR /F "usebackq skip=2 tokens=1-3" %%A IN (`REG QUERY HKLM\SOFTWARE\%REGKEY% /v MinorVersion 2^>nul`) DO (
     set /a MinorVerReg=%%C
 )
-FOR /F "usebackq skip=2 tokens=1-3" %%A IN (`REG QUERY HKLM\SOFTWARE\Citrix\Xentools /v MicroVersion 2^>nul`) DO (
+FOR /F "usebackq skip=2 tokens=1-3" %%A IN (`REG QUERY HKLM\SOFTWARE\%REGKEY% /v MicroVersion 2^>nul`) DO (
     set /a MicroVerReg=%%C
 )
-FOR /F "usebackq skip=2 tokens=1-3" %%A IN (`REG QUERY HKLM\SOFTWARE\Citrix\Xentools /v BuildVersion 2^>nul`) DO (
+FOR /F "usebackq skip=2 tokens=1-3" %%A IN (`REG QUERY HKLM\SOFTWARE\%REGKEY% /v BuildVersion 2^>nul`) DO (
     set /a BuildVerReg=%%C
 )
 
 REM Collect important registry entries
 mkdir %bugpath%\registry
 reg export "HKLM\SYSTEM\CurrentControlSet\Control" "%bugpath%\registry\control.reg" /y > NUL 2>&1
-reg export "HKLM\SOFTWARE\Citrix" "%bugpath%\registry\SWcitrix.reg" /y > NUL 2>&1
+reg export "HKLM\SOFTWARE\%REGCO%" "%bugpath%\registry\SW%REGCO%.reg" /y > NUL 2>&1
 reg export "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" "%bugpath%\registry\uninstall.reg" /y > NUL 2>&1
 reg export "HKLM\SYSTEM\CurrentControlSet\Services\xenvif" "%bugpath%\registry\xenvif.reg" /y > NUL 2>&1
 reg export "HKLM\SYSTEM\CurrentControlSet\Services\xenvbd" "%bugpath%\registry\xenvbd.reg" /y > NUL 2>&1
@@ -186,9 +189,9 @@ REM See https://technet.microsoft.com/en-us/library/dd939844 for details
 reg export "HKLM\Software\Microsoft\Windows\CurrentVersion\WindowsUpdate" "%bugpath%\registry\wu.reg" /y > NUL 2>&1
 
 REM Check for 64 Bit Keys
-reg query HKLM\Software\Wow6432node\Citrix > NUL 2>&1
+reg query HKLM\Software\Wow6432node\%REGCO% > NUL 2>&1
 if %ERRORLEVEL% == 0 (
-reg export "HKLM\Software\Wow6432node\Citrix\XenToolsInstaller" "%bugpath%\registry\XenToolsInstaller.reg" /y > NUL 2>&1
+reg export "HKLM\Software\Wow6432node\%REGCO%\%INSTALLNAME%" "%bugpath%\registry\%INSTALLNAME%.reg" /y > NUL 2>&1
 )
 	
 REM Identify Running OS then run collection commands for that version
@@ -246,20 +249,20 @@ mkdir programfiles64
 mkdir programfiles
 mkdir programdata
 mkdir tasks
-xcopy /Y /C /S c:\programdata\citrix\* programdata  > NUL 2>&1
+xcopy /Y /C /S c:\programdata\%COMPANY%\* programdata  > NUL 2>&1
 if NOT %ERRORLEVEL%==0 echo "No programdata found" >> xtbugtool.log
-xcopy /Y /C /S "c:\programdata\Citrix Systems, Inc" programdata > NUL 2>&1
+xcopy /Y /C /S "c:\programdata\%GUESTLOGS%" programdata > NUL 2>&1
 if NOT %ERRORLEVEL%==0 echo "No agent logs found" >> xtbugtool.log
 xcopy /Y /C /S "c:\windows\system32\tasks" tasks > NUL 2>&1
 if NOT %ERRORLEVEL%==0 echo "No task logs found" >> xtbugtool.log
-copy "c:\Program Files (x86)\Citrix\XenTools\*.txt" programfiles64  > NUL 2>&1
-copy "c:\Program Files (x86)\Citrix\XenTools\*.log" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.config" programfiles64  > NUL 2>&1
-copy "C:\Program Files (x86)\Citrix\XenTools\Installer\*.install*" programfiles64  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.txt" programfiles  > NUL 2>&1
-copy "c:\Program Files\Citrix\XenTools\*.log" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.config" programfiles  > NUL 2>&1
-copy "C:\Program Files\Citrix\XenTools\Installer\*.install*" programfiles  > NUL 2>&1
+copy "c:\Program Files (x86)\%TOOLPATH%\*.txt" programfiles64  > NUL 2>&1
+copy "c:\Program Files (x86)\%TOOLPATH%\*.log" programfiles64  > NUL 2>&1
+copy "C:\Program Files (x86)\%TOOLPATH%\Installer\*.config" programfiles64  > NUL 2>&1
+copy "C:\Program Files (x86)\%TOOLPATH%\Installer\*.install*" programfiles64  > NUL 2>&1
+copy "c:\Program Files\%TOOLPATH%\*.txt" programfiles  > NUL 2>&1
+copy "c:\Program Files\%TOOLPATH%\*.log" programfiles  > NUL 2>&1
+copy "C:\Program Files\%TOOLPATH%\Installer\*.config" programfiles  > NUL 2>&1
+copy "C:\Program Files\%TOOLPATH%\Installer\*.install*" programfiles  > NUL 2>&1
 echo Capturing pnputil -e output...
 pnputil.exe -e > pnputil-e.out
 if NOT %ERRORLEVEL%==0 echo "pnputil failed" >> xtbugtool.log
@@ -364,9 +367,9 @@ cd %bugpath%
 echo ^<DataInfo^> > manifest.xml
 echo ^<UTCDate^>%UTC_DATE_TIME%^</UTCDate^> >> manifest.xml
 echo  ^<Date^>%LOCAL_DATE_TIME%^</Date^> >> manifest.xml
-echo  ^<Product^>XenTools^</Product^> >> manifest.xml
+echo  ^<Product^>%TOOLSNAME%^</Product^> >> manifest.xml
 echo  ^<ProductVersion^>%MajorVerReg%.%MinorVerReg%.%MicroVerReg%.%BuildVerReg%^</ProductVersion^> >> manifest.xml
-echo  ^<ClientTool Name="XenTools bugtool generator" Version="%ToolVersion%" /^> >> manifest.xml
+echo  ^<ClientTool Name="%TOOLSNAME% bugtool generator" Version="%ToolVersion%" /^> >> manifest.xml
 echo ^</DataInfo^> >> manifest.xml
 cd %TEMP%
 goto zipit
@@ -398,6 +401,20 @@ goto exit
 :usage
 IF "%1"=="" echo "USAGE: xtbugtool.bat <Destination Path for ZIP file>"
 
+REM Autogenerated section, do not modify
+:I18N
+REM I18N
+SET COMPANY=Citrix
+SET TOOLPATH=Citrix\XenTools
+SET REGKEY=Citrix\Xentools
+SET REGCO=Citrix
+SET INSTALLNAME=XenToolsInstaller
+SET GUESTLOGS=Citrix Systems, Inc
+SET TOOLSNAME=XenTools
+exit /b
+REM ENDI18N
+
 :exit
+goto :EOF
 
 :EOF

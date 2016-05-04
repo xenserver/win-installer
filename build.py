@@ -526,6 +526,30 @@ def generate_intermediate_signing_script():
         signfile.write("echo. \n")
         signfile.write("echo sign.bat \"signtool sign /a /s my /n \"\"My Company Inc.\"\" /t http://timestamp.verisign.com/scripts/timestamp.dll\"\n")
 
+def build_diagnostics(source, output):
+    cwd = os.getcwd()
+    print("source " + source+ " output "+output);
+    outpath=os.path.join(output,"diagnostics")
+    if not os.path.lexists(outpath):
+        os.mkdir(outpath)
+    outfile = os.path.join(outpath, "xtbugtool.bat")
+    inpath=os.path.join(source,"src","diagnostics","xtbugtool.bat")
+    with open(inpath,"r") as myfile:
+        data=myfile.read()
+    data = re.compile(r"REM I18N.*REM ENDI18N", re.MULTILINE|re.DOTALL).sub("REM I18N\n"+
+    "SET COMPANY="+branding.branding['manufacturer']+"\n"+
+    "SET TOOLPATH="+branding.branding['manufacturer']+"\\"+branding.branding['shortTools']+"\n"+
+    "SET REGKEY=Citrix\Xentools\n"+
+    "SET REGCO=Citrix\n"+
+    "SET INSTALLNAME="+branding.branding['shortTools']+"Installer"+"\n"+
+    "SET GUESTLOGS="+branding.branding['manufacturerLong']+"\n"+
+    "SET TOOLSNAME="+branding.branding['shortTools']+"\n"+
+    "\nREM ENDI18N",data)
+    with open(outfile,"w") as myfile:
+        myfile.write(data)
+
+
+
 def make_installers_dir():
     if os.path.exists('installer'):
             shutil.rmtree('installer')
@@ -1021,9 +1045,9 @@ if __name__ == '__main__':
             if not all_drivers_signed:
                 signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
                 signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
-
         build_installer_apps(location,outbuilds)
         make_builds(location,outbuilds)
+        build_diagnostics(".", outbuilds)
         make_installer_builds(".",outbuilds)
 
         make_pe(location)
