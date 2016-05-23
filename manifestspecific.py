@@ -31,7 +31,7 @@
 secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
 localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
 
-1uild_tar_source_files = {
+build_tar_source_files = {
        "xenguestagent" : r'xenguestagentsecret.git\201\xenguestagent.tar',
        "xenbus" : r'xenbus-patchq.git.whql\63-all\xenbus.tar',
        "xenvif" : r'xenvif-patchq.git.whql\62-all\xenvif.tar',
