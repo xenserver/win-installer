@@ -140,7 +140,7 @@ SaveCmd(
 	)
 {
 	HRESULT err = 0;
-
+	RegistryStopGuestAgentCopy();
 	err = RegistryIterateOverKeySubKeys(NETWORK_ADAPTER_CLASS_KEY, saveDevice, NULL);
 
 	return err;
