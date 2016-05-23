@@ -72,6 +72,9 @@
 
 #define SOFTWARE_KEY "SOFTWARE\\Citrix"
 
+#define NETWORKSETTINGS \
+		SOFTWARE_KEY ## "\\XenToolsNetSettings"
+
 #define INSTALLER_KEY_MAC   \
         SOFTWARE_KEY ## "\\XenToolsNetSettings\\Mac"
 #define INSTALLER_KEY_IPV4   \
@@ -231,6 +234,14 @@ RegistryDeleteValuesOnCondition(
 extern PTCHAR
 RegistryGetStorageKeyOverrideName(
 	int deviceIndex
+);
+
+extern HRESULT
+RegistryAllowGuestAgentCopy(
+);
+
+extern HRESULT
+RegistryStopGuestAgentCopy(
 );
 
 #endif
