@@ -950,19 +950,7 @@ if __name__ == '__main__':
             continue
 
         if (sys.argv[argptr] == "--branch"):
-
             reference = sys.argv[argptr+1]
-            rtf = open('src\\bitmaps\\EULA_DRIVERS.rtf', "w")
-            print(r"{\rtf1\ansi{\fonttbl\f0\fmodern Courier;}\f0\fs10\pard", file=rtf)
-            txt = urllib.request.urlopen('http://hg.uk.xensource.com/carbon/'+reference+'/docsource.hg/raw-file/tip/EULA_DRIVERS_OPEN')
-            while (1):
-                line = txt.readline()
-                if not line:
-                    break
-                print(str(line, encoding='utf-8')+"\\par", file=rtf)
-            print(r"}",file=rtf);
-            txt.close()
-            rtf.close()
             argptr += 2
             continue
 
