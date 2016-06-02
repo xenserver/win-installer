@@ -575,6 +575,14 @@ namespace InstallAgent
         // Call 'SetInstallStatus()' with 'Installed'
         // or 'Failed' before calling 'InstallerDone()'
         {
+            if (rebootOption == RebootType.AUTOREBOOT &&
+                VM.GetRebootsSoFar() == 0)
+            // If /forcerestart is set, the VM
+            // needs to reboot at least once
+            {
+                TryReboot();
+            }
+
             if (installMode == InstallMode.FULL)
             {
                 BlockUntilInitiatorNotified();
