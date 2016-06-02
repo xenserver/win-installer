@@ -42,6 +42,11 @@ namespace State
             return othDrvInstalling;
         }
 
+        public static int GetRebootsSoFar()
+        {
+            return rebootsSoFar;
+        }
+
         public static bool AllowedToReboot()
         {
             return rebootsSoFar < REBOOTS_MAX;
