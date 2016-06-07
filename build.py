@@ -277,7 +277,6 @@ def make_header(outbuilds):
     file.write("<?define BRANDING_MINOR_VERSION_STR =\t\""+os.environ['MINOR_VERSION']+"\"?>\n")
     file.write("<?define BRANDING_MICRO_VERSION_STR =\t\""+os.environ['MICRO_VERSION']+"\"?>\n")
     file.write("<?define BRANDING_BUILD_NR_STR =\t\""+os.environ['BUILD_NUMBER']+"\"?>\n")
-    file.write("<?define TOOLS_HOTFIX_NR_STR =\t\""+os.environ['TOOLS_HOTFIX_NUMBER']+"\"?>\n")
     file.write("</Include>")
     file.close();
 
@@ -804,7 +803,7 @@ def record_version_details():
     f.write(os.environ['MAJOR_VERSION']+"."+
             os.environ['MINOR_VERSION']+"."+
             os.environ['MICRO_VERSION']+"."+
-            os.environ['TOOLS_HOTFIX_NUMBER'])
+            os.environ['BUILD_NUMBER'])
     f.close()
  
 def archive_build_input(archiveSrc):
@@ -908,12 +907,9 @@ if __name__ == '__main__':
 
     basedir = os.getcwd()
 
-    os.environ['MAJOR_VERSION'] = '6'
-    os.environ['MINOR_VERSION'] = '2'
-    os.environ['MICRO_VERSION'] = '50'
-
-    os.environ['TOOLS_HOTFIX_NUMBER'] = '20000'
-    # Note that the TOOLS_HOTFIX_NUMBER should be reset to 0 following a change of majror, minor or micro numbers
+    os.environ['MAJOR_VERSION'] = '7'
+    os.environ['MINOR_VERSION'] = '1'
+    os.environ['MICRO_VERSION'] = '0'
 
     if 'BUILD_NUMBER' not in os.environ.keys():
         os.environ['BUILD_NUMBER'] = '0'
@@ -955,20 +951,6 @@ if __name__ == '__main__':
         if (sys.argv[argptr] == "--secure"):
             securebuild = True
             argptr +=1
-            continue
-
-        if (sys.argv[argptr] == "--branch"):
-
-            reference = sys.argv[argptr+1]
-            fo = urllib.request.urlopen('http://hg.uk.xensource.com/carbon/'+reference+'/branding.hg/raw-file/tip/toplevel-versions-xenserver')
-            text=str(fo.read())
-            m = re.search('^.*PRODUCT_MAJOR_VERSION\s*:=\s*(\d*).*$',text)
-            os.environ['MAJOR_VERSION'] = m.group(1)
-            m = re.search('^.*PRODUCT_MINOR_VERSION\s*:=\s*(\d*).*$',text)
-            os.environ['MINOR_VERSION'] = m.group(1)
-            m = re.search('^.*PRODUCT_MICRO_VERSION\s*:=\s*(\d*).*$',text)
-            os.environ['MICRO_VERSION'] = m.group(1)
-            argptr += 2
             continue
 
         if (sys.argv[argptr] == "--sign"):
