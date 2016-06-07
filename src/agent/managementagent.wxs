@@ -43,7 +43,6 @@
     <?define CurrentMinorVersion = '$(var.BRANDING_MINOR_VERSION_STR)' ?>
     <?define CurrentMicroVersion = '$(var.BRANDING_MICRO_VERSION_STR)' ?>
     <?define CurrentBuildVersion = '$(var.BRANDING_BUILD_NR_STR)' ?>
-    <?define CurrentToolsHotfix  = '$(var.TOOLS_HOTFIX_NR_STR)' ?>
 
     <?define Brand = '$(var.BRANDING_manufacturer)' ?>
     <?define Product = '$(var.BRANDING_hypervisorProduct)' ?>
@@ -419,7 +418,7 @@
               <RegistryValue Type='integer' Name='MajorVersion' Value='$(var.CurrentMajorVersion)' />
               <RegistryValue Type='integer' Name='MinorVersion' Value='$(var.CurrentMinorVersion)' />
               <RegistryValue Type='integer' Name='MicroVersion' Value='$(var.CurrentMicroVersion)' />
-              <RegistryValue Type='integer' Name='BuildVersion' Value='$(var.CurrentToolsHotfix)' /> 
+              <RegistryValue Type='integer' Name='BuildVersion' Value='$(var.CurrentBuildVersion)' /> 
               <!-- BuildVersion, above, is the number we report to XAPI, so we report the hardcoded tools hotfix number, not the Jenkins build number -->
               <RegistryValue Type='string' Name='Install_Dir' Value='[INSTALLDIR]' />
               <RegistryValue Type='integer' Name='MsiGuestAgent' Value='1' />
