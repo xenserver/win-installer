@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using System.ServiceProcess;
 
 namespace HelperFunctions
 {
@@ -233,6 +234,36 @@ namespace HelperFunctions
                     );
                 }
             }
+        }
+
+        public static bool ServiceRestart(string name)
+        {
+            ServiceController sc;
+            try
+            {
+                sc = new ServiceController(name);
+            }
+            catch (ArgumentException e)
+            {
+                Trace.WriteLine(e.Message);
+                return false;
+            }
+
+            try
+            {
+                if ((sc.Status == ServiceControllerStatus.Running) && sc.CanStop)
+                {
+                    sc.Stop();
+                }
+                sc.WaitForStatus(ServiceControllerStatus.Stopped);
+                sc.Start();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.Message);
+                return false;
+            }
+            return true;
         }
 
         public static bool DeleteService(string serviceName)
