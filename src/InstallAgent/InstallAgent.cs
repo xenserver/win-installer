@@ -136,6 +136,7 @@ namespace InstallAgent
 
         private void __InstallThreadHandler()
         {
+            bool needReboot = false;
             if (WinVersion.IsWOW64())
             {
                 throw new Exception("WOW64: Do not do that.");
@@ -190,19 +191,16 @@ namespace InstallAgent
 
             if (!Installer.EverythingInstalled())
             {
-                bool needReboot;
                 InstallCertificates();
                 PVDriversInstall(out needReboot);
-
-                if (needReboot)
-                {
-                    goto ExitReboot;
-                }
             }
 
             if (PVDevice.PVDevice.AllFunctioning())
             {
-                goto ExitDone;
+                if (needReboot)
+                    goto ExitReboot;
+                else
+                    goto ExitDone;
             }
             else
             {
