@@ -65,6 +65,7 @@ namespace State
             new StateInfo("XenVbdInstalled", 0),
             new StateInfo("CertificatesInstalled", 0),
             new StateInfo("ProceedWithSystemClean", 0),
+            new StateInfo("DriversRequired", 0),
         };
 
         [Flags]
@@ -89,10 +90,11 @@ namespace State
             XenVifInstalled = 1 << 9,
             XenNetInstalled = 1 << 10,
             XenVbdInstalled = 1 << 11,
+            DriversRequired = 1 << 12,
             // ---------------- End ---------------
 
-            CertificatesInstalled = 1 << 12,
-            ProceedWithSystemClean = 1 << 13,
+            CertificatesInstalled = 1 << 13,
+            ProceedWithSystemClean = 1 << 14,
         }
 
         // Static constructor: queries the Registry for the
@@ -191,7 +193,7 @@ namespace State
 
         public static bool EverythingInstalled()
         {
-            return (currentState & everythingInstalled) == everythingInstalled;
+            return (currentState & everythingInstalled) == everythingInstalled ;
         }
 
         public static bool Complete()
