@@ -96,38 +96,38 @@
     <UI Id="MyUI">
         <Dialog Id="InstallChoicesDlg" Width="370" Height="270" Title="[ProductName] Setup" >
             <Control Id="BannerBmp" Type="Bitmap" Text="WixUI_Bmp_Banner" X="0" Y="0" Width="370" Height="44" />
-            <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Installation and Update Settings" />
-            <Control Id="Description" Type="Text" X="25" Y="23" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="Click Next to accept recommended settings." />
+            <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}$(var.BRANDING_installAndUpdateTitle)" />
+            <Control Id="Description" Type="Text" X="25" Y="23" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_installAndUpdateDesc)" />
             
-            <Control Id="TextNow" Type="Text" X="20" Y="60" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="I/O drivers improve performance, functionality and reliability" />
-            <Control Id="InstallNow" Type="CheckBox" CheckBoxValue="1" Property="InstallDriversGUI" Text="Install I/O Drivers Now" X="20" Y="75" Width="290" Height="15" />
+            <Control Id="TextNow" Type="Text" X="20" Y="60" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioDesc)" />
+            <Control Id="InstallNow" Type="CheckBox" CheckBoxValue="1" Property="InstallDriversGUI" Text="$(var.BRANDING_ioInstall)" X="20" Y="75" Width="290" Height="15" />
 
-            <Control Id="TextAuto" Type="Text" X="20" Y="105" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="The management agent automatically updates itself when new versions are available." NoWrap="no" />
-            <Control Id="AutoUpdate" Type="ComboBox" ComboList="yes" X="20" Y="120" Width="290" Height="30" Text="The management agent may automatically update itself when new versions are available" Property="ALLOWAUTOUPDATE" >
+            <Control Id="TextAuto" Type="Text" X="20" Y="105" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_mgmtDesc)" NoWrap="no" />
+            <Control Id="AutoUpdate" Type="ComboBox" ComboList="yes" X="20" Y="120" Width="290" Height="30" Property="ALLOWAUTOUPDATE" >
                 <ComboBox Property="ALLOWAUTOUPDATE">
-                    <ListItem Text="Allow automatic management agent updates" Value="YES"/>
-                    <ListItem Text="Disallow automatic management agent updates" Value="NO"/>
+                    <ListItem Text="$(var.BRANDING_mgmtAllow)" Value="YES"/>
+                    <ListItem Text="$(var.BRANDING_mgmtDisallow)" Value="NO"/>
                 </ComboBox>
             </Control>
 
-            <Control Id="TextDriver" Type="Text" X="20" Y="165" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="The management agent automatically updates I/O drivers when new versions are available." NoWrap="no">
+            <Control Id="TextDriver" Type="Text" X="20" Y="165" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioUpdDesc)" NoWrap="no">
             </Control>
-            <Control Id="DriverUpdate" Type="ComboBox" ComboList="yes" X="20" Y="180" Width="290" Height="30" Text="The management agent automatically updates I/O drivers when new versions are available" Property="ALLOWDRIVERUPDATE" >
+            <Control Id="DriverUpdate" Type="ComboBox" ComboList="yes" X="20" Y="180" Width="290" Height="30" Property="ALLOWDRIVERUPDATE" >
                 <ComboBox Property="ALLOWDRIVERUPDATE">
-                    <ListItem Text="Allow automatic I/O driver updates by the management agent" Value="YES"/>
-                    <ListItem Text="Disallow automatic I/O driver updates by the management agent" Value="NO"/>
+                    <ListItem Text="$(var.BRANDING_ioUpdAllow)" Value="YES"/>
+                    <ListItem Text="$(var.BRANDING_ioUpdDisallow)" Value="NO"/>
                 </ComboBox>
                 <Condition Action="disable">ALLOWAUTOUPDATE="NO"</Condition>
                 <Condition Action="enable">ALLOWAUTOUPDATE="YES"</Condition>
             </Control>
-            <Control Id="TextDisclaim" Type="Text" X="20" Y="210" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="Automatic updates may be overridden by pool policies" NoWrap="no" />
-            <Control Id="Next" Text="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" >
+            <Control Id="TextDisclaim" Type="Text" X="20" Y="210" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_updDisclaim)" NoWrap="no" />
+            <Control Id="Next" Text="!(loc.WixUINext)" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" >
                 <Publish Event="NewDialog" Value="VerifyReadyDlg"></Publish>
             </Control>
-            <Control Id="Back" Text="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Default="no" >
+            <Control Id="Back" Text="!(loc.WixUIBack)" Type="PushButton" X="180" Y="243" Width="56" Height="17" Default="no" >
                 <Publish Event="NewDialog" Value="InstallDirDlg"></Publish>
             </Control>
-            <Control Id="Cancel" Text="Cancel" Cancel="yes" Type="PushButton" X="304" Y="243" Width="56" Height="17" Default="no" >
+            <Control Id="Cancel" Text="!(loc.WixUICancel)" Cancel="yes" Type="PushButton" X="304" Y="243" Width="56" Height="17" Default="no" >
                 <Publish Event="SpawnDialog" Value="CancelDlg"></Publish>
             </Control>
 

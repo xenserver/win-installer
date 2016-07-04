@@ -80,6 +80,17 @@ branding = {
         "allowAutoUpdate" : "YES",
         "allowDriverUpdate" : "NO",
         "allowDriverInstall" : "YES",
+        "installAndUpdateTitle" : "Installation and Update Settings",
+        "installAndUpdateDesc" : "Click Next to accept recommended settings",
+        "ioDesc" : "I/O drivers improve performance, functionality and reliability",
+        "ioInstall" : "Install I/O Drivers Now",
+        "mgmtDesc" : "The management agent automatically updates itself when new versions are available",
+        "mgmtAllow" : "Allow automatic management agent updates",
+        "mgmtDisallow" : "Disallow automatic management agent updates",
+        "ioUpdDesc" : "The management agent automatically updates I/O drivers when new versions are available",
+        "ioUpdAllow" : "Allow automatic I/O driver updates by the management agent",
+        "ioUpdDisallow" : "Disallow automatic I/O driver updates by the management agent",
+        "updDisclaim" : "Automatic updates may be overridden by pool policies",
 }
 
 filenames = {
