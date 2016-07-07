@@ -69,6 +69,18 @@ namespace State
             ++rebootsSoFar;
         }
 
+        public static bool DriversRequired()
+        {
+            using (RegistryKey rk =
+                       Registry.LocalMachine.OpenSubKey(InstallAgent.InstallAgent.rootRegKeyName))
+            {
+                string installDrivers = (string)rk.GetValue("InstallDrivers","YES");
+                if (installDrivers.Equals("YES"))
+                    return true;
+                return false;
+            }
+        }
+
         private static void SetOtherDriverInstallingOnFirstRun(
             RegistryKey openRegKey)
         // Check if any other drivers are installing. The outcome
