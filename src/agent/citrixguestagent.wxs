@@ -179,6 +179,7 @@
                         ErrorControl='ignore'
                         Interactive='no' >
                         <ServiceDependency Id='Winmgmt' />
+                        <ServiceDependency Id='CryptSvc' />
                  </ServiceInstall>
 
                  <ServiceControl Id='StartService' 
