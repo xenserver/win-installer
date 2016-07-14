@@ -126,6 +126,7 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
         pack+"\\xenvbd\\"+arch+"\\xendisk.sys",
         pack+"\\xennet\\"+arch+"\\xennet.sys",
         pack+"\\xeniface\\"+arch+"\\xeniface.sys",
+        pack+"\\xeniface\\"+arch+"\\xenagent.exe",
         pack+"\\xeniface\\"+arch+"\\liteagent.exe",
         pack+"\\xenbus\\"+arch+"\\xenbus.sys",
         pack+"\\xenbus\\"+arch+"\\xen.sys",
@@ -467,6 +468,7 @@ def driverarchfiles_wxs(pack, driver, arch):
     dlist = glob.glob(os.path.join(pack, driver, arch, "*.inf"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.sys"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.dll"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "xenagent.exe"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "liteagent.exe"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.cat"))
     for dfile in dlist:
