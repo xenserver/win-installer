@@ -80,7 +80,7 @@
              SummaryCodepage='1252' />
 
    <Icon Id="icon.ico" SourceFile="$(var.RESOURCES_Bitmaps)\$(var.RESOURCE_icon)"/>
-   <Property Id="ARPPRODUCTICON" Value="$(var.RESOURCE_icon)" />
+   <Property Id="ARPPRODUCTICON" Value="icon.ico" />
     <Property Id="REINSTALLMODE" Value="dmus" />
 
     <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
