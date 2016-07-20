@@ -85,13 +85,113 @@
 
     <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />     
-    <UIRef Id="WixUI_InstallDir" />
     <WixVariable Id="WixUIBannerBmp" Value="$(var.RESOURCES_Bitmaps)\BannrBmp.bmp" />
     <WixVariable Id="WixUIDialogBmp" Value="$(var.RESOURCES_Bitmaps)\DlgBmp.bmp" />
     <WixVariable Id="WixUIExclamationIco" Value="$(var.RESOURCES_Bitmaps)\exclamic.ico" />
     <WixVariable Id="WixUIInfoIco" Value="$(var.RESOURCES_Bitmaps)\info.ico" />
     <WixVariable Id="WixUINewIco" Value="$(var.RESOURCES_Bitmaps)\New.ico" />
     <WixVariable Id="WixUIUpIco" Value="$(var.RESOURCES_Bitmaps)\Up.ico" />
+
+
+    <UI Id="MyUI">
+        <Dialog Id="InstallChoicesDlg" Width="370" Height="270" Title="[ProductName] Setup" >
+            <Control Id="BannerBmp" Type="Bitmap" Text="WixUI_Bmp_Banner" X="0" Y="0" Width="370" Height="44" />
+            <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}$(var.BRANDING_installAndUpdateTitle)" />
+            <Control Id="Description" Type="Text" X="25" Y="23" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_installAndUpdateDesc)" />
+            
+            <Control Id="TextNow" Type="Text" X="20" Y="60" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioDesc)" />
+            <Control Id="InstallNow" Type="CheckBox" CheckBoxValue="1" Property="InstallDriversGUI" Text="$(var.BRANDING_ioInstall)" X="20" Y="75" Width="290" Height="15" />
+
+            <Control Id="TextAuto" Type="Text" X="20" Y="105" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_mgmtDesc)" NoWrap="no" />
+            <Control Id="AutoUpdate" Type="ComboBox" ComboList="yes" X="20" Y="120" Width="290" Height="30" Property="ALLOWAUTOUPDATE" >
+                <ComboBox Property="ALLOWAUTOUPDATE">
+                    <ListItem Text="$(var.BRANDING_mgmtAllow)" Value="YES"/>
+                    <ListItem Text="$(var.BRANDING_mgmtDisallow)" Value="NO"/>
+                </ComboBox>
+            </Control>
+
+            <Control Id="TextDriver" Type="Text" X="20" Y="165" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioUpdDesc)" NoWrap="no">
+            </Control>
+            <Control Id="DriverUpdate" Type="ComboBox" ComboList="yes" X="20" Y="180" Width="290" Height="30" Property="ALLOWDRIVERUPDATE" >
+                <ComboBox Property="ALLOWDRIVERUPDATE">
+                    <ListItem Text="$(var.BRANDING_ioUpdAllow)" Value="YES"/>
+                    <ListItem Text="$(var.BRANDING_ioUpdDisallow)" Value="NO"/>
+                </ComboBox>
+                <Condition Action="disable">ALLOWAUTOUPDATE="NO"</Condition>
+                <Condition Action="enable">ALLOWAUTOUPDATE="YES"</Condition>
+            </Control>
+            <Control Id="TextDisclaim" Type="Text" X="20" Y="210" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_updDisclaim)" NoWrap="no" />
+            <Control Id="Next" Text="!(loc.WixUINext)" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" >
+                <Publish Event="NewDialog" Value="VerifyReadyDlg"></Publish>
+            </Control>
+            <Control Id="Back" Text="!(loc.WixUIBack)" Type="PushButton" X="180" Y="243" Width="56" Height="17" Default="no" >
+                <Publish Event="NewDialog" Value="InstallDirDlg"></Publish>
+            </Control>
+            <Control Id="Cancel" Text="!(loc.WixUICancel)" Cancel="yes" Type="PushButton" X="304" Y="243" Width="56" Height="17" Default="no" >
+                <Publish Event="SpawnDialog" Value="CancelDlg"></Publish>
+            </Control>
+
+            <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+            <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        </Dialog>
+        
+
+         <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+            <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+            <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+
+            <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+            <Property Id="WixUI_Mode" Value="InstallDir" />
+            <Property Id="InstallDriversNow" Value="1" />
+            <Property Id="DriverUpdateResp" Value="NO" />
+
+            <DialogRef Id="BrowseDlg" />
+            <DialogRef Id="DiskCostDlg" />
+            <DialogRef Id="ErrorDlg" />
+            <DialogRef Id="FatalError" />
+            <DialogRef Id="FilesInUse" />
+            <DialogRef Id="MsiRMFilesInUse" />
+            <DialogRef Id="PrepareDlg" />
+            <DialogRef Id="ProgressDlg" />
+            <DialogRef Id="ResumeDlg" />
+            <DialogRef Id="UserExit" />
+            
+            <Publish Dialog="BrowseDlg" Control="OK" Event="DoAction" Value="WixUIValidatePath" Order="3">1</Publish>
+            <Publish Dialog="BrowseDlg" Control="OK" Event="SpawnDialog" Value="InvalidDirDlg" Order="4"><![CDATA[WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+
+            <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
+
+            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="LicenseAgreementDlg">NOT Installed</Publish>
+            <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">Installed AND PATCH</Publish>
+
+            <Publish Dialog="LicenseAgreementDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+            <Publish Dialog="LicenseAgreementDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">LicenseAccepted = "1"</Publish>
+
+            <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="LicenseAgreementDlg">1</Publish>
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="DoAction" Value="WixUIValidatePath" Order="2">NOT WIXUI_DONTVALIDATEPATH</Publish>
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+        <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="InstallChoicesDlg" Order="4">WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID="1"</Publish>
+            <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+            <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+            
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallChoicesDlg" Order="1">NOT Installed</Publish>
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2">Installed AND NOT PATCH</Publish>
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">Installed AND PATCH</Publish>
+
+            <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
+
+            <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+            <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+            <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
+
+            <Property Id="ARPNOMODIFY" Value="1" />
+
+        <UIRef Id="WixUI_Common" />
+
+        
+        
+    </UI>
 
     <MajorUpgrade
         AllowDowngrades="yes" 
@@ -172,6 +272,49 @@
                         Win64='yes'/>
     </Property>
 
+    <!-- Parameters -->
+    <!-- -DALLOWAUTOUPDATE[=YES/NO] -->
+      <Property Id="ALLOWAUTOUPDATE" Value="MAYBE" />
+      <CustomAction Id="brandAutoUpdate" Property="ALLOWAUTOUPDATE" Value="$(var.BRANDING_allowAutoUpdate)" />
+      <CustomAction Id="yesAutoUpdate" Property="ALLOWAUTOUPDATE" Value="YES" />
+      <CustomAction Id="noAutoUpdate" Property="ALLOWAUTOUPDATE" Value="NO" />
+      <Property Id="REGAUTOUPDATE">
+          <RegistrySearch Id="RegAutoUpdateSearch"
+              Root='HKLM'
+              Key='Software\Citrix\XenTools'
+              Name='DisableAutoUpdate'
+              Type="raw" 
+          />
+      </Property>
+      <CustomAction Id="yesRegAutoUpdate" Property="DISABLEAUTOUPDATE" Value="0" />
+      <CustomAction Id="noRegAutoUpdate" Property="DISABLEAUTOUPDATE" Value="1" />
+
+      
+    <!-- -DALLOWDRIVERINSTALL[=YES/NO] -->
+      <Property Id="ALLOWDRIVERINSTALL" Value="MAYBE" />
+      <CustomAction Id="brandDriverInstall" Property="ALLOWDRIVERINSTALL" Value="$(var.BRANDING_allowDriverInstall)" />
+      <CustomAction Id="yesDriverInstall" Property="ALLOWDRIVERINSTALL" Value="YES" />
+      <CustomAction Id="noDriverInstall" Property="ALLOWDRIVERINSTALL" Value="NO" />
+      <Property Id="InstallDriversGUI" Value="XXX" />
+      <CustomAction Id="yesInstallDriversGUI" Property="InstallDriversGUI" Value="1" />
+      <CustomAction Id="noInstallDriversGUI" Property="InstallDriversGUI" Value="" />
+    <!-- -DALLOWDRIVERUPDATE[=YES/NO] -->
+      <Property Id="ALLOWDRIVERUPDATE" Value="MAYBE" />
+      <CustomAction Id="brandDriverUpdate" Property="ALLOWDRIVERUPDATE" Value="$(var.BRANDING_allowDriverUpdate)" />
+      <Property Id="REGDRIVERUPDATE" Value="XXX">
+          <RegistrySearch Id="RegDriverUpdateSearch"
+              Root='HKLM'
+              Key='Software\Citrix\XenTools\AutoUpdate'
+              Name='InstallDrivers'
+              Type="raw" 
+              />
+      </Property>
+      <CustomAction Id="regDriverUpdate" Property="ALLOWDRIVERUPDATE" Value="[REGDRIVERUPDATE]" />
+      
+
+    
+
+
     <CustomAction Id="SaveCmdLineHosttime"
                   Property="CMDLINE_HOSTTIME"
                   Value="[HOSTTIME]"
@@ -228,10 +371,65 @@
                   Impersonate="no"
                   Return="ignore" />
 
+
+              <InstallUISequence>
+        <Custom Action="brandDriverUpdate" Before="regDriverUpdate">
+            ((ALLOWDRIVERUPDATE="MAYBE") AND (NOT ((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
+        </Custom>
+        <Custom Action="regDriverUpdate" Before="brandDriverInstall">
+            ((ALLOWDRIVERUPDATE="MAYBE") AND (((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
+        </Custom>
+
+        <Custom Action="brandDriverInstall" Before="noInstallDriversGUI">
+            ALLOWDRIVERINSTALL="MAYBE"
+        </Custom>
+        <Custom Action="noInstallDriversGUI" Before="yesInstallDriversGUI">
+            ALLOWDRIVERINSTALL="NO"
+        </Custom>
+        <Custom Action="yesInstallDriversGUI" Before="brandAutoUpdate">
+            ALLOWDRIVERINSTALL="YES"
+        </Custom>
+        <Custom Action="brandAutoUpdate" Before="noAutoUpdate">
+            ((ALLOWAUTOUPDATE="MAYBE") AND (NOT REGAUTOUPDATE="#0") AND (NOT REGAUTOUPDATE="#1"))
+        </Custom>
+        <Custom Action="noAutoUpdate" Before="yesAutoUpdate">
+            ((ALLOWAUTOUPDATE="MAYBE") AND (REGAUTOUPDATE="#1"))
+        </Custom>
+        <Custom Action="yesAutoUpdate" Before="MaintenanceWelcomeDlg">
+            ((ALLOWAUTOUPDATE="MAYBE") AND (REGAUTOUPDATE="#0"))
+        </Custom>
+        
+        <Custom Action="noDriverInstall" Before="yesDriverInstall">
+            (NOT InstallDriversGUI="1")
+        </Custom>
+        <Custom Action="yesDriverInstall" Before="ExecuteAction">
+            InstallDriversGUI="1"
+        </Custom>
+
+        </InstallUISequence>
+
         <InstallExecuteSequence>
         <Custom Action="SaveCmdLineHosttime" Before="AppSearch"/>
         <Custom Action="SetFromHosttime64" After="AppSearch">
             ((NOT HOSTTIME64="") AND (NOT CMDLINE_HOSTTIME))
+        </Custom>
+        <Custom Action="brandAutoUpdate" After="SetFromHosttime64">
+            ((ALLOWAUTOUPDATE="MAYBE") AND (NOT REGAUTOUPDATE="#0") AND (NOT REGAUTOUPDATE="#1"))
+        </Custom>
+        <Custom Action="noAutoUpdate" After="brandAutoUpdate">
+            ((ALLOWAUTOUPDATE="MAYBE") AND (REGAUTOUPDATE="#1"))
+        </Custom>
+        <Custom Action="yesAutoUpdate" After="noAutoUpdate">
+            ((ALLOWAUTOUPDATE="MAYBE") AND (REGAUTOUPDATE="#0"))
+        </Custom>
+         <Custom Action="brandDriverInstall" After="yesAutoUpdate">
+            ALLOWDRIVERINSTALL="MAYBE"
+        </Custom>
+        <Custom Action="brandDriverUpdate" After="brandDriverInstall">
+            ((ALLOWDRIVERUPDATE="MAYBE") AND (NOT ((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
+        </Custom>
+        <Custom Action="regDriverUpdate" After="brandDriverUpdate">
+            ((ALLOWDRIVERUPDATE="MAYBE") AND (((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
         </Custom>
         <Custom Action="StopServ" Before="InstallInitialize"/>
         <Custom Action="SetFromCmdLineHosttime" After="AppSearch">
@@ -242,7 +440,13 @@
 		 </Custom>
 		 <Custom Action="RegisterUpdateTask" After="InstallFiles">
 			NOT Installed
-		 </Custom>
+        </Custom>
+        <Custom Action="noRegAutoUpdate" Before="SetREBOOTOPTION">
+            ALLOWAUTOUPDATE="NO"
+        </Custom>
+        <Custom Action="yesRegAutoUpdate" Before="SetREBOOTOPTION">
+            ALLOWAUTOUPDATE="YES"
+        </Custom>
         <Custom Action="SetREBOOTOPTION" Before="WriteRegistryValues" />
         <Custom Action="RebootOptionForce" After="SetREBOOTOPTION">
             REBOOT="Force"
@@ -425,6 +629,7 @@
               <RegistryValue Type='string' Name='Install_Dir' Value='[INSTALLDIR]' />
               <RegistryValue Type='integer' Name='MsiGuestAgent' Value='1' />
               <RegistryValue Type='string' Name='Driver_Install_Dir' Value='[INSTALLDIR]\Drivers' />
+              <RegistryValue Type='integer' Name="DisableAutoUpdate" Value='[DISABLEAUTOUPDATE]' />
           </RegistryKey> 
           <RegistryKey Root='HKLM'
               Key='SYSTEM\CurrentControlSet\Control'>
@@ -442,6 +647,11 @@
               <RegistryValue Type='string' Name='HostTime' Value='[HOSTTIME]' />
           </RegistryKey>
       </Component>
+      <Component Id="AutoUpdateReg" Guid="*">
+          <RegistryKey Root="HKLM" Key='Software\Citrix\XenTools\AutoUpdate'>
+              <RegistryValue Type="string" Name="InstallDrivers" Value='[ALLOWDRIVERUPDATE]' />
+          </RegistryKey>
+      </Component>
       <Component Id="InstallAgentReg" Guid="15382399-a381-4ff1-8f8d-10ab8a31512e">
           <RegistryKey Root="HKLM"
               Key='$(var.BRANDING_installAgentRegKey)'>
@@ -454,6 +664,10 @@
           <RegistryKey Root="HKLM"
               Key='$(var.BRANDING_installAgentRegKey)'>
               <RegistryValue Type='string' Name='InstallerInitiatorSid' Value='[INITIATORSID]' />
+          </RegistryKey>
+          <RegistryKey Root="HKLM"
+              Key='$(var.BRANDING_installAgentRegKey)'>
+              <RegistryValue Type='string' Name='InstallDrivers' Value='[ALLOWDRIVERINSTALL]' />
           </RegistryKey>
           <RemoveRegistryKey Root="HKLM"
               Key='$(var.BRANDING_installAgentRegKey)'
@@ -506,6 +720,7 @@
         <?endif ?>
         <ComponentRef Id='InstallAgentReg'/>
         <ComponentRef Id='InstallService' />
+        <ComponentRef Id='AutoUpdateReg' />
     </Feature>
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>
