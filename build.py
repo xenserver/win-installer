@@ -131,6 +131,7 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
         pack+"\\xenbus\\"+arch+"\\xenbus.sys",
         pack+"\\xenbus\\"+arch+"\\xen.sys",
         pack+"\\xenbus\\"+arch+"\\xenfilt.sys",
+        pack+"\\xenbus\\"+arch+"\\xenbus_monitor.exe",
     ]
     
     noadditionalcertfiles = [
@@ -147,6 +148,7 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
         pack+"\\xenvbd\\"+arch+"\\xenvbd_coinst.dll",
         pack+"\\xennet\\"+arch+"\\xennet_coinst.dll",
         pack+"\\xenbus\\"+arch+"\\xenbus_coinst.dll",
+        pack+"\\xenbus\\"+arch+"\\xenbus_monitor.dll",
         pack+"\\xeniface\\"+arch+"\\xeniface_coinst.dll",
     ]
 
@@ -470,6 +472,7 @@ def driverarchfiles_wxs(pack, driver, arch):
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.dll"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "xenagent.exe"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "liteagent.exe"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "xenbus_monitor.exe"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.cat"))
     for dfile in dlist:
         leaf = os.path.basename(dfile)
