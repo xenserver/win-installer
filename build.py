@@ -468,8 +468,7 @@ def driverarchfiles_wxs(pack, driver, arch):
     dlist = glob.glob(os.path.join(pack, driver, arch, "*.inf"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.sys"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.dll"))
-    dlist+= glob.glob(os.path.join(pack, driver, arch, "xenagent.exe"))
-    dlist+= glob.glob(os.path.join(pack, driver, arch, "liteagent.exe"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "*.exe"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.cat"))
     for dfile in dlist:
         leaf = os.path.basename(dfile)
