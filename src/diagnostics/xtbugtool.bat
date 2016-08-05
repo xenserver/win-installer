@@ -187,6 +187,7 @@ reg export "HKLM\SYSTEM\Internet Communication Management\Internet Communication
 reg export "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\WindowsUpdate" "%bugpath%\registry\userwupolicy.reg" /y > NUL 2>&1
 REM See https://technet.microsoft.com/en-us/library/dd939844 for details
 reg export "HKLM\Software\Microsoft\Windows\CurrentVersion\WindowsUpdate" "%bugpath%\registry\wu.reg" /y > NUL 2>&1
+reg export "HKLM\Software\Microsoft\NET Framework Setup\NDP" "%bugpath%\registry\netframework.reg" /y > NUL 2>&1
 
 REM Check for 64 Bit Keys
 reg query HKLM\Software\Wow6432node\%REGCO% > NUL 2>&1
