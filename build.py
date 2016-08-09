@@ -133,6 +133,14 @@ def signcatfiles(pack, signname, arch, additionalcert, signstr = None):
     for afile in catfiles:
         sign(afile, signname, additionalcert, signstr=signstr)
 
+def make_cs_header() :
+    file = open(include+'\\VerInfo.cs', 'w')
+
+    file.write('internal class XenVersions {\n')
+    for key,value in branding.branding.items():
+        file.write("public const string BRANDING_"+key+" = \""+value+"\";\n")
+    file.write("}")
+    file.close()
 
 def make_header():
     now = datetime.datetime.now()
@@ -151,6 +159,8 @@ def make_header():
     file.write("<?define TOOLS_HOTFIX_NR_STR =\t\""+os.environ['TOOLS_HOTFIX_NUMBER']+"\"?>\n")
     file.write("</Include>")
     file.close();
+
+    make_cs_header();
 
     file = open(include+"\\"+brandingheader, 'w')
     file.write("<?xml version='1.0' ?>\n");
@@ -177,13 +187,14 @@ def make_header():
     file.close();
 
     file = open("proj\\buildsat.bat",'w')
-    file.write("echo HELLO\n")
+    file.write("echo Building sattelite dll\n")
     file.write("call \"%VS%\\VC\\vcvarsall.bat\" x86\n")
     file.write("set FrameworkVersion=v3.5\n")
+    file.write("mkdir BrandSupport\n")
     file.write("resgen.exe proj\\textstrings.txt proj\\textstrings.resources\n")
     #file.write("al.exe proj\\branding.mod /embed:proj\\textstrings.resources /embed:"+branding.bitmaps+"\\DlgBmp.bmp /t:lib /out:proj\\brandsat.dll\n")
-    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:proj\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
-    file.write("echo HELLO\n")
+    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:BrandSupport\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
+    file.write("echo Built satellite dll at BrandSupport\\brandsat.dll\n")
     file.close();
     print (callfnout("proj\\buildsat.bat"))
 
