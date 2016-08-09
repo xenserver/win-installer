@@ -404,8 +404,8 @@ namespace HelperFunctions
 
                 if (err != WinError.ERROR_SUCCESS)
                 {
-                    Win32Error.Set("MsiGetProductInfo", err);
-                    throw new Exception(Win32Error.GetFullErrMsg());
+                    Trace.WriteLine("Failed to read the name of msi " + productCode.ToString());
+                    continue;
                 }
 
                 if (msiName.Equals(
