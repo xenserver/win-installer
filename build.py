@@ -840,7 +840,11 @@ def perform_autocommit():
                     logout+="REVERTS :\n"
                     logout+=callfnout(['git','log',os.environ['GIT_COMMIT']+".."+hashdata])
                     logout+="\n\nCOMMITS :\n"
-                logout+=callfnout(['git','log',hashdata+".."+os.environ['GIT_COMMIT']])
+                    try:
+                        logout+=callfnout(['git','log',hashdata+".."+os.environ['GIT_COMMIT']])
+                    except:
+                        logout+="Git log failed (is this from a different branch?)"
+                        logout+=callfnout(['git','log',"HEAD~1..HEAD"])
             else:
                 logout+=callfnout(['git','log',"HEAD~1..HEAD"])
 
