@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Management;
+using HelperFunctions;
 
 namespace PVDevice
 {
@@ -8,6 +9,7 @@ namespace PVDevice
     {
         // Only 1 session can be active at any time
         private static ManagementObject _session;
+        private static Boolean functioning = false;
 
         static XenIface()
         {
@@ -64,7 +66,15 @@ namespace PVDevice
                     return false;
                 }
             }*/
-
+            if (!functioning)
+            {
+                // This is a workaround to cope with xeniface being re-installed
+                // as xenlite is bad at reconnecting via WMI without a kick.
+                // This can be removed when the lite agent uses IOCTLS
+                Trace.WriteLine("Restart xenlite service");
+                Helpers.ServiceRestart("xenlite");
+                functioning = true;
+            }
             Trace.WriteLine("IFACE: device installed");
             return true;
         }

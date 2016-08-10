@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
+using System.ServiceProcess;
 
 namespace HelperFunctions
 {
@@ -235,6 +236,36 @@ namespace HelperFunctions
             }
         }
 
+        public static bool ServiceRestart(string name)
+        {
+            ServiceController sc;
+            try
+            {
+                sc = new ServiceController(name);
+            }
+            catch (ArgumentException e)
+            {
+                Trace.WriteLine(e.Message);
+                return false;
+            }
+
+            try
+            {
+                if ((sc.Status == ServiceControllerStatus.Running) && sc.CanStop)
+                {
+                    sc.Stop();
+                }
+                sc.WaitForStatus(ServiceControllerStatus.Stopped);
+                sc.Start();
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.Message);
+                return false;
+            }
+            return true;
+        }
+
         public static bool DeleteService(string serviceName)
         // Marks the specified service for deletion from
         // the service control manager database
@@ -442,17 +473,33 @@ namespace HelperFunctions
                 "Installing driver: \'" + Path.GetFileName(infPath) + "\'"
             );
 
-            if (!NewDev.DiInstallDriver(
-                    IntPtr.Zero,
-                    infPath,
-                    flags,
-                    out reboot))
+            NewDev.DiInstallDriver(
+                IntPtr.Zero,
+                infPath,
+                flags,
+                out reboot
+            );
+
+            Win32Error.Set("DiInstallDriver");
+
+            if (Win32Error.GetErrorNo() == WinError.ERROR_SUCCESS)
             {
-                Win32Error.Set("DiInstallDriver");
+                Trace.WriteLine("Driver installed successfully");
+            }
+            else if (Win32Error.GetErrorNo() == WinError.ERROR_NO_MORE_ITEMS)
+            // DiInstallDriver() returns ERROR_NO_MORE_ITEMS when the
+            // hardware ID in the inf file is found, but the specified
+            // driver is not a better match than the current one and
+            // DIIRFLAG_FORCE_INF is not used
+            {
+                Trace.WriteLine(
+                    "Driver not installed; newer driver already present"
+                );
+            }
+            else
+            {
                 throw new Exception(Win32Error.GetFullErrMsg());
             }
-
-            Trace.WriteLine("Driver installed successfully");
         }
 
         public static string[] StringArrayFromMultiSz(byte[] szz)
