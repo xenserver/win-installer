@@ -171,8 +171,59 @@ fail1:
 
 }
 
+HRESULT
+RegistryStopGuestAgentCopy(
+)
+{
+	HRESULT Error;
+	HKEY NetSet;
+	CHAR InBuffer[] = "DontUpdate";
+	Error = RegOpenKey(HKEY_LOCAL_MACHINE, NETWORKSETTINGS, &NetSet);
+	if (Error != ERROR_SUCCESS) {
+		goto fail1;
+	}
 
+	Error = RegSetValueEx(NetSet,"Status",0,REG_SZ,(BYTE*)InBuffer,strlen(InBuffer)+1);
+	if (Error != ERROR_SUCCESS) {
+		goto fail2;
+	}
 
+	return RegCloseKey(NetSet);
+
+fail2:
+	Log("fail2");
+	RegCloseKey(NetSet);
+fail1:
+	Log("stopGuestAgentCopy fail1: %d", Error);
+	return Error;
+}
+
+HRESULT
+RegistryAllowGuestAgentCopy(
+)
+{
+	HRESULT Error;
+	HKEY NetSet;
+	CHAR InBuffer[] = "AllowUpdate";
+	Error = RegOpenKey(HKEY_LOCAL_MACHINE, NETWORKSETTINGS, &NetSet);
+	if (Error != ERROR_SUCCESS) {
+		goto fail1;
+	}
+
+	Error = RegSetValueEx(NetSet,"Status",0,REG_SZ,(BYTE*)InBuffer,strlen(InBuffer)+1);
+	if (Error != ERROR_SUCCESS) {
+		goto fail2;
+	}
+
+	return RegCloseKey(NetSet);
+
+fail2:
+	Log("fail2");
+	RegCloseKey(NetSet);
+fail1:
+	Log("allowGuestAgentCopy fail1: %d", Error);
+	return Error;
+}
 
 HRESULT
 getXenNetDeviceEnumKey(

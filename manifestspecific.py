@@ -29,10 +29,10 @@
 # SUCH DAMAGE.
 
 secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
-localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
+localserver = r'\\filer.do.citrite.net\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
-       "xenguestagent" : r'xenguestagent.git\192\xenguestagent.tar',
+       "xenguestagent" : r'xenguestagentsecret.git\205\xenguestagent.tar',
        "xenbus" : r'xenbus-patchq.git.whql\63-all\xenbus.tar',
        "xenvif" : r'xenvif-patchq.git.whql\62-all\xenvif.tar',
        "xennet" : r'xennet-patchq.git.whql\42-all\xennet.tar',
