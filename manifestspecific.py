@@ -33,7 +33,7 @@ localserver = r'\\filer.do.citrite.net\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
        "xenguestagent" : r'xenguestagentsecret.git\206\xenguestagent.tar',
-       "xenbus" : r'xenbus-patchq.git.whql\63-all\xenbus.tar',
+       "xenbus" : r'xenbus-81-patchq.git\64\xenbus.tar',
        "xenvif" : r'xenvif-patchq.git.whql\62-all\xenvif.tar',
        "xennet" : r'xennet-patchq.git.whql\42-all\xennet.tar',
        "xeniface" : r'xeniface-patchq.git.whql\26-all\xeniface.tar',
@@ -41,4 +41,4 @@ build_tar_source_files = {
        "xenvss" : r'xenvss.git\15\xenvss.tar',
 }
 
-all_drivers_signed = True
+all_drivers_signed = False
