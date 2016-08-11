@@ -695,11 +695,11 @@ namespace HelperFunctions
             return ret.ToArray();
         }
 
-        public static string GetUserSidFromSessionId(ulong sessionId)
+        public static string GetUserSidFromSessionId(UInt32 sessionId)
         // Gets the unique Security Identifier (SID)
         // of the User logged on to 'sessionId'
         {
-            IntPtr token       = IntPtr.Zero;
+            IntPtr token       = (IntPtr)0;
             IntPtr tokenInf    = IntPtr.Zero;
             uint   tokenInfLen = 0;
             IntPtr szSid       = IntPtr.Zero;
@@ -707,6 +707,9 @@ namespace HelperFunctions
 
             try
             {
+                AcquireSystemPrivilege(AdvApi32.SE_TCB_NAME);
+
+                Trace.WriteLine("Using session id " + sessionId.ToString());
                 if (!WtsApi32.WTSQueryUserToken(sessionId, out token))
                 {
                     Win32Error.Set("WTSQueryUserToken");
