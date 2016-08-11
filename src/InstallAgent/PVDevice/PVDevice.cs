@@ -79,24 +79,28 @@ namespace PVDevice
             return false;
         }
 
+        static string MONITOR_SOFTWARE_KEY = Helpers.REGISTRY_SOFTWARE_KEY +
+            "Citrix\\XenServer\\PV Driver Monitor\\";
+        static string REQUEST_KEY = MONITOR_SOFTWARE_KEY + "Request\\";
+
+
+
         public static bool NeedsReboot(string emulatedDevice)
         {
             bool reboot;
 
             Trace.WriteLine(emulatedDevice + ": checking if reboot needed");
 
+            reboot = false;
+
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey(
-                Helpers.REGISTRY_SERVICES_KEY +
-                emulatedDevice + @"\Status"))
+                REQUEST_KEY + emulatedDevice))
             {
-                if (key != null &&
-                    key.GetValueNames().Contains("NeedReboot"))
+                if ((key != null) &&
+                    (key.GetValueNames().Contains("Reboot")) &&
+                    (((uint)key.GetValue("Reboot", 0)) == 1))
                 {
                     reboot = true;
-                }
-                else
-                {
-                    reboot = false;
                 }
             }
 

@@ -17,6 +17,8 @@ namespace HelperFunctions
         public const string HKLM = @"HKEY_LOCAL_MACHINE\";
         public const string REGISTRY_SERVICES_KEY =
             @"SYSTEM\CurrentControlSet\Services\";
+        public const string REGISTRY_SOFTWARE_KEY =
+            @"SOFTWARE\";
 
         public static void Reboot()
         {
