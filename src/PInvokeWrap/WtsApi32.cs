@@ -44,44 +44,44 @@ namespace PInvokeWrap
         }
 
         [Flags]
-        public enum MB : long
+        public enum MB : uint
         // MessageBox style flags; Can pick 1 from
         // each group (apart from the last one)
         {
             // Buttons
-            OK                = 0x00000000L,
-            OKCANCEL          = 0x00000001L,
-            ABORTRETRYIGNORE  = 0x00000002L,
-            YESNOCANCEL       = 0x00000003L,
-            YESNO             = 0x00000004L,
-            RETRYCANCEL       = 0x00000005L,
-            CANCELTRYCONTINUE = 0x00000006L,
-            HELP              = 0x00004000L,
+            OK                = 0x00000000,
+            OKCANCEL          = 0x00000001,
+            ABORTRETRYIGNORE  = 0x00000002,
+            YESNOCANCEL       = 0x00000003,
+            YESNO             = 0x00000004,
+            RETRYCANCEL       = 0x00000005,
+            CANCELTRYCONTINUE = 0x00000006,
+            HELP              = 0x00004000,
             // Display Icons
-            ICONSTOP        = 0x00000010L,
-            ICONERROR       = 0x00000010L,
-            ICONHAND        = 0x00000010L,
-            ICONQUESTION    = 0x00000020L,
-            ICONEXCLAMATION = 0x00000030L,
-            ICONWARNING     = 0x00000030L,
-            ICONINFORMATION = 0x00000040L,
-            ICONASTERISK    = 0x00000040L,
+            ICONSTOP        = 0x00000010,
+            ICONERROR       = 0x00000010,
+            ICONHAND        = 0x00000010,
+            ICONQUESTION    = 0x00000020,
+            ICONEXCLAMATION = 0x00000030,
+            ICONWARNING     = 0x00000030,
+            ICONINFORMATION = 0x00000040,
+            ICONASTERISK    = 0x00000040,
             // Default Button
-            DEFBUTTON1 = 0x00000000L,
-            DEFBUTTON2 = 0x00000100L,
-            DEFBUTTON3 = 0x00000200L,
-            DEFBUTTON4 = 0x00000300L,
+            DEFBUTTON1 = 0x00000000,
+            DEFBUTTON2 = 0x00000100,
+            DEFBUTTON3 = 0x00000200,
+            DEFBUTTON4 = 0x00000300,
             // Modality
-            APPLMODAL   = 0x00000000L,
-            SYSTEMMODAL = 0x00001000L,
-            TASKMODAL   = 0x00002000L,
+            APPLMODAL   = 0x00000000,
+            SYSTEMMODAL = 0x00001000,
+            TASKMODAL   = 0x00002000,
             // Other options; can use more than 1
-            SETFOREGROUND        = 0x00010000L,
-            DEFAULT_DESKTOP_ONLY = 0x00020000L,
-            TOPMOST              = 0x00040000L,
-            RIGHT                = 0x00080000L,
-            RTLREADING           = 0x00100000L,
-            SERVICE_NOTIFICATION = 0x00200000L,
+            SETFOREGROUND        = 0x00010000,
+            DEFAULT_DESKTOP_ONLY = 0x00020000,
+            TOPMOST              = 0x00040000,
+            RIGHT                = 0x00080000,
+            RTLREADING           = 0x00100000,
+            SERVICE_NOTIFICATION = 0x00200000,
         }
 
         public static readonly IntPtr WTS_CURRENT_SERVER_HANDLE = IntPtr.Zero;
@@ -122,7 +122,7 @@ namespace PInvokeWrap
 
         [DllImport("wtsapi32.dll", SetLastError = true)]
         public static extern bool WTSQueryUserToken(
-                ulong  SessionId,
+                UInt32  SessionId,
             out IntPtr phToken
         );
     }
