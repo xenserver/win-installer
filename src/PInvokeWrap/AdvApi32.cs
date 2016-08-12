@@ -89,6 +89,7 @@ namespace PInvokeWrap
         // may not be the best, but will do for now.
         public const string SE_SHUTDOWN_NAME = "SeShutdownPrivilege";
         public const string SE_LOAD_DRIVER_NAME = "SeLoadDriverPrivilege";
+        public const string SE_TCB_NAME = "SeTcbPrivilege";
 
         [Flags]
         public enum AccessRights : uint
