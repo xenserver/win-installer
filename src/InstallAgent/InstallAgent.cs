@@ -531,8 +531,20 @@ namespace InstallAgent
 
             foreach (WtsApi32.WTS_SESSION_INFO si in sessions)
             {
-                if (si.State == WtsApi32.WTS_CONNECTSTATE_CLASS.WTSActive &&
-                    sid.Equals(Helpers.GetUserSidFromSessionId(si.SessionID)))
+                bool equalSessionId;
+
+                try
+                {
+                    equalSessionId = (si.State == WtsApi32.WTS_CONNECTSTATE_CLASS.WTSActive &&
+                                      sid.Equals(Helpers.GetUserSidFromSessionId(si.SessionID)));
+                }
+                catch (Exception e)
+                {
+                    Trace.WriteLine("Unknown user for session id " + si.SessionID.ToString()+" "+e.ToString());
+                    continue;
+                }
+
+                if (equalSessionId)
                 {
                     if (!WtsApi32.WTSSendMessage(
                             WtsApi32.WTS_CURRENT_SERVER_HANDLE,
