@@ -34,8 +34,8 @@ localserver = r'\\filer.do.citrite.net\build\windowsbuilds\WindowsBuilds'
 build_tar_source_files = {
        "xenguestagent" : r'xenguestagentsecret.git\206\xenguestagent.tar',
        "xenbus" : r'xenbus-patchq.git\70\xenbus.tar',
-       "xenvif" : r'xenvif-patchq.git\68\xenvif.tar',
-       "xennet" : r'xennet-patchq.git\46\xennet.tar',
+       "xenvif" : r'xenvif-patchq.git\69\xenvif.tar',
+       "xennet" : r'xennet-patchq.git\47\xennet.tar',
        "xeniface" : r'xeniface-patchq.git\43\xeniface.tar',
        "xenvbd" : r'xenvbd-patchq.git\137\xenvbd.tar',
        "xenvss" : r'xenvss.git\15\xenvss.tar',
