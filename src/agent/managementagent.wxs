@@ -110,7 +110,9 @@
                 </ComboBox>
             </Control>
 
-            <Control Id="TextDriver" Type="Text" X="20" Y="165" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioUpdDesc)" NoWrap="no">
+            <Control Id="TextDriver" Type="Text" X="20" Y="150" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioUpdDesc)" NoWrap="no">
+            </Control>
+            <Control Id="TextUpdate" Type="Text" X="20" Y="165" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_whqlWarn)" NoWrap="no">
             </Control>
             <Control Id="DriverUpdate" Type="ComboBox" ComboList="yes" X="20" Y="180" Width="290" Height="30" Property="ALLOWDRIVERUPDATE" >
                 <ComboBox Property="ALLOWDRIVERUPDATE">
