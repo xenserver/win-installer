@@ -98,13 +98,31 @@ namespace PVDevice
             {
                 if ((key != null) &&
                     (key.GetValueNames().Contains("Reboot")) &&
-                    (((uint)key.GetValue("Reboot", 0)) == 1))
+                    ((Int32)key.GetValue("Reboot", 0) == 1))
                 {
                     reboot = true;
                 }
             }
 
             return reboot;
+        }
+
+        public static void RemoveNeedsReboot() 
+        {
+            string[] rebootDrivers = { "xenbus", "xenvbd", "xenvif" };
+            foreach (string driver in rebootDrivers) {
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(
+                    REQUEST_KEY + driver, true))
+                {
+                    if ((key != null) &&
+                        (key.GetValueNames().Contains("Reboot")))
+                    {
+                        Trace.WriteLine("Removing REBOOT key from " + driver);
+                        key.DeleteValue("Reboot");
+                    }
+                }
+            }
+
         }
 
         public static bool AllFunctioning()
