@@ -210,6 +210,21 @@ namespace InstallAgent
 
             if (PVDevice.PVDevice.AllFunctioning())
             {
+                if (!Helpers.BlockUntilNoDriversInstalling(0))
+                {
+                    Trace.WriteLine("A driver is still installing");
+                    while (!(Helpers.BlockUntilNoDriversInstalling(5) || VM.GetOtherDriverInstallingOnFirstRun()))
+                    {
+                        Trace.WriteLine("Waiting to see if drivers request reboot");
+                        if (!PVDevice.PVDevice.AllFunctioning())
+                        {
+                            Trace.WriteLine("Reboot needed");
+                            Helpers.EnsureBootStartServicesStartAtBoot();
+                            goto ExitReboot;
+                        }
+                    }
+                    Trace.WriteLine("No reboot needed");
+                }
                 Helpers.EnsureBootStartServicesStartAtBoot();
                 SetInstallStatus(InstallStatus.Installed);
                 goto ExitDone;
@@ -275,7 +290,7 @@ namespace InstallAgent
 
                 // 'timeout' arbitrarily set to 30 minutes
                 Helpers.BlockUntilMsiMutexAvailable(new TimeSpan(0, 30, 0));
-
+                PVDevice.PVDevice.RemoveNeedsReboot();
                 VM.IncrementRebootCount();
                 Helpers.Reboot();
 
