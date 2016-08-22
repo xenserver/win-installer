@@ -79,9 +79,9 @@ namespace PVDevice
             return false;
         }
 
-        static string MONITOR_SOFTWARE_KEY = Helpers.REGISTRY_SOFTWARE_KEY +
-            "Citrix\\XenServer\\PV Driver Monitor\\";
-        static string REQUEST_KEY = MONITOR_SOFTWARE_KEY + "Request\\";
+        static string MONITOR_KEY = Helpers.REGISTRY_SERVICES_KEY +
+            "xenbus_monitor\\";
+        static string REQUEST_KEY = MONITOR_KEY + "Request\\";
 
 
 
