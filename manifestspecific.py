@@ -29,7 +29,7 @@
 # SUCH DAMAGE.
 
 secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
-localserver = r'\\camos.uk.xensource.com\build\windowsbuilds\WindowsBuilds'
+localserver = r'\\filer.do.citrite.net\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
        "xenbus" : r'xenbus.git.whql\51-w10\xenbus-7-2-0-51-w10.tar',
