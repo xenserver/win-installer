@@ -295,7 +295,7 @@ namespace InstallWizard
 
                                 if (DriversMsi.olderinstalled())
                                 {
-                                    
+                                   VifConfig.FixupAliases(); 
                                 }
 
                                 try
