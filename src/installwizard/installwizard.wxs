@@ -322,7 +322,7 @@
                             Wait='yes' />
                     </Component>
                     <Component Id="brandsat" Guid="*">
-                        <File Id="brandsatdll" Name="brandsat.dll" Source="proj\brandsat.dll" />
+                        <File Id="brandsatdll" Name="brandsat.dll" Source="BrandSupport\brandsat.dll" />
                     </Component>
                 </Directory>
             </Directory>
