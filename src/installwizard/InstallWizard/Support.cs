@@ -2134,7 +2134,7 @@ namespace InstallWizard
         {
             RegistryKey control;
             try {
-                control= Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control", false);
+                control= Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control", true);
             }
             catch {
                 Trace.WriteLine("Unable to open control key");
@@ -2168,6 +2168,7 @@ namespace InstallWizard
                 {
                     proc.WaitForExit();
                 }
+                control.SetValue("SystemStartOptions","XEN:NONE");
             }
             catch (Exception e)
             {
