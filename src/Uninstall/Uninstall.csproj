@@ -33,7 +33,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="BrandSupport">
-      <HintPath>..\..\src\BrandSupport\bin\Release\BrandSupport.dll</HintPath>
+      <HintPath>..\..\BrandSupport\BrandSupport.dll</HintPath>
     </Reference>
     <Reference Include="HelperFunctions">
       <HintPath>..\..\Libraries\HelperFunctions.dll</HintPath>
