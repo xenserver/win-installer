@@ -298,6 +298,15 @@
       <Property Id="InstallDriversGUI" Value="XXX" />
       <CustomAction Id="yesInstallDriversGUI" Property="InstallDriversGUI" Value="1" />
       <CustomAction Id="noInstallDriversGUI" Property="InstallDriversGUI" Value="" />
+      <Property Id="REGDRIVERINSTALL" Value="XXX">
+          <RegistrySearch Id="RegDriverInstallSearch"
+              Root='HKLM'
+              Key='$(var.BRANDING_installAgentRegKey)'
+              Name='InstallDrivers'
+              Type="raw" 
+              />
+      </Property>
+      <CustomAction Id="regDriverInstall" Property="ALLOWDRIVERINSTALL" Value="[REGDRIVERINSTALL]" />
     <!-- -DALLOWDRIVERUPDATE[=YES/NO] -->
       <Property Id="ALLOWDRIVERUPDATE" Value="MAYBE" />
       <CustomAction Id="brandDriverUpdate" Property="ALLOWDRIVERUPDATE" Value="$(var.BRANDING_allowDriverUpdate)" />
@@ -372,7 +381,10 @@
                   Return="ignore" />
 
 
-              <InstallUISequence>
+    <InstallUISequence>
+        <Custom Action="regDriverInstall" Before="brandDriverUpdate">
+            (Installed AND (NOT UPGRADINGPRODUCTCODE))
+        </Custom>
         <Custom Action="brandDriverUpdate" Before="regDriverUpdate">
             ((ALLOWDRIVERUPDATE="MAYBE") AND (NOT ((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
         </Custom>
@@ -422,13 +434,16 @@
         <Custom Action="yesAutoUpdate" After="noAutoUpdate">
             ((ALLOWAUTOUPDATE="MAYBE") AND (REGAUTOUPDATE="#0"))
         </Custom>
-         <Custom Action="brandDriverInstall" After="yesAutoUpdate">
+        <Custom Action="regDriverInstall" After="yesAutoUpdate">
+            ((ALLOWDRIVERINSTALL="MAYBE") AND (Installed AND (NOT UPGRADINGPRODUCTCODE)))
+        </Custom>
+        <Custom Action="brandDriverUpdate" After="regDriverInstall">
+            ((ALLOWDRIVERUPDATEL="MAYBE") AND (NOT ((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
+        </Custom>
+         <Custom Action="brandDriverInstall" After="brandDriverUpdate">
             ALLOWDRIVERINSTALL="MAYBE"
         </Custom>
-        <Custom Action="brandDriverUpdate" After="brandDriverInstall">
-            ((ALLOWDRIVERUPDATE="MAYBE") AND (NOT ((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
-        </Custom>
-        <Custom Action="regDriverUpdate" After="brandDriverUpdate">
+        <Custom Action="regDriverUpdate" After="brandDriverInstall">
             ((ALLOWDRIVERUPDATE="MAYBE") AND (((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
         </Custom>
         <Custom Action="StopServ" Before="InstallInitialize"/>
@@ -465,7 +480,7 @@
             UILevel=3 OR UILevel=4
         </Custom>
         <Custom Action="SetINITIATORSID" Before="WriteRegistryValues" />
-        <Custom Action="UninstallExe" Before="RemoveFiles">
+        <Custom Action="UninstallExe" Before="RemoveRegistryValues">
             (NOT UPGRADINGPRODUCTCODE) AND (REMOVE="ALL")
         </Custom>
         <ScheduleReboot After="InstallFinalize">
