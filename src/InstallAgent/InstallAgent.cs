@@ -49,6 +49,11 @@ namespace InstallAgent
 
         static InstallAgent()
         {
+            const int TRIES = 10;
+            const int WAIT_TIME = 5; // seconds
+            string tmp = null;
+            int i;
+
             Trace.WriteLine("===> InstallAgent cctor");
 
             exeDir = new DirectoryInfo(
@@ -62,9 +67,32 @@ namespace InstallAgent
             using (RegistryKey rootRK =
                         Registry.LocalMachine.CreateSubKey(rootRegKeyName))
             {
+                for (i = 0; i < TRIES; ++i)
+                {
+                    tmp = (string)rootRK.GetValue("InstallMode");
+
+                    if (!String.IsNullOrEmpty(tmp))
+                    {
+                        break;
+                    }
+
+                    Trace.WriteLine(
+                        "Value 'InstallMode' does not exist. " +
+                        "Try: " + i + "/" + TRIES
+                    );
+                    Trace.WriteLine("Sleeping for " + WAIT_TIME + " seconds");
+
+                    Thread.Sleep(WAIT_TIME * 1000);
+                }
+
+                if (i == TRIES)
+                {
+                    throw new Exception("Unable to read 'InstallMode'");
+                }
+
                 installMode = (InstallMode)Enum.Parse(
                     typeof(InstallMode),
-                    (string)rootRK.GetValue("InstallMode"),
+                    tmp,
                     true
                 );
             }
@@ -291,6 +319,17 @@ namespace InstallAgent
                 // 'timeout' arbitrarily set to 30 minutes
                 Helpers.BlockUntilMsiMutexAvailable(new TimeSpan(0, 30, 0));
                 PVDevice.PVDevice.RemoveNeedsReboot();
+
+                using (RegistryKey rootRK = Registry.LocalMachine.OpenSubKey(
+                           rootRegKeyName))
+                {
+                    if (rootRK != null)
+                    {
+                        rootRK.Flush();
+                        Trace.WriteLine(rootRegKeyName + " flushed to disk.");
+                    }
+                }
+
                 VM.IncrementRebootCount();
                 Helpers.Reboot();
 
