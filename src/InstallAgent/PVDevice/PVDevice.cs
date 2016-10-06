@@ -92,6 +92,20 @@ namespace PVDevice
             Trace.WriteLine(emulatedDevice + ": checking if reboot needed");
 
             reboot = false;
+            using (RegistryKey key = Registry.LocalMachine.OpenSubKey(
+                Helpers.REGISTRY_SERVICES_KEY +
+                emulatedDevice + @"\Status"))
+            {
+                if (key != null &&
+                    key.GetValueNames().Contains("NeedReboot"))
+                {
+                    reboot = true;
+                }
+                else
+                {
+                    reboot = false;
+                }
+            }
 
             using (RegistryKey key = Registry.LocalMachine.OpenSubKey(
                 REQUEST_KEY + emulatedDevice))
