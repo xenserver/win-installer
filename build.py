@@ -45,6 +45,7 @@ import stat
 import tempfile
 import imp
 import io
+import os.path
 
 (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding",["src\\branding"])
 branding = imp.load_module("branding",brandingFile,brandingPath,brandingDesc)
@@ -154,10 +155,12 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
 
 
     for afile in additionalcertfiles:
-        sign(afile, signname, additionalcert, signstr=crosssignstr)
+        if (os.path.isfile(afile)):
+            sign(afile, signname, additionalcert, signstr=crosssignstr)
 
     for afile in noadditionalcertfiles:
-        sign(afile, signname, signstr=signstr)
+        if (os.path.isfile(afile)):
+            sign(afile, signname, signstr=signstr)
 
 
 

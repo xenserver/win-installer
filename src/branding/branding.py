@@ -77,6 +77,21 @@ branding = {
         "evtStopJoin" : "Service Stopping (joining thread)",
         "evtStopped" : "Service Stopping (done)",
         "32BitNotOn64" : "Please install the 64 bit version of this package on 64 bit systems",
+        "allowAutoUpdate" : "YES",
+        "allowDriverUpdate" : "NO",
+        "allowDriverInstall" : "YES",
+        "installAndUpdateTitle" : "Installation and Update Settings",
+        "installAndUpdateDesc" : "Click Next to accept recommended settings",
+        "ioDesc" : "I/O drivers improve performance, functionality and reliability",
+        "ioInstall" : "Install I/O Drivers Now",
+        "mgmtDesc" : "The management agent automatically updates itself when new versions are available",
+        "mgmtAllow" : "Allow automatic management agent updates",
+        "mgmtDisallow" : "Disallow automatic management agent updates",
+        "ioUpdDesc" : "The management agent can install I/O drivers when new versions are available",
+        "ioUpdAllow" : "Allow automatic I/O driver updates by the management agent",
+        "ioUpdDisallow" : "Disallow automatic I/O driver updates by the management agent",
+        "updDisclaim" : "Automatic updates may be overridden by pool policies",
+        "whqlWarn" : "Customers using Windows Update for I/O driver updates should not select this option"
 }
 
 filenames = {
