@@ -108,6 +108,9 @@ typedef struct {
 	bool norestart;
 	bool forcerestart;
 	bool legacy;
+    int  driverupdate;
+    int  autoupdate;
+    int  driverinstall;
 } arguments;
 
 
@@ -120,6 +123,9 @@ bool parseCommandLine(arguments* args)
 	int argCount;
 	LPWSTR cli = GetCommandLineW();
 	LPWSTR *szArgList = CommandLineToArgvW(cli, &argCount);
+    args->driverinstall=-1;
+    args->autoupdate=-1;
+    args->driverupdate=-1;
 	for (int i=1; i<argCount ; i++) {
 		if (!wcsncmp(szArgList[i],L"/TEST",sizeof(L"/TEST"))) {
 			args->test = true;
@@ -135,6 +141,24 @@ bool parseCommandLine(arguments* args)
 		}
 		else if (!wcsncmp(szArgList[i],L"/forcerestart",sizeof(L"/forcerestart"))) {
 			args->forcerestart = true;
+		}
+		else if (!wcsncmp(szArgList[i],L"ALLOWDRIVERINSTALL=NO",sizeof(L"ALLOWDRIVERINSTALL=NO"))) {
+			args->driverinstall=0;
+		}
+		else if (!wcsncmp(szArgList[i],L"ALLOWDRIVERINSTALL=YES",sizeof(L"ALLOWDRIVERINSTALL=YES"))) {
+			args->driverinstall=1;
+		}
+		else if (!wcsncmp(szArgList[i],L"ALLOWAUTOUPDATE=NO",sizeof(L"ALLOWAUTOUPDATE=NO"))) {
+			args->autoupdate=0;
+		}
+		else if (!wcsncmp(szArgList[i],L"ALLOWAUTOUPDATE=YES",sizeof(L"ALLOWAUTOUPDATE=YES"))) {
+			args->autoupdate=1;
+		}
+		else if (!wcsncmp(szArgList[i],L"ALLOWDRIVERUPDATE=NO",sizeof(L"ALLOWDRIVERUPDATE=NO"))) {
+			args->driverupdate=0;
+		}
+		else if (!wcsncmp(szArgList[i],L"ALLOWDRIVERUPDATE=YES",sizeof(L"ALLOWDRIVERUPDATE=YES"))) {
+			args->driverupdate=1;
 		}
 		else {
 			ErrMsg(getBrandingString(BRANDING_setupHelp));
@@ -224,12 +248,18 @@ DWORD installMsi(arguments* args)
 	DWORD exitcode;
 
 	const TCHAR* installname = getInstallMsiName(args);
-	TCHAR* cmdline = _tallocprintf(_T("\"%s\" /i\"%s\\%s\"%s%s /liwearucmopvx+! \"%s\""),
+	TCHAR* cmdline = _tallocprintf(_T("\"%s\" /i\"%s\\%s\"%s%s%s%s%s /liwearucmopvx+! \"%s\""),
 		msiexec,
 		workfile,
 		installname,
 		( args->passive?_T(" /passive"): (args->quiet?_T(" /quiet"):_T(""))),
 		( args->norestart?_T(" /norestart"):(args->forcerestart?_T(" /forcerestart"):_T(""))),
+        ( (args->autoupdate >= 0)?
+                (args->autoupdate?_T(" ALLOWAUTOUPDATE=YES"):_T(" ALLOWAUTOUPDATE=NO")):_T("")),
+        ( (args->driverupdate >= 0)?
+                (args->driverupdate?_T(" ALLOWDRIVERUPDATE=YES"):_T(" ALLOWDRIVERUPDATE=NO")):_T("")),
+        ( (args->driverinstall >= 0)?
+                (args->driverinstall?_T(" ALLOWDRIVERINSTALL=YES"):_T(" ALLOWDRIVERINSTALL=NO")):_T("")),
 		logfile);
 	if (cmdline == NULL) {
 		ErrMsg(getBrandingString(BRANDING_errCmdLineNoMem));
