@@ -467,9 +467,9 @@ namespace HelperFunctions
 
         public static void InstallDriver(
             string infPath,
+            out bool reboot,
             NewDev.DIIRFLAG flags = NewDev.DIIRFLAG.ZERO)
         {
-            bool reboot;
 
             Trace.WriteLine(
                 "Installing driver: \'" + Path.GetFileName(infPath) + "\'"
