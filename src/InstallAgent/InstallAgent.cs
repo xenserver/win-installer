@@ -190,26 +190,32 @@ namespace InstallAgent
 
             if (!Installer.EverythingInstalled())
             {
+                bool needReboot;
                 InstallCertificates();
-                PVDriversInstall();
+                PVDriversInstall(out needReboot);
+
+                if (needReboot)
+                {
+                    goto ExitReboot;
+                }
             }
 
             if (PVDevice.PVDevice.AllFunctioning())
             {
-                Helpers.EnsureBootStartServicesStartAtBoot();
-                SetInstallStatus(InstallStatus.Installed);
                 goto ExitDone;
             }
             else
             {
-                Helpers.EnsureBootStartServicesStartAtBoot();
                 goto ExitReboot;
             }
 
         ExitReboot:
+            Helpers.EnsureBootStartServicesStartAtBoot();
             this.InstallerReboot();
             return;
         ExitDone:
+            Helpers.EnsureBootStartServicesStartAtBoot();
+            SetInstallStatus(InstallStatus.Installed);
             this.InstallerDone();
         }
 
@@ -309,7 +315,7 @@ namespace InstallAgent
             Installer.SetFlag(Installer.States.CertificatesInstalled);
         }
 
-        private static void PVDriversInstall()
+        private static void PVDriversInstall(out bool needReboot)
         // Installs the set of PV drivers provided
         // by the Management Agent
         {
@@ -333,16 +339,22 @@ namespace InstallAgent
                       installed = Installer.States.XenBusInstalled }
             };
 
+            needReboot = false;
+            
             foreach (var driver in drivers)
             {
                 if (!Installer.GetFlag(driver.installed))
                 {
+                    bool reboot;
                     string infPath = Path.Combine(
                         driverRootDir,
                         driver.name + build + driver.name + ".inf"
                     );
 
-                    Helpers.InstallDriver(infPath);
+                    Helpers.InstallDriver(infPath, out reboot);
+
+                    needReboot |= reboot;
+
                     Installer.SetFlag(driver.installed);
                 }
             }
