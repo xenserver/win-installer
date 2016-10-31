@@ -56,7 +56,9 @@ def unpack_from_jenkins(filelist, packdir):
     for urlkey in filelist:
         url = filelist[urlkey]
         print(url)
-        tf = tarfile.open(name=url, mode='r|')
+        request = urllib.request.urlopen(url)
+        temp = io.BytesIO(request.read())
+        tf = tarfile.open(fileobj=temp)
         tf.extractall(packdir)
 
 
@@ -787,12 +789,9 @@ def shell(command):
     return pipe.close()
 
 def build_tar_source_files(securebuild):
-	if securebuild:
-		server = manifestspecific.secureserver
-	else:
-		server = manifestspecific.localserver
-	return { k:  os.sep.join([server, v]) for k,v in 
-			manifestspecific.build_tar_source_files.items() }
+    server = manifestspecific.artifactory
+    return { k:  (server+v) for k,v in 
+        manifestspecific.build_tar_source_files.items() }
 
 def record_version_details():
     if 'GIT_COMMIT' in os.environ.keys():
