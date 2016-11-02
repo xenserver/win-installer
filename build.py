@@ -46,17 +46,36 @@ import tempfile
 import imp
 import io
 import os.path
+import urllib.parse
+import posixpath
 
 (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding",["src\\branding"])
 branding = imp.load_module("branding",brandingFile,brandingPath,brandingDesc)
 
-def unpack_from_jenkins(filelist, packdir):
+def unpack_from_jenkins(filelist, packdir, checked=False):
     if ('GIT_COMMIT' in os.environ):
         print ("Installer Build ",os.environ["GIT_COMMIT"])
     for urlkey in filelist:
+        fallback = ""
         url = filelist[urlkey]
-        print(url)
-        request = urllib.request.urlopen(url)
+        if checked:
+            oldurl=url
+            o = urllib.parse.urlparse(url)
+            (head,filename) = posixpath.split(o.path)
+            (head,build) = posixpath.split(head)
+            (head,branch) = posixpath.split(head)
+            branch=branch+"-checked"
+            newpath=posixpath.join(head,branch,build,filename)
+            url=urllib.parse.urlunparse((o.scheme, o.netloc, newpath, o.params, o.query, o.fragment))
+            try:
+                request = urllib.request.urlopen(url)
+            except:
+                fallback = "(FALLBACK - no checked build available)"
+                url = oldurl
+                request = urllib.request.urlopen(url)
+        else:
+            request = urllib.request.urlopen(url)
+        print(url+" "+fallback)
         temp = io.BytesIO(request.read())
         tf = tarfile.open(fileobj=temp)
         tf.extractall(packdir)
@@ -819,10 +838,10 @@ def archive_build_input(archiveSrc):
         archive('installer\\source.tgz', listfile.splitlines(), tgz=True)
     archive('installer.tar', ['installer'])
 
-def build_installer_apps(location, outbuilds):
-    msbuild('installwizard','x64', False )
-    msbuild('installwizard','Win32', False )
-    msbuild('installwizard','Any CPU', False )
+def build_installer_apps(location, outbuilds, checked):
+    msbuild('installwizard','x64', checked )
+    msbuild('installwizard','Win32', checked )
+    msbuild('installwizard','Any CPU', checked )
 
     if (signfiles):
         sign(os.sep.join([getsrcpath('installwizard', debug=False),"InstallWizard.exe"]), signname, signstr=signstr)
@@ -840,8 +859,8 @@ def build_installer_apps(location, outbuilds):
     copyfiles('installwizard', 'qnetsettings', ".",'x64', debug=False)
     copyfiles('installwizard', 'qnetsettings', ".",'Win32', debug=False)
 
-def build_xenprep():
-    msbuild('xenprep','Any CPU', False)
+def build_xenprep(checked):
+    msbuild('xenprep','Any CPU', checked)
     if signfiles:
         sign(os.sep.join([getsrcpath('xenprep', debug=False),"xenprep.exe"]), signname, signstr=signstr)
     copyfiles('xenprep', 'xenprep', location, debug=False)
@@ -953,7 +972,9 @@ if __name__ == '__main__':
 
     archiveSrc = True;
     outbuilds = "installer\\builds"
-    
+   
+    checked=False
+
     while (len(sys.argv) > argptr):
         if (sys.argv[argptr] == "--secure"):
             securebuild = True
@@ -991,6 +1012,11 @@ if __name__ == '__main__':
              argptr +=1
              continue
         
+        if (sys.argv[argptr] == '--checked'):
+             checked = True
+             argptr +=1
+             continue
+        
         if (sys.argv[argptr] == '--binaryoutputlocation'):
             outbuilds = sys.argv[argptr+1]
             argptr +=2
@@ -1005,7 +1031,7 @@ if __name__ == '__main__':
         all_drivers_signed = False
     elif (command == '--specific'):
         print( "Specific Build")
-        unpack_from_jenkins(build_tar_source_files(securebuild), location)
+        unpack_from_jenkins(build_tar_source_files(securebuild), location, checked)
         all_drivers_signed = manifestspecific.all_drivers_signed
     elif (command == '--latest'):
         print ("Latest Build")
@@ -1027,7 +1053,7 @@ if __name__ == '__main__':
             if not all_drivers_signed:
                 signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
                 signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
-        build_installer_apps(location,outbuilds)
+        build_installer_apps(location,outbuilds,checked)
         make_builds(location,outbuilds)
         build_diagnostics(".", outbuilds)
         make_installer_builds(".",outbuilds)
