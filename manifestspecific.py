@@ -32,11 +32,11 @@ artifactory='https://repo.citrite.net:443/xenserver/transformer/'
 
 build_tar_source_files = {
        "xenguestagent" : r'win-xenguestagent/master/win-xenguestagent-212/xenguestagent.tar',
-       "xenbus" : r'win-xenbus/patchq/win-xenbus-81/xenbus.tar',
-       "xenvif" : r'win-xenvif/patchq/win-xenvif-91/xenvif.tar',
-       "xennet" : r'win-xennet/patchq/win-xennet-58/xennet.tar',
-       "xeniface" : r'win-xeniface/patchq/win-xeniface-50/xeniface.tar',
-       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-146/xenvbd.tar',
+       "xenbus" : r'win-xenbus/patchq/win-xenbus-82/xenbus.tar',
+       "xenvif" : r'win-xenvif/patchq/win-xenvif-92/xenvif.tar',
+       "xennet" : r'win-xennet/patchq/win-xennet-59/xennet.tar',
+       "xeniface" : r'win-xeniface/patchq/win-xeniface-51/xeniface.tar',
+       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-148/xenvbd.tar',
        "xenvss" : r'win-xenvss/master/win-xenvss-18/xenvss.tar',
 }
 
