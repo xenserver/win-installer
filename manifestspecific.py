@@ -32,13 +32,13 @@ secureserver = r'\\10.80.13.10\distfiles\distfiles\WindowsBuilds'
 localserver = r'\\filer.do.citrite.net\build\windowsbuilds\WindowsBuilds'
 
 build_tar_source_files = {
-       "xenbus" : r'xenbus.git.whql\51-w10\xenbus-7-2-0-51-w10.tar',
-       "xenvif" : r'xenvif.git.whql\57\xenvif-7-2-0-57.tar',
-       "xennet" : r'xennet.git.whql\17-w10\xennet-7-2-0-17-w10.tar',
-       "xeniface" : r'xeniface.git.whql\14-w10\xeniface-7-2-0-14-w10.tar',
-       "xenvbd" : r'xenvbd.git.whql\40-w10\xenvbd-7-2-0-40-w10.tar',
-       "xenguestagent" : r'xenguestagentsecret.git\206\xenguestagent.tar',
-       "xenvss" : r'standard-lcm\16\xenvss-7.tar',
+       "xenguestagent" : r'xenguestagent.git\209\xenguestagent.tar',
+       "xenbus" : r'xenbus-patchq.git.2016.whql\64\xenbus.tar',
+       "xenvif" : r'xenvif-patchq.git.2016.whql\62\xenvif.tar',
+       "xennet" : r'xennet-patchq.git.whql\42-inc2016\xennet.tar',
+       "xeniface" : r'xeniface-patchq.git.2016.whql\26\xeniface.tar',
+       "xenvbd" : r'xenvbd-patchq.git.2016.whql\130\xenvbd.tar',
+       "xenvss" : r'xenvss.git\15\xenvss.tar',
 }
 
 all_drivers_signed = True
