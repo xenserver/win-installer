@@ -35,8 +35,8 @@ build_tar_source_files = {
        "xenbus" : r'win-xenbus/patchq/win-xenbus-84/xenbus.tar',
        "xenvif" : r'win-xenvif/patchq/win-xenvif-98/xenvif.tar',
        "xennet" : r'win-xennet/patchq/win-xennet-61/xennet.tar',
-       "xeniface" : r'win-xeniface/patchq/win-xeniface-57/xeniface.tar',
-       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-148/xenvbd.tar',
+       "xeniface" : r'win-xeniface/patchq/win-xeniface-60/xeniface.tar',
+       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-149/xenvbd.tar',
        "xenvss" : r'win-xenvss/master/win-xenvss-18/xenvss.tar',
 }
 
