@@ -63,7 +63,7 @@ branding = {
         "twoCharBrand":"XS",
         "updater" : "ManagementAgentUpdater",
         "copyrightUpdater" : "Copyright 2016 Citrix Systems, Inc.",
-        "updaterURL" : "https://pvupdates.vmd.citrix.com/updates.tsv",
+        "updaterURL" : "https://pvupdates.vmd.citrix.com/updates.2.tsv",
         "updaterLong" : "Citrix Management Agent Auto-Updater",
         "updaterDesc" : "Automatically checks and updates XenServer tools",
         "laterVersion" : "A later version of Windows Management Agent is already installed.  Setup will now exit",
