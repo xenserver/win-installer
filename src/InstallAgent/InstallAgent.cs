@@ -144,6 +144,14 @@ namespace InstallAgent
 
             SetInstallStatus(InstallStatus.Installing);
 
+            if (!Installer.GetFlag(Installer.States.DriversRequired))
+            {
+                if (VM.DriversRequired())
+                {
+                    Installer.SetFlag(Installer.States.DriversRequired);
+                }
+            }
+
             if (!Installer.GetFlag(Installer.States.NetworkSettingsSaved))
             {
                 Trace.WriteLine("NetSettings not saved..");
@@ -187,6 +195,12 @@ namespace InstallAgent
                 Device.Enumerate(@"ACPI\PNP0A03", true);
 
                 Trace.WriteLine("Old PV Tools removal complete!");
+            }
+
+            if (!Installer.GetFlag(Installer.States.DriversRequired))
+            {
+                SetInstallStatus(InstallStatus.Installed);
+                goto ExitDone;
             }
 
             if (!Installer.EverythingInstalled())
