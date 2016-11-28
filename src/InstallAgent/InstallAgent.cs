@@ -317,13 +317,12 @@ namespace InstallAgent
         {
             if (VM.AllowedToReboot())
             {
-                Helpers.BlockUntilNoDriversInstalling(
-                    GetTimeoutToReboot()
-                );
 
                 // 'timeout' arbitrarily set to 30 minutes
                 Helpers.BlockUntilMsiMutexAvailable(new TimeSpan(0, 30, 0));
                 PVDevice.PVDevice.RemoveNeedsReboot();
+                
+                VM.IncrementRebootCount();
 
                 using (RegistryKey rootRK = Registry.LocalMachine.OpenSubKey(
                            rootRegKeyName))
@@ -335,7 +334,15 @@ namespace InstallAgent
                     }
                 }
 
-                VM.IncrementRebootCount();
+                // It is important that blocking until no drivers
+                // are installing is the last thing we do before
+                // rebooting.  There will always be a race here, but we
+                // can make the race as short as possible
+
+                Helpers.BlockUntilNoDriversInstalling(
+                    GetTimeoutToReboot()
+                );
+                
                 Helpers.Reboot();
 
                 return true;
