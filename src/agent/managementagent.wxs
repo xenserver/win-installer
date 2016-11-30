@@ -438,7 +438,7 @@
             ((ALLOWDRIVERINSTALL="MAYBE") AND (Installed AND (NOT UPGRADINGPRODUCTCODE)))
         </Custom>
         <Custom Action="brandDriverUpdate" After="regDriverInstall">
-            ((ALLOWDRIVERUPDATEL="MAYBE") AND (NOT ((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
+            ((ALLOWDRIVERUPDATE="MAYBE") AND (NOT ((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
         </Custom>
          <Custom Action="brandDriverInstall" After="brandDriverUpdate">
             ALLOWDRIVERINSTALL="MAYBE"
