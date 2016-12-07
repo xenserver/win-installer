@@ -28,7 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-artifactory='https://repo.citrite.net:443/xenserver/transformer/'
+artifactory='https://repo.citrite.net:443/xs-local-build/'
 
 build_tar_source_files = {
        "xenguestagent" : r'win-xenguestagent/master/win-xenguestagent-212/xenguestagent.tar',
