@@ -87,10 +87,11 @@ branding = {
         "mgmtDesc" : "The management agent automatically updates itself when new versions are available",
         "mgmtAllow" : "Allow automatic management agent updates",
         "mgmtDisallow" : "Disallow automatic management agent updates",
-        "ioUpdDesc" : "The management agent automatically updates I/O drivers when new versions are available",
+        "ioUpdDesc" : "The management agent can install I/O drivers when new versions are available",
         "ioUpdAllow" : "Allow automatic I/O driver updates by the management agent",
         "ioUpdDisallow" : "Disallow automatic I/O driver updates by the management agent",
         "updDisclaim" : "Automatic updates may be overridden by pool policies",
+        "whqlWarn" : "Customers using Windows Update for I/O driver updates should not select this option"
 }
 
 filenames = {
