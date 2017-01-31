@@ -36,8 +36,8 @@ build_tar_source_files = {
        "xenvif" : r'win-xenvif/patchq/win-xenvif-103/xenvif.signed.tar',
        "xennet" : r'win-xennet/patchq/win-xennet-64/xennet.signed.tar',
        "xeniface" : r'win-xeniface/patchq/win-xeniface-61/xeniface.signed.tar',
-       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-156/xenvbd.tar',
+       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-156/xenvbd.signed.tar',
        "xenvss" : r'win-xenvss/master/win-xenvss-18/xenvss.tar',
 }
 
-all_drivers_signed = False
+all_drivers_signed = True
