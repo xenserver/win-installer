@@ -403,7 +403,6 @@ def make_installer_builds(pack, outbuilds):
         shutil.copytree(pack+"\\Libraries", outbuilds+"\\Libraries")
         shutil.copytree(pack+"\\Setup", outbuilds+"\\Setup")
         shutil.copytree(pack+"\\Uninstall", outbuilds+"\\Uninstall")
-        shutil.copytree(pack+"\\diagnostics", outbuilds+"\\diagnostics")
 
 
 
@@ -1065,6 +1064,7 @@ if __name__ == '__main__':
 
     if rebuild_installers_only:
         make_builds(location,outbuilds)
+        build_diagnostics(".", outbuilds)
         make_installer_builds(location,outbuilds)
         generate_signing_script()
     else:
