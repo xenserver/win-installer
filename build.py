@@ -403,6 +403,7 @@ def make_installer_builds(pack, outbuilds):
         shutil.copytree(pack+"\\Libraries", outbuilds+"\\Libraries")
         shutil.copytree(pack+"\\Setup", outbuilds+"\\Setup")
         shutil.copytree(pack+"\\Uninstall", outbuilds+"\\Uninstall")
+        shutil.copytree(pack+"\\diagnostics", outbuilds+"\\diagnostics")
 
 
 
