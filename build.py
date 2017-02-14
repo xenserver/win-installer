@@ -865,70 +865,143 @@ def build_xenprep(checked):
         sign(os.sep.join([getsrcpath('xenprep', debug=False),"xenprep.exe"]), signname, signstr=signstr)
     copyfiles('xenprep', 'xenprep', location, debug=False)
 
+def rmerrorhandler(func, path, exc_info):
+    import stat
+    if not (os.path.exists(path)):
+        return
+    if not (os.access(path, os.W_OK)):
+        os.chmod(path, stat.S_IWUSR)
+        func(path)
+    else:
+        raise
+
+class autocommit:
+    def __init__(self, repository, location, buildlocation):
+        self.repository = repository
+        self.location = location
+        self.buildlocation = buildlocation
+        self.logout = "" 
+
+    def command(self, cmdlist):
+        if self.test:
+            print(cmdlist)
+        else:
+            callfn(cmdlist)
+
+
+    def commitHash(self):
+        if self.hascommithash:
+            with open(self.commithashpath,'r') as temp:
+                hashdata = temp.read().strip()
+            if (callfnret(['git','merge-base','--is-ancestor',hashdata,os.environ['GIT_COMMIT']])==1):
+                self.logout+="REVERTS :\n"
+                self.logout+=callfnout(['git','log',os.environ['GIT_COMMIT']+".."+hashdata])
+                self.logout+="\n\nCOMMITS :\n"
+            try:
+                self.logout+=callfnout(['git','log',hashdata+".."+os.environ['GIT_COMMIT']])
+            except:
+                self.logout+="Git log failed (is this from a different branch?)"
+                self.logout+=callfnout(['git','log',"HEAD~1..HEAD"])
+        else:
+            self.logout+=callfnout(['git','log',"HEAD~1..HEAD"])
+
+        with open (self.commithashpath,'w+t') as temp:
+            print(os.environ['GIT_COMMIT'], file=temp)
+
+
+    def doCommit(self, test=False):
+        self.test=test
+        self.prepareFiles()
+
+        self.messagefilename=""
+    
+        with tempfile.NamedTemporaryFile(mode='w+t',delete=False) as message:
+            print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+self.logout+'\n')
+            print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+self.logout+'\n', file=message)
+            self.messagefilename=message.name
+
+        pwd = os.getcwd()
+        self.commit()
+        self.push()
+        os.remove(self.messagefilename)
+        os.chdir(pwd)
+        print ("removing "+self.commitdir)
+        print(os.getcwd())
+        shutil.rmtree(self.commitdir, onerror=rmerrorhandler )
+
+
+class Transformer(autocommit):
+    def __init__(self, *therest):
+        super().__init__(*therest)
+        self.commitdir = os.sep.join([self.location, 'xenserver-pv-tools.git'])
+
+    def prepareFiles(self):
+        print ("removing "+self.commitdir)
+        print(os.getcwd())
+        shutil.rmtree(self.commitdir, onerror=rmerrorhandler )
+        callfn(['git','clone',self.repository+'xenserver-pv-tools.git', self.commitdir])
+        pwd = os.getcwd()
+        os.chdir(self.commitdir)
+        callfn(['git','checkout','team/windows/staging'])
+        os.chdir(pwd)
+        insturl = open(os.sep.join([self.location,'xenserver-pv-tools.git\\urls\\windows\\xenserver\\tools']),'w')
+        print (buildlocation, file=insturl, end="")
+        print (buildlocation)
+        insturl.close()
+        self.commithashpath = os.sep.join([self.location,'xenserver-pv-tools.git\\urls\\windows\\xenserver\\commithash'])
+        logout = "" 
+        self.hascommithash = os.path.isfile(self.commithashpath)
+
+    def commit(self):
+        self.command(['git', 'add', 'urls\\windows\\xenserver\\tools'])
+        self.command(['git', 'add', 'urls\\windows\\xenserver\\commithash'])
+        self.command(['git', 'commit', '-F', self.messagefilename ])
+
+    def push(self):
+        self.command(['git', 'push', 'origin', 'team/windows/staging:team/windows/staging'])
+
+
+class XenBuilder(autocommit):
+    def __init__(self, *therest):
+        super().__init__(*therest)
+        self.commitdir = os.sep.join([self.location, 'guest-packages.hg'])
+
+    def prepareFiles(self):
+        shutil.rmtree(self.commitdir, onerror=rmerrorhandler )
+        callfn(['hg','clone',self.repository+"/guest-packages.hg",self.commitdir])
+        insturl = open(os.sep.join([self.location,'guest-packages.hg\\win-tools-iso\\installer.url']),'w')
+        print (self.buildlocation, file=insturl, end="")
+        print (self.buildlocation)
+        insturl.close()
+        self.commithashpath = os.sep.join([self.location,'guest-packages.hg\\win-tools-iso\\commithash'])
+    
+        self.hascommithash = os.path.isfile(self.commithashpath)
+
+    def commit(self):
+        os.chdir(self.commitdir)
+        if not self.hascommithash:
+            self.command(['hg','add',os.sep.join([pwd,commithashpath])])
+        self.command(['hg','commit','-l' ,self.messagefilename,'-u','jenkins@xeniface-build'])
+
+    def push(self):
+        self.command(['hg','push'])
+
 
 def perform_autocommit():
     if ('AUTOCOMMIT' in os.environ):
         print ("AUTOCOMMIT = ",os.environ['AUTOCOMMIT'])
         if (os.environ['AUTOCOMMIT'] == "true" or os.environ['AUTOCOMMIT'] == "test"):
             repository = os.environ['AUTOREPO']
-            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
-            callfn(['hg','clone',repository+"/guest-packages.hg",os.sep.join([location, 'guest-packages.hg'])])
-            insturl = open(os.sep.join([location,'guest-packages.hg\\win-tools-iso\\installer.url']),'w')
-            print (buildlocation, file=insturl, end="")
-            print (buildlocation)
-            insturl.close()
-            commithashpath = os.sep.join([location,'guest-packages.hg\\win-tools-iso\\commithash'])
-            logout = "" 
-
-            hascommithash = os.path.isfile(commithashpath)
-
-            if hascommithash:
-                with open(commithashpath,'r') as temp:
-                    hashdata = temp.read().strip()
-                if (callfnret(['git','merge-base','--is-ancestor',hashdata,os.environ['GIT_COMMIT']])==1):
-                    logout+="REVERTS :\n"
-                    logout+=callfnout(['git','log',os.environ['GIT_COMMIT']+".."+hashdata])
-                    logout+="\n\nCOMMITS :\n"
-                    try:
-                        logout+=callfnout(['git','log',hashdata+".."+os.environ['GIT_COMMIT']])
-                    except:
-                        logout+="Git log failed (is this from a different branch?)"
-                        logout+=callfnout(['git','log',"HEAD~1..HEAD"])
+            if 'TRANSFORMED' in os.environ and os.environ['TRANSFORMED']=="true":
+                auto = Transformer(repository,location, buildlocation)
             else:
-                logout+=callfnout(['git','log',"HEAD~1..HEAD"])
-
-            with open (commithashpath,'w+t') as temp:
-                print(os.environ['GIT_COMMIT'], file=temp)
-
-            pwd = os.getcwd()
-            os.chdir(os.sep.join([location, 'guest-packages.hg']))
-           
-            messagefilename=""
-
-            with tempfile.NamedTemporaryFile(mode='w+t',delete=False) as message:
-                print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n')
-                print("Auto-update installer to "+buildlocation+" "+os.environ['GIT_COMMIT']+'\n\n\n'+logout+'\n', file=message)
-                messagefilename=message.name
-    
-            commit=['hg','commit','-l' ,messagefilename,'-u','jenkins@xeniface-build']
-            push=['hg','push']
-            add=['hg','add',os.sep.join([pwd,commithashpath])]
-            print(commit)
-            print(push)
-            print(add)
-            if (os.environ['AUTOCOMMIT'] == "true"):
-                if not hascommithash:
-                    callfn(add)
-                callfn(commit)
-                callfn(push)
-            os.remove(messagefilename)
-            os.chdir(pwd)
-            shutil.rmtree(os.sep.join([location, 'guest-packages.hg']), True)
-
-basedir=""
+                auto = XenBuilder(repository, location, buildlocation)
+            doTest = (os.environ['AUTOCOMMIT'] == 'test')
+            auto.doCommit(doTest)
 
 if __name__ == '__main__':
 
+    basedir=""
     print (sys.argv)
 
     basedir = os.getcwd()
