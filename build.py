@@ -884,7 +884,8 @@ class autocommit:
 
     def command(self, cmdlist):
         if self.test:
-            print(cmdlist)
+            print(os.getcwd()+" : "+str(cmdlist))
+            pass
         else:
             callfn(cmdlist)
 
@@ -953,12 +954,18 @@ class Transformer(autocommit):
         self.hascommithash = os.path.isfile(self.commithashpath)
 
     def commit(self):
+        pwd = os.getcwd()
+        os.chdir(self.commitdir)
         self.command(['git', 'add', 'urls\\windows\\xenserver\\tools'])
         self.command(['git', 'add', 'urls\\windows\\xenserver\\commithash'])
         self.command(['git', 'commit', '-F', self.messagefilename ])
+        os.chdir(pwd)
 
     def push(self):
+        pwd = os.getcwd()
+        os.chdir(self.commitdir)
         self.command(['git', 'push', 'origin', 'team/windows/staging:team/windows/staging'])
+        os.chdir(pwd)
 
 
 class XenBuilder(autocommit):
