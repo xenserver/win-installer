@@ -922,6 +922,7 @@ class autocommit:
             self.messagefilename=message.name
 
         pwd = os.getcwd()
+        self.commitHash()
         self.commit()
         self.push()
         os.remove(self.messagefilename)
