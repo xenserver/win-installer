@@ -102,19 +102,19 @@
             <Control Id="TextNow" Type="Text" X="20" Y="60" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioDesc)" />
             <Control Id="InstallNow" Type="CheckBox" CheckBoxValue="1" Property="InstallDriversGUI" Text="$(var.BRANDING_ioInstall)" X="20" Y="75" Width="290" Height="15" />
 
-            <Control Id="TextAuto" Type="Text" X="20" Y="105" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_mgmtDesc)" NoWrap="no" />
-            <Control Id="AutoUpdate" Type="ComboBox" ComboList="yes" X="20" Y="120" Width="290" Height="30" Property="ALLOWAUTOUPDATE" >
+            <Control Id="TextAuto" Type="Text" X="20" Y="100" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_mgmtDesc)" NoWrap="no" />
+            <Control Id="AutoUpdate" Type="ComboBox" ComboList="yes" X="20" Y="115" Width="290" Height="30" Property="ALLOWAUTOUPDATE" >
                 <ComboBox Property="ALLOWAUTOUPDATE">
                     <ListItem Text="$(var.BRANDING_mgmtAllow)" Value="YES"/>
                     <ListItem Text="$(var.BRANDING_mgmtDisallow)" Value="NO"/>
                 </ComboBox>
             </Control>
 
-            <Control Id="TextDriver" Type="Text" X="20" Y="150" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioUpdDesc)" NoWrap="no">
+            <Control Id="TextDriver" Type="Text" X="20" Y="145" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_ioUpdDesc)" NoWrap="no">
             </Control>
-            <Control Id="TextUpdate" Type="Text" X="20" Y="165" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_whqlWarn)" NoWrap="no">
+            <Control Id="TextUpdate" Type="Text" X="20" Y="160" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_whqlWarn)" NoWrap="no">
             </Control>
-            <Control Id="DriverUpdate" Type="ComboBox" ComboList="yes" X="20" Y="180" Width="290" Height="30" Property="ALLOWDRIVERUPDATE" >
+            <Control Id="DriverUpdate" Type="ComboBox" ComboList="yes" X="20" Y="175" Width="290" Height="30" Property="ALLOWDRIVERUPDATE" >
                 <ComboBox Property="ALLOWDRIVERUPDATE">
                     <ListItem Text="$(var.BRANDING_ioUpdAllow)" Value="YES"/>
                     <ListItem Text="$(var.BRANDING_ioUpdDisallow)" Value="NO"/>
@@ -122,7 +122,8 @@
                 <Condition Action="disable">ALLOWAUTOUPDATE="NO"</Condition>
                 <Condition Action="enable">ALLOWAUTOUPDATE="YES"</Condition>
             </Control>
-            <Control Id="TextDisclaim" Type="Text" X="20" Y="210" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_updDisclaim)" NoWrap="no" />
+            <Control Id="AnonymousUsage" Type="CheckBox" CheckBoxValue="1" Property="IdentifyCheck" Text="$(var.BRANDING_anonymousUsage)" X="20" Y="200" Width="290" Height="15" />
+            <Control Id="TextDisclaim" Type="Text" X="20" Y="220" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="$(var.BRANDING_updDisclaim)" NoWrap="no" />
             <Control Id="Next" Text="!(loc.WixUINext)" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" >
                 <Publish Event="NewDialog" Value="VerifyReadyDlg"></Publish>
             </Control>
@@ -291,6 +292,22 @@
       <CustomAction Id="yesRegAutoUpdate" Property="DISABLEAUTOUPDATE" Value="0" />
       <CustomAction Id="noRegAutoUpdate" Property="DISABLEAUTOUPDATE" Value="1" />
 
+    <!-- -DIDENTIFYAUTOUPDATE [=YES/NO] -->
+      <Property Id="IDENTIFYAUTOUPDATE" Value="MAYBE" />
+      <CustomAction Id="yesIdentify" Property="IDENTIFYAUTOUPDATE" Value="YES" />
+      <CustomAction Id="noIdentify" Property="IDENTIFYAUTOUPDATE" Value="NO" />
+      <Property Id="IdentifyCheck" Value="1" />
+      <CustomAction Id="yesIdentifyGUI" Property="IdentifyCheck" Value="1" />
+      <CustomAction Id="noIdentifyGUI" Property="IdentifyCheck" Value="" />
+      <Property Id="REGIDENTIFY" Value="XXX">
+          <RegistrySearch Id="RegIdentifySearch"
+              Root='HKLM'
+              Key='Software\Citrix\XenTools\AutoUpdate'
+              Name='Identify'
+              Type="raw" 
+              />
+      </Property>
+      <CustomAction Id="regIdentifyAutoUpdate" Property="IDENTIFYAUTOUPDATE" Value="[REGIDENTIFY]" />
       
     <!-- -DALLOWDRIVERINSTALL[=YES/NO] -->
       <Property Id="ALLOWDRIVERINSTALL" Value="MAYBE" />
@@ -384,6 +401,9 @@
 
 
     <InstallUISequence>
+        <Custom Action="regIdentifyAutoUpdate" Before="regDriverInstall">
+            ((IDENTIFYAUTOUPDATE="MAYBE") AND ((REGIDENTIFY="YES") OR (REGIDENTIFY="NO")))
+        </Custom>
         <Custom Action="regDriverInstall" Before="brandDriverUpdate">
             (Installed AND (NOT UPGRADINGPRODUCTCODE))
         </Custom>
@@ -400,8 +420,14 @@
         <Custom Action="noInstallDriversGUI" Before="yesInstallDriversGUI">
             ALLOWDRIVERINSTALL="NO"
         </Custom>
-        <Custom Action="yesInstallDriversGUI" Before="brandAutoUpdate">
+        <Custom Action="yesInstallDriversGUI" Before="yesIdentifyGUI">
             ALLOWDRIVERINSTALL="YES"
+        </Custom>
+        <Custom Action="yesIdentifyGUI" Before="noIdentifyGUI">
+            ((IDENTIFYAUTOUPDATE="YES") OR (IDENTIFYAUTOUPDATE="MAYBE"))
+        </Custom>
+        <Custom Action="noIdentifyGUI" Before="brandAutoUpdate">
+            IDENTIFYAUTOUPDATE="NO"
         </Custom>
         <Custom Action="brandAutoUpdate" Before="noAutoUpdate">
             ((ALLOWAUTOUPDATE="MAYBE") AND (NOT REGAUTOUPDATE="#0") AND (NOT REGAUTOUPDATE="#1"))
@@ -413,12 +439,19 @@
             ((ALLOWAUTOUPDATE="MAYBE") AND (REGAUTOUPDATE="#0"))
         </Custom>
         
-        <Custom Action="noDriverInstall" Before="yesDriverInstall">
+        <Custom Action="noDriverInstall" After="ProgressDlg"> 
             (NOT InstallDriversGUI="1")
         </Custom>
-        <Custom Action="yesDriverInstall" Before="ExecuteAction">
+        <Custom Action="yesDriverInstall" After="noDriverInstall">
             InstallDriversGUI="1"
         </Custom>
+        <Custom Action="yesIdentify" After="yesDriverInstall">
+            IdentifyCheck="1"
+        </Custom>
+        <Custom Action="noIdentify" After="yesIdentify">
+            (NOT IdentifyCheck="1")
+        </Custom>
+        <ExecuteAction Sequence="5000" />
 
         </InstallUISequence>
 
@@ -439,7 +472,13 @@
         <Custom Action="regDriverInstall" After="yesAutoUpdate">
             ((ALLOWDRIVERINSTALL="MAYBE") AND (Installed AND (NOT UPGRADINGPRODUCTCODE)))
         </Custom>
-        <Custom Action="brandDriverUpdate" After="regDriverInstall">
+        <Custom Action="regIdentifyAutoUpdate" After="regDriverInstall">
+            ((IDENTIFYAUTOUPDATE="MAYBE") AND (Installed AND (NOT UPGRADINGPRODUCTCODE)))
+        </Custom>
+        <Custom Action="yesIdentify" After="regIdentifyAutoUpdate">
+            IDENTIFYAUTOUPDATE="MAYBE"
+        </Custom>
+        <Custom Action="brandDriverUpdate" After="yesIdentify">
             ((ALLOWDRIVERUPDATE="MAYBE") AND (NOT ((REGDRIVERUPDATE="YES") OR (REGDRIVERUPDATE="NO"))))
         </Custom>
          <Custom Action="brandDriverInstall" After="brandDriverUpdate">
@@ -667,6 +706,7 @@
       <Component Id="AutoUpdateReg" Guid="*">
           <RegistryKey Root="HKLM" Key='Software\Citrix\XenTools\AutoUpdate'>
               <RegistryValue Type="string" Name="InstallDrivers" Value='[ALLOWDRIVERUPDATE]' />
+              <RegistryValue Type="string" Name="Identify" Value='[IDENTIFYAUTOUPDATE]' />
           </RegistryKey>
       </Component>
       <Component Id="InstallAgentReg" Guid="15382399-a381-4ff1-8f8d-10ab8a31512e">

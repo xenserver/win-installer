@@ -111,6 +111,7 @@ typedef struct {
     int  driverupdate;
     int  autoupdate;
     int  driverinstall;
+    int  identifyautoupdate;
 } arguments;
 
 
@@ -159,6 +160,12 @@ bool parseCommandLine(arguments* args)
 		}
 		else if (!wcsncmp(szArgList[i],L"ALLOWDRIVERUPDATE=YES",sizeof(L"ALLOWDRIVERUPDATE=YES"))) {
 			args->driverupdate=1;
+		}
+		else if (!wcsncmp(szArgList[i],L"IDENTIFYAUTOUPDATE=YES",sizeof(L"IDENTIFYAUTOUPDATE=YES"))) {
+			args->identifyautoupdate=1;
+		}
+		else if (!wcsncmp(szArgList[i],L"IDENTIFYAUTOUPDATE=NO",sizeof(L"IDENTIFYAUTOUPDATE=NO"))) {
+			args->identifyautoupdate=0;
 		}
 		else {
 			ErrMsg(getBrandingString(BRANDING_setupHelp));
@@ -248,7 +255,7 @@ DWORD installMsi(arguments* args)
 	DWORD exitcode;
 
 	const TCHAR* installname = getInstallMsiName(args);
-	TCHAR* cmdline = _tallocprintf(_T("\"%s\" /i\"%s\\%s\"%s%s%s%s%s /liwearucmopvx+! \"%s\""),
+	TCHAR* cmdline = _tallocprintf(_T("\"%s\" /i\"%s\\%s\"%s%s%s%s%s%s /liwearucmopvx+! \"%s\""),
 		msiexec,
 		workfile,
 		installname,
@@ -260,6 +267,8 @@ DWORD installMsi(arguments* args)
                 (args->driverupdate?_T(" ALLOWDRIVERUPDATE=YES"):_T(" ALLOWDRIVERUPDATE=NO")):_T("")),
         ( (args->driverinstall >= 0)?
                 (args->driverinstall?_T(" ALLOWDRIVERINSTALL=YES"):_T(" ALLOWDRIVERINSTALL=NO")):_T("")),
+        ( (args->identifyautoupdate >= 0)?
+                (args->identifyautoupdate?_T(" IDENTIFYAUTOUPDATE=YES"):_T(" IDENTIFYAUTOUPDATE=NO")):_T("")),
 		logfile);
 	if (cmdline == NULL) {
 		ErrMsg(getBrandingString(BRANDING_errCmdLineNoMem));
@@ -450,7 +459,8 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 	if (msiResult != ERROR_SUCCESS &&
 			msiResult != ERROR_SUCCESS_REBOOT_INITIATED &&
-			msiResult != ERROR_SUCCESS_REBOOT_REQUIRED) {
+			msiResult != ERROR_SUCCESS_REBOOT_REQUIRED &&
+            msiResult != ERROR_INSTALL_USEREXIT) {
 		ErrMsg(
 			getBrandingString(BRANDING_errMSIInstallFail),
 			msiResult,
