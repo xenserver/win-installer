@@ -93,6 +93,7 @@ branding = {
         "updDisclaim" : "Automatic updates may be overridden by pool policies",
         "whqlWarn" : "Customers using Windows Update for I/O driver updates should not select this option",
         "userAgent" : "Citrix XenServer AutoUpdate",
+        "anonymousUsage" : "Send anonymous usage information to Citrix",
 }
 
 filenames = {
