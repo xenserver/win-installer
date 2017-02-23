@@ -10,5 +10,6 @@
         public const int ERROR_NO_MORE_ITEMS            = 259;
         public const int ERROR_SUCCESS_REBOOT_INITIATED = 1641;
         public const int ERROR_SUCCESS_REBOOT_REQUIRED  = 3010;
+        public const int ERROR_KEY_DOES_NOT_EXIST       = -536870396; //0xe0000204
     }
 }
