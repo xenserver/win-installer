@@ -35,6 +35,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HardwareDevice", "..\src\HardwareDevice\HardwareDevice.csproj", "{277A3C3D-C32D-41CD-89DE-407C97CE29FF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PVDriversRemoval", "..\src\PVDriversRemoval\PVDriversRemoval.csproj", "{B75C4D13-EF07-48FC-B028-5ED1AB7146CD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3C46D5F0-E82E-41B1-849B-D7B0FE335212} = {3C46D5F0-E82E-41B1-849B-D7B0FE335212}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BrandSupport", "..\src\BrandSupport\BrandSupport.csproj", "{3C46D5F0-E82E-41B1-849B-D7B0FE335212}"
 EndProject
