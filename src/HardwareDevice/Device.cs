@@ -230,9 +230,12 @@ namespace HardwareDevice
                     devInfoData))
             {
                 Win32Error.Set("SetupDiCallClassInstaller");
-                throw new Exception(
-                    Win32Error.GetFullErrMsg()
-                );
+                if (Win32Error.GetErrorNo() != WinError.ERROR_KEY_DOES_NOT_EXIST)
+                {
+                    throw new Exception(
+                        Win32Error.GetFullErrMsg()
+                    );
+                }
             }
 
             Trace.WriteLine("Remove should have worked");
