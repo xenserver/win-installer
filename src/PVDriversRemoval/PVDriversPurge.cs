@@ -7,7 +7,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-
+using BrandSupport;
+using System.Reflection;
 namespace PVDriversRemoval
 {
     public static class PVDriversPurge
@@ -198,13 +199,13 @@ namespace PVDriversRemoval
             // msi refuses to uninstall if the '/norestart' flag is
             // given (although it returns ERROR_SUCCESS)
             var msiList = new[] {
-                new { name = "Citrix XenServer Tools Installer",
+                new { name = Branding.GetString("BRANDING_installerProductName"), //"Citrix XenServer Tools Installer",
                       args = "/qn"},
-                new { name = "Citrix XenServer VSS Provider",
+                new { name = Branding.GetString("BRANDING_vssLong"), //""Citrix XenServer VSS Provider",
                       args = "/qn /norestart"},
-                new { name = "Citrix Xen Windows x64 PV Drivers",
+                new { name = Branding.GetString("BRANDING_hypervisorAndOs")+" x64 "+Branding.GetString("BRANDING_pvDrivers"), // "Citrix Xen Windows x64 PV Drivers",
                       args = "/qn /norestart"},
-                new { name = "Citrix Xen Windows x86 PV Drivers",
+                new { name = Branding.GetString("BRANDING_hypervisorAndOs")+" x86 "+Branding.GetString("BRANDING_pvDrivers"), // "Citrix Xen Windows x86 PV Drivers",
                       args = "/qn /norestart"},
             };
 
@@ -338,4 +339,25 @@ namespace PVDriversRemoval
             }
         }
     }
+
+    public static class Branding
+    {
+        private static BrandingControl handle;
+
+        static Branding()
+        {
+            string brandSatPath = Path.Combine(
+                Path.GetDirectoryName(
+                    System.Reflection.Assembly.GetExecutingAssembly().Location)
+                , "Branding\\brandsat.dll"
+            );
+            handle = new BrandingControl(brandSatPath);
+        }
+
+        public static string GetString(string key)
+        {
+            return handle.getString(key);
+        }
+    }
+
 }
