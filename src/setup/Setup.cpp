@@ -127,6 +127,7 @@ bool parseCommandLine(arguments* args)
     args->driverinstall=-1;
     args->autoupdate=-1;
     args->driverupdate=-1;
+	args->identifyautoupdate=-1;
 	for (int i=1; i<argCount ; i++) {
 		if (!wcsncmp(szArgList[i],L"/TEST",sizeof(L"/TEST"))) {
 			args->test = true;
