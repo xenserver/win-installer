@@ -791,7 +791,8 @@ def copyfiles(name, subproj, dest, arch="", debug=False):
     print(os.getcwd())
     for file in glob.glob(os.sep.join([src_path, '*'])):
         print("%s -> %s" % (file, dst_path))
-        shutil.copy(file, dst_path)
+        if not os.path.isdir(file):
+            shutil.copy(file, dst_path)
     if not os.path.lexists(dst_path):
         print("dstpath not found")
 
