@@ -40,4 +40,10 @@ build_tar_source_files = {
        "xenvss" : r'win-xenvss/master/win-xenvss-18/xenvss.tar',
 }
 
-all_drivers_signed = True
+signed_drivers = { 
+       "xenbus" : r'win-xenbus/patchq/win-xenbus-85/xenbus.signed.tar',
+       "xenvif" : r'win-xenvif/patchq/win-xenvif-103/xenvif.signed.tar',
+       "xennet" : r'win-xennet/patchq/win-xennet-64/xennet.signed.tar',
+       "xeniface" : r'win-xeniface/patchq/win-xeniface-61/xeniface.signed.tar',
+       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-156/xenvbd.signed.tar',
+}
