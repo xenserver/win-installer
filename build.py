@@ -808,10 +808,17 @@ def shell(command):
 
     return pipe.close()
 
-def build_tar_source_files(securebuild):
+def build_tar_source_files(securebuild, signed):
     server = manifestspecific.artifactory
-    return { k:  (server+v) for k,v in 
-        manifestspecific.build_tar_source_files.items() }
+    outdict = {}
+    for k,v in manifestspecific.build_tar_source_files.items():
+        print("Check "+k)
+        if k in manifestspecific.signed_drivers and signed:
+            print(k + "in signed drivers")
+            outdict[k]=server+manifestspecific.signed_drivers[k]
+        else :
+            outdict[k]= server+v
+    return outdict
 
 def record_version_details():
     if 'GIT_COMMIT' in os.environ.keys():
@@ -1056,6 +1063,7 @@ if __name__ == '__main__':
     outbuilds = "installer\\builds"
    
     checked=False
+    signeddrivers = False
 
     while (len(sys.argv) > argptr):
         if (sys.argv[argptr] == "--secure"):
@@ -1099,6 +1107,12 @@ if __name__ == '__main__':
              argptr +=1
              continue
         
+        if (sys.argv[argptr] == '--signeddrivers'):
+             print("SIGNED DRIVERS")
+             signeddrivers = True
+             argptr +=1
+             continue
+        
         if (sys.argv[argptr] == '--binaryoutputlocation'):
             outbuilds = sys.argv[argptr+1]
             argptr +=2
@@ -1113,8 +1127,8 @@ if __name__ == '__main__':
         all_drivers_signed = False
     elif (command == '--specific'):
         print( "Specific Build")
-        unpack_from_jenkins(build_tar_source_files(securebuild), location, checked)
-        all_drivers_signed = manifestspecific.all_drivers_signed
+        unpack_from_jenkins(build_tar_source_files(securebuild, signeddrivers), location, checked)
+        all_drivers_signed = signeddrivers
     elif (command == '--latest'):
         print ("Latest Build")
         unpack_from_jenkins(manifestlatest.latest_tar_source_files, location)
