@@ -19,7 +19,7 @@ namespace PVDevice
             // does not enumerate a device for xenvif
             if (PVDevice.IsServiceNeeded("VIF"))
             {
-                if (!PVDevice.IsServiceRunning("xenvif"))
+                if (!Helpers.IsServiceRunning("xenvif"))
                 {
                     return false;
                 }

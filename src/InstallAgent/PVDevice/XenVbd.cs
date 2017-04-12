@@ -1,12 +1,12 @@
 ﻿using System.Diagnostics;
-
+using HelperFunctions;
 namespace PVDevice
 {
     class XenVbd
     {
         public static bool IsFunctioning()
         {
-            if (!PVDevice.IsServiceRunning("xenvbd"))
+            if (!Helpers.IsServiceRunning("xenvbd"))
             {
                 return false;
             }
