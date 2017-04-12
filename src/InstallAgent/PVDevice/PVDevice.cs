@@ -10,41 +10,7 @@ namespace PVDevice
 {
     static class PVDevice
     {
-        public static bool IsServiceRunning(string name)
-        {
-            ServiceController sc;
-
-            Trace.WriteLine("Checking service: \'" + name + "\'");
-
-            try
-            {
-                sc = new ServiceController(name);
-            }
-            catch (ArgumentException e)
-            {
-                Trace.WriteLine(e.Message);
-                return false;
-            }
-
-            try
-            {
-                if (sc.Status != ServiceControllerStatus.Running)
-                {
-                    Trace.WriteLine(
-                        "Service \'" + name + "\' not running; Status: " +
-                        sc.Status
-                    );
-                    return false;
-                }
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine(e.Message);
-                return false;
-            }
-
-            return true;
-        }
+        
 
         public static bool IsServiceNeeded(string device)
         {

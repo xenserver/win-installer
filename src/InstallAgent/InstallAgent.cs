@@ -425,7 +425,7 @@ namespace InstallAgent
                         driver.name + build + driver.name + ".inf"
                     );
 
-                    Helpers.InstallDriver(infPath, out reboot);
+                    Helpers.InstallDriver(driver.name, infPath, out reboot);
 
                     needReboot |= reboot;
 

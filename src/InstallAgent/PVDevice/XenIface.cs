@@ -18,61 +18,22 @@ namespace PVDevice
 
         public static bool IsFunctioning()
         {
-            if (!PVDevice.IsServiceRunning("xeniface"))
+            if (!Helpers.IsServiceRunning("xeniface"))
             {
                 return false;
             }
 
-            // This part is currently not needed. It will be kept
-            // in place for a while, just in case..
-            /*try
-            {
-                XenIface.CreateSession();
-            }
-            catch
-            {
-                Trace.WriteLine("IFACE: CreateSession() failed");
-                return false;
-            }
-
-            int noChildNodes = 0;
-
-            try
-            {
-                noChildNodes = XenIface.GetNoChildNodes();
-            }
-            catch { }
-            finally
-            {
-                XenIface.DestroySession();
-            }
-
-            if (noChildNodes == 0)
-            {
-                int noNeedToReboot =
-                    (int)Application.CommonAppDataRegistry.GetValue(
-                        "DriverFinalReboot",
-                        0
-                    );
-
-                Trace.WriteLine("Have I rebooted? " + noNeedToReboot.ToString());
-                if (noNeedToReboot == 0)
-                {
-                    Application.CommonAppDataRegistry.SetValue(
-                        "DriverFinalReboot",
-                        1
-                    );
-
-                    return false;
-                }
-            }*/
             if (!functioning)
             {
-                // This is a workaround to cope with xeniface being re-installed
-                // as xenlite is bad at reconnecting via WMI without a kick.
-                // This can be removed when the lite agent uses IOCTLS
-                Trace.WriteLine("Restart xenlite service");
+                if (!Helpers.IsServiceRunning("xenagent"))
+                {
+                    Helpers.ChangeServiceStartMode("xenagent", Helpers.ExpandedServiceStartMode.Automatic);
+                }
+                Trace.WriteLine("Restart xeniface agent service");
+                Helpers.ServiceRestart("xenagent");
+                //For backwards compatability
                 Helpers.ServiceRestart("xenlite");
+                
                 functioning = true;
             }
             Trace.WriteLine("IFACE: device installed");
