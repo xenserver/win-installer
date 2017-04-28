@@ -143,6 +143,7 @@ namespace InstallAgent
         {
             Trace.WriteLine("Shutting down");
             installThread.Join();
+            PVDevice.PVDevice.RemoveNeedsReboot();
             base.OnShutdown();
             Trace.WriteLine("Shut down");
         }
