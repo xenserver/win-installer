@@ -517,8 +517,10 @@ namespace HelperFunctions
 
             if (!success)
             {
+                
                 int error = Marshal.GetLastWin32Error();
-                if (error == 0)
+                Trace.WriteLine("Unable to update driver - code " + error.ToString());
+                if ((error == 0) || (error == 0x50))
                 {
                     Trace.WriteLine("Driver already installed");
                     if (Helpers.IsServiceRunning(name))
