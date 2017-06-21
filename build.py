@@ -509,6 +509,8 @@ def driverarchfiles_wxs(pack, driver, arch):
 signinstallers = [
     'managementx64',
     'managementx86',
+]
+dualsigninstallers = [
     'setup'
 ]
 
@@ -519,6 +521,8 @@ def generate_signing_script():
         signfile.write("@set temp=%~1\n") #Remove Quotes
         signfile.write("@set temp=%temp:\"\"=\"%\n") #Convert doube quotes to single quotes
         for msi in signinstallers:
+            signfile.write("%temp% "+"%~dp0\\"+branding.filenames[msi]+"\n") #dp0 is the pathname of the script
+        for msi in dualsigninstallers:
             signfile.write("%temp% "+"%~dp0\\"+branding.filenames[msi]+"\n") #dp0 is the pathname of the script
         signfile.write("@exit /B 0\n")
         signfile.write(":usage\n")
@@ -717,6 +721,8 @@ def make_mgmtagent_msi(pack,signname):
     if signfiles:
         for signname in signinstallers:
             sign("installer\\"+branding.filenames[signname], signname, signstr=singlesignstr)
+        for signname in dualsigninstallers:
+            sign("installer\\"+branding.filenames[signname], signname, signstr=signstr)
 
     # Write updates.tsv (url\tversion\tsize\tarch)
     f = open(os.sep.join(['installer','updates.tsv']),"w")
