@@ -1144,9 +1144,9 @@ if __name__ == '__main__':
     make_installers_dir()
     if not rebuild_installers_only :
         if (signfiles):
-            signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
-            signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
             if not all_drivers_signed:
+                signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
+                signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
                 signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
                 signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
         build_installer_apps(location,outbuilds,checked)
