@@ -252,13 +252,37 @@ namespace HelperFunctions
                 return false;
             }
 
+            if (!sc.CanStop)
+            {
+                Trace.WriteLine("Service '" + name + "' cannot be stopped.");
+                return false;
+            }
+
             try
             {
-                if ((sc.Status == ServiceControllerStatus.Running) && sc.CanStop)
+                if (sc.Status == ServiceControllerStatus.Running
+                        || sc.Status == ServiceControllerStatus.StartPending
+                        || sc.Status == ServiceControllerStatus.Paused
+                        || sc.Status == ServiceControllerStatus.PausePending
+                        || sc.Status == ServiceControllerStatus.ContinuePending)
                 {
+                    Trace.WriteLine("Stopping service: '" + name + "'.");
                     sc.Stop();
                 }
-                sc.WaitForStatus(ServiceControllerStatus.Stopped);
+
+                while (sc.Status != ServiceControllerStatus.Stopped)
+                {
+                    Trace.WriteLine(
+                        "Service status: '"
+                        + sc.Status
+                        + "'; sleeping for 1 second."
+                    );
+                    Thread.Sleep(1000);
+                    sc.Refresh();
+                }
+
+                Trace.WriteLine("Service: '" + name + "' stopped.");
+                Trace.WriteLine("Starting service: '" + name + "'.");
                 sc.Start();
             }
             catch (Exception e)
