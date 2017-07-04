@@ -252,10 +252,19 @@ namespace HelperFunctions
                 return false;
             }
 
-            if (!sc.CanStop)
+            try
             {
-                Trace.WriteLine("Service '" + name + "' cannot be stopped.");
+                if (!sc.CanStop)
+                {
+                    Trace.WriteLine("Service '" + name + "' cannot be stopped.");
+                    return false;
+                }
+            }
+            catch (InvalidOperationException e)
+            {
+                Trace.WriteLine(e.Message);
                 return false;
+
             }
 
             try
@@ -270,6 +279,7 @@ namespace HelperFunctions
                     sc.Stop();
                 }
 
+                sc.Refresh();
                 while (sc.Status != ServiceControllerStatus.Stopped)
                 {
                     Trace.WriteLine(
@@ -285,7 +295,7 @@ namespace HelperFunctions
                 Trace.WriteLine("Starting service: '" + name + "'.");
                 sc.Start();
             }
-            catch (Exception e)
+            catch (Win32Exception e)
             {
                 Trace.WriteLine(e.Message);
                 return false;
