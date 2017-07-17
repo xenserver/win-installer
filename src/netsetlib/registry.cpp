@@ -1583,11 +1583,11 @@ HRESULT RegistryDeleteValuesOnCondition(PTCHAR KeyName, CONDITIONAL_CALLBACK cal
             goto fail5;
         }
         if (callback(&cbargs, data)) {
-            Log("Deleting Value %s", cbargs.Value);
+            Log("Deleting Value %s", cbargs.Name);
 
-		    Error = RegDeleteValue(Key, (LPCTSTR)cbargs.Value);
+		    Error = RegDeleteValue(Key, (LPCTSTR)cbargs.Name);
 		    if (Error != ERROR_SUCCESS) {
-			    Warning("Unable to delete value %s @ %d", cbargs.Value, Index);
+			    Warning("Unable to delete value %s @ %d", cbargs.Name, Index);
                 ++Index;
 		    }
             // else, dont increment the index, next value will have the same index as this value after the delete
