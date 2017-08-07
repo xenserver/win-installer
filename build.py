@@ -341,7 +341,7 @@ def make_header(outbuilds):
     file.write("mkdir BrandSupport\n")
     file.write("resgen.exe proj\\textstrings.txt proj\\textstrings.resources\n")
     #file.write("al.exe proj\\branding.mod /embed:proj\\textstrings.resources /embed:"+branding.bitmaps+"\\DlgBmp.bmp /t:lib /out:proj\\brandsat.dll\n")
-    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:BrandSupport\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+outbuilds+"\\"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
+    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:BrandSupport\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
     file.write("echo Built satellite dll at BrandSupport\\brandsat.dll\n")
     file.close();
     print (callfnout("proj\\buildsat.bat"))
@@ -702,7 +702,11 @@ def make_mgmtagent_msi(pack,signname):
         culture = branding.cultures['default']
         
         callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
-        callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext", "WixUtilExtension.dll", "-cultures:"+branding.cultures['default'], "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
+        callfn([wix("light.exe"),
+                cwd+"\\installer\\managementagent"+arch+".wixobj",
+                "-dculture="+culture, "-darch="+arch, "-o",
+                cwd+"\\installer\\"+branding.filenames['management'+arch],
+                "-b", "..\\..\\", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext", "WixUtilExtension.dll", "-cultures:"+branding.cultures['default'], "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if len(branding.cultures['others']) != 0 :
         for culture in branding.cultures['others']:
@@ -710,7 +714,11 @@ def make_mgmtagent_msi(pack,signname):
             os.makedirs(cwd+'installer\\'+culture)
             for arch in ["x86", "x64"]:
                 callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-ext", "WixUtilExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
-                callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext", "WixUtilExtension.dll", "-cultures:"+culture, "-dWixUILicenseRtf="+cbranding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
+                callfn([wix("light.exe"),
+                        cwd+"\\installer\\managementagent"+arch+".wixobj",
+                        "-dculture="+culture, "-darch="+arch, "-o",
+                        cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch],
+                        "-b", "..\\..\\", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext", "WixUtilExtension.dll", "-cultures:"+culture, "-dWixUILicenseRtf="+cbranding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
                 callfn(["cscript", cwd+"\\src\\branding\\msidiff.js", cwd+"\\installer\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+arch+".mst"])
                 callfn(["cscript", cwd+"\\src\\branding\\WiSubStg.vbs", cwd+"\\installer\\"+branding.filenames['management'+arch], cwd+"\\installer\\"+culture+arch+".mst",cbranding.branding["language"]])
 
