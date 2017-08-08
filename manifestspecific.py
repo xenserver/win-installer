@@ -45,5 +45,5 @@ signed_drivers = {
        "xenvif" : r'win-xenvif/patchq/win-xenvif-152/xenvif.signed.tar',
        "xennet" : r'win-xennet/patchq/win-xennet-64/xennet.signed.tar',
        "xeniface" : r'win-xeniface/patchq/win-xeniface-102/xeniface.signed.tar',
-       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-156/xenvbd.signed.tar',
+       "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-158/xenvbd.signed.tar',
 }
