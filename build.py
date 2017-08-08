@@ -333,6 +333,7 @@ def make_header(outbuilds):
     for key, value in branding.resources.items():
         file.write("RESOURCE_"+key+"="+value.replace("\\","\\\\")+"\n")
     file.close();
+    print("====outbuilds:======" +outbuilds)
 
     file = open("proj\\buildsat.bat",'w')
     file.write("echo Building satellite dll\n")
@@ -341,7 +342,9 @@ def make_header(outbuilds):
     file.write("mkdir BrandSupport\n")
     file.write("resgen.exe proj\\textstrings.txt proj\\textstrings.resources\n")
     #file.write("al.exe proj\\branding.mod /embed:proj\\textstrings.resources /embed:"+branding.bitmaps+"\\DlgBmp.bmp /t:lib /out:proj\\brandsat.dll\n")
-    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:BrandSupport\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
+    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\
+               /out:BrandSupport\\brandsat.dll /target:library \
+               /res:proj\\textstrings.resources /res:"+outbuilds+"\\"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
     file.write("echo Built satellite dll at BrandSupport\\brandsat.dll\n")
     file.close();
     print (callfnout("proj\\buildsat.bat"))
