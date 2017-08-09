@@ -152,6 +152,9 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
         pack+"\\xeniface\\"+arch+"\\xeniface.sys",
         pack+"\\xeniface\\"+arch+"\\xenagent.exe",
         pack+"\\xeniface\\"+arch+"\\liteagent.exe",
+        pack+"\\xencons\\"+arch+"\\xencons.sys",
+        pack+"\\xencons\\"+arch+"\\xencons_monitor.exe",
+        pack+"\\xencons\\"+arch+"\\xencons_tty.exe",
         pack+"\\xenbus\\"+arch+"\\xenbus.sys",
         pack+"\\xenbus\\"+arch+"\\xen.sys",
         pack+"\\xenbus\\"+arch+"\\xenfilt.sys",
@@ -171,6 +174,7 @@ def signdrivers(pack, signname, arch, additionalcert, signstr=None, crosssignstr
         pack+"\\xenvss\\"+arch+"\\xenvss.dll", 
         pack+"\\xenvbd\\"+arch+"\\xenvbd_coinst.dll",
         pack+"\\xennet\\"+arch+"\\xennet_coinst.dll",
+        pack+"\\xencons\\"+arch+"\\xencons_coinst.dll",
         pack+"\\xenbus\\"+arch+"\\xenbus_coinst.dll",
         pack+"\\xenbus\\"+arch+"\\xenbus_monitor.dll",
         pack+"\\xeniface\\"+arch+"\\xeniface_coinst.dll",
@@ -194,6 +198,7 @@ def signcatfiles(pack, signname, arch, additionalcert, signstr = None):
         pack+"\\xenvbd\\"+arch+"\\xenvbd.cat",
         pack+"\\xennet\\"+arch+"\\xennet.cat",
         pack+"\\xeniface\\"+arch+"\\xeniface.cat",
+        pack+"\\xencons\\"+arch+"\\xencons.cat",
         pack+"\\xenbus\\"+arch+"\\xenbus.cat"
     ]
     
@@ -386,6 +391,7 @@ def make_pe(pack):
         shutil.copytree(pack+"\\xenvif", "installer\\pe\\xenvif")
         shutil.copytree(pack+"\\xenvbd", "installer\\pe\\xenvbd")
         shutil.copytree(pack+"\\xennet", "installer\\pe\\xennet")
+        shutil.copytree(pack+"\\xencons", "installer\\pe\\xencons")
         shutil.copytree(pack+"\\xenbus", "installer\\pe\\xenbus")
         shutil.copytree("src\\pescripts", "installer\\pe\\scripts")
 
@@ -393,6 +399,7 @@ def make_builds(pack, outbuilds):
         shutil.copytree(pack+"\\xenvif", outbuilds+"\\xenvif")
         shutil.copytree(pack+"\\xenvbd", outbuilds+"\\xenvbd")
         shutil.copytree(pack+"\\xennet", outbuilds+"\\xennet")
+        shutil.copytree(pack+"\\xencons", outbuilds+"\\xencons")
         shutil.copytree(pack+"\\xenbus", outbuilds+"\\xenbus")
         shutil.copytree(pack+"\\xeniface", outbuilds+"\\xeniface")
         shutil.copytree(pack+"\\xenguestagent", outbuilds+"\\xenguestagent")
@@ -413,6 +420,10 @@ driverlist= {
             {"guid" : 
                 {   "x64" : "eb49829c-a972-4aee-b2d7-762992f41f17",
                     "x86" : "37dad919-da89-41ee-84c2-febe29585e3f"}},
+        "xencons" :
+            {"guid" :
+                {   "x64" : "8f7343d8-c2c8-4a43-a88c-6c51af2638d1",
+                    "x86" : "aba19633-6dbc-4651-b7ba-faf560048500"}},
         "xenvif" :
             {"guid" : 
                 {   "x64" : "c17cf278-3a60-4e2a-9cfc-db64a6847a85",
@@ -499,6 +510,8 @@ def driverarchfiles_wxs(pack, driver, arch):
     dlist+= glob.glob(os.path.join(pack, driver, arch, "xenagent.exe"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "liteagent.exe"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "xenbus_monitor.exe"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "xencons_monitor.exe"))
+    dlist+= glob.glob(os.path.join(pack, driver, arch, "xencons_tty.exe"))
     dlist+= glob.glob(os.path.join(pack, driver, arch, "*.cat"))
     for dfile in dlist:
         leaf = os.path.basename(dfile)
