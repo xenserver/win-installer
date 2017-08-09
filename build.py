@@ -118,6 +118,8 @@ agenttosign = [
     "xenguestagent\\xendpriv\\XenDPriv.exe",
     "xenguestagent\\xenupdater\\ManagementAgentUpdater.exe",
     "xenguestagent\\xenguestagent\\XenGuestLib.Dll" ,
+    "xenguestagent\\xenguestagent\\Interop.NetFwTypeLib.dll", 
+    "xenguestagent\\xenupdater\\Interop.TaskScheduler.dll",
     'xenvss\\x64\\xenvss.dll',
     'xenvss\\x86\\xenvss.dll',
     'xenvss\\x64\\vssclient.dll', 
