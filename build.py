@@ -699,7 +699,7 @@ def make_mgmtagent_msi(pack,signname):
 
     cwd = os.getcwd()
     os.chdir(pack)
-    print(os.getcwd())
+    print("current dir: ======>"+os.getcwd())
     for arch in ["x86", "x64"]:
         src = cwd+"\\.\\src\\agent"
         culture = branding.cultures['default']
