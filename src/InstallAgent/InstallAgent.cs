@@ -143,6 +143,7 @@ namespace InstallAgent
         {
             Trace.WriteLine("Shutting down");
             installThread.Join();
+            PVDevice.PVDevice.RemoveNeedsReboot();
             base.OnShutdown();
             Trace.WriteLine("Shut down");
         }
@@ -425,7 +426,7 @@ namespace InstallAgent
                         driver.name + build + driver.name + ".inf"
                     );
 
-                    Helpers.InstallDriver(infPath, out reboot);
+                    Helpers.InstallDriver(driver.name, infPath, out reboot);
 
                     needReboot |= reboot;
 

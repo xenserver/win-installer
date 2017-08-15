@@ -9,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.ServiceProcess;
+using System.ComponentModel;
 
 namespace HelperFunctions
 {
@@ -253,14 +254,48 @@ namespace HelperFunctions
 
             try
             {
-                if ((sc.Status == ServiceControllerStatus.Running) && sc.CanStop)
+                if (!sc.CanStop)
                 {
+                    Trace.WriteLine("Service '" + name + "' cannot be stopped.");
+                    return false;
+                }
+            }
+            catch (InvalidOperationException e)
+            {
+                Trace.WriteLine(e.Message);
+                return false;
+
+            }
+
+            try
+            {
+                if (sc.Status == ServiceControllerStatus.Running
+                        || sc.Status == ServiceControllerStatus.StartPending
+                        || sc.Status == ServiceControllerStatus.Paused
+                        || sc.Status == ServiceControllerStatus.PausePending
+                        || sc.Status == ServiceControllerStatus.ContinuePending)
+                {
+                    Trace.WriteLine("Stopping service: '" + name + "'.");
                     sc.Stop();
                 }
-                sc.WaitForStatus(ServiceControllerStatus.Stopped);
+
+                sc.Refresh();
+                while (sc.Status != ServiceControllerStatus.Stopped)
+                {
+                    Trace.WriteLine(
+                        "Service status: '"
+                        + sc.Status
+                        + "'; sleeping for 1 second."
+                    );
+                    Thread.Sleep(1000);
+                    sc.Refresh();
+                }
+
+                Trace.WriteLine("Service: '" + name + "' stopped.");
+                Trace.WriteLine("Starting service: '" + name + "'.");
                 sc.Start();
             }
-            catch (Exception e)
+            catch (Win32Exception e)
             {
                 Trace.WriteLine(e.Message);
                 return false;
@@ -465,15 +500,76 @@ namespace HelperFunctions
             }
         }
 
+        public static bool IsServiceRunning(string name)
+        {
+            ServiceController sc;
+
+            Trace.WriteLine("Checking service: \'" + name + "\'");
+
+            try
+            {
+                sc = new ServiceController(name);
+            }
+            catch (ArgumentException e)
+            {
+                Trace.WriteLine(e.Message);
+                return false;
+            }
+
+            try
+            {
+                if (sc.Status != ServiceControllerStatus.Running)
+                {
+                    Trace.WriteLine(
+                        "Service \'" + name + "\' not running; Status: " +
+                        sc.Status
+                    );
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                Trace.WriteLine(e.Message);
+                return false;
+            }
+
+            return true;
+        }
+
         public static void InstallDriver(
+            string name,
             string infPath,
             out bool reboot,
             NewDev.DIIRFLAG flags = NewDev.DIIRFLAG.ZERO)
         {
 
+
+            Trace.WriteLine("Add to driverstore " + infPath);
+            int size = 0;
+
+            bool success = SetupApi.SetupCopyOEMInf(infPath, "", SetupApi.SPOST.NONE, SetupApi.SP_COPY.NOOVERWRITE, IntPtr.Zero, 0, ref size, IntPtr.Zero);
+
+            if (!success)
+            {
+                
+                int error = Marshal.GetLastWin32Error();
+                Trace.WriteLine("Unable to update driver - code " + error.ToString());
+                if ((error == 0) || (error == 0x50))
+                {
+                    Trace.WriteLine("Driver already installed");
+                    if (Helpers.IsServiceRunning(name))
+                    {
+                        reboot = false;
+                        return;
+                    }
+                }
+            }
+            
             Trace.WriteLine(
                 "Installing driver: \'" + Path.GetFileName(infPath) + "\'"
             );
+
+
 
             NewDev.DiInstallDriver(
                 IntPtr.Zero,

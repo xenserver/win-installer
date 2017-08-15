@@ -407,10 +407,10 @@ namespace PInvokeWrap
             string OEMSourceMediaLocation,
             SPOST OEMSourceMediaType,
             SP_COPY CopyStyle,
-            IntPtr DestinationInfFileName, // == IntPtr.Zero
-            int DestinationInfFileNameSize, // == 0
-            IntPtr RequiredSize, // == IntPtr.Zero
-            IntPtr DestinationInfFileNameComponent // == IntPtr.Zero
+            IntPtr DestinationInfFileName,
+            int DestinationInfFileNameSize,
+            ref int RequiredSize,
+            IntPtr DestinationInfFileNameComponent
         );
 
         [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Auto)]

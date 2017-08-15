@@ -62,10 +62,10 @@ def unpack_from_jenkins(filelist, packdir, checked=False):
             oldurl=url
             o = urllib.parse.urlparse(url)
             (head,filename) = posixpath.split(o.path)
+            (filebase, fileext) = os.path.splitext(filename)
             (head,build) = posixpath.split(head)
             (head,branch) = posixpath.split(head)
-            branch=branch+"-checked"
-            newpath=posixpath.join(head,branch,build,filename)
+            newpath=posixpath.join(head,branch,build,filebase+"-checked"+fileext)
             url=urllib.parse.urlunparse((o.scheme, o.netloc, newpath, o.params, o.query, o.fragment))
             try:
                 request = urllib.request.urlopen(url)
@@ -118,6 +118,8 @@ agenttosign = [
     "xenguestagent\\xendpriv\\XenDPriv.exe",
     "xenguestagent\\xenupdater\\ManagementAgentUpdater.exe",
     "xenguestagent\\xenguestagent\\XenGuestLib.Dll" ,
+    "xenguestagent\\xenguestagent\\Interop.NetFwTypeLib.dll", 
+    "xenguestagent\\xenupdater\\Interop.TaskScheduler.dll",
     'xenvss\\x64\\xenvss.dll',
     'xenvss\\x86\\xenvss.dll',
     'xenvss\\x64\\vssclient.dll', 
@@ -509,6 +511,8 @@ def driverarchfiles_wxs(pack, driver, arch):
 signinstallers = [
     'managementx64',
     'managementx86',
+]
+dualsigninstallers = [
     'setup'
 ]
 
@@ -519,6 +523,8 @@ def generate_signing_script():
         signfile.write("@set temp=%~1\n") #Remove Quotes
         signfile.write("@set temp=%temp:\"\"=\"%\n") #Convert doube quotes to single quotes
         for msi in signinstallers:
+            signfile.write("%temp% "+"%~dp0\\"+branding.filenames[msi]+"\n") #dp0 is the pathname of the script
+        for msi in dualsigninstallers:
             signfile.write("%temp% "+"%~dp0\\"+branding.filenames[msi]+"\n") #dp0 is the pathname of the script
         signfile.write("@exit /B 0\n")
         signfile.write(":usage\n")
@@ -717,6 +723,8 @@ def make_mgmtagent_msi(pack,signname):
     if signfiles:
         for signname in signinstallers:
             sign("installer\\"+branding.filenames[signname], signname, signstr=singlesignstr)
+        for signname in dualsigninstallers:
+            sign("installer\\"+branding.filenames[signname], signname, signstr=signstr)
 
     # Write updates.tsv (url\tversion\tsize\tarch)
     f = open(os.sep.join(['installer','updates.tsv']),"w")
@@ -791,7 +799,8 @@ def copyfiles(name, subproj, dest, arch="", debug=False):
     print(os.getcwd())
     for file in glob.glob(os.sep.join([src_path, '*'])):
         print("%s -> %s" % (file, dst_path))
-        shutil.copy(file, dst_path)
+        if not os.path.isdir(file):
+            shutil.copy(file, dst_path)
     if not os.path.lexists(dst_path):
         print("dstpath not found")
 
@@ -807,10 +816,17 @@ def shell(command):
 
     return pipe.close()
 
-def build_tar_source_files(securebuild):
+def build_tar_source_files(securebuild, signed):
     server = manifestspecific.artifactory
-    return { k:  (server+v) for k,v in 
-        manifestspecific.build_tar_source_files.items() }
+    outdict = {}
+    for k,v in manifestspecific.build_tar_source_files.items():
+        print("Check "+k)
+        if k in manifestspecific.signed_drivers and signed:
+            print(k + "in signed drivers")
+            outdict[k]=server+manifestspecific.signed_drivers[k]
+        else :
+            outdict[k]= server+v
+    return outdict
 
 def record_version_details():
     if 'GIT_COMMIT' in os.environ.keys():
@@ -1055,6 +1071,7 @@ if __name__ == '__main__':
     outbuilds = "installer\\builds"
    
     checked=False
+    signeddrivers = False
 
     while (len(sys.argv) > argptr):
         if (sys.argv[argptr] == "--secure"):
@@ -1098,6 +1115,12 @@ if __name__ == '__main__':
              argptr +=1
              continue
         
+        if (sys.argv[argptr] == '--signeddrivers'):
+             print("SIGNED DRIVERS")
+             signeddrivers = True
+             argptr +=1
+             continue
+        
         if (sys.argv[argptr] == '--binaryoutputlocation'):
             outbuilds = sys.argv[argptr+1]
             argptr +=2
@@ -1112,8 +1135,8 @@ if __name__ == '__main__':
         all_drivers_signed = False
     elif (command == '--specific'):
         print( "Specific Build")
-        unpack_from_jenkins(build_tar_source_files(securebuild), location, checked)
-        all_drivers_signed = manifestspecific.all_drivers_signed
+        unpack_from_jenkins(build_tar_source_files(securebuild, signeddrivers), location, checked)
+        all_drivers_signed = signeddrivers
     elif (command == '--latest'):
         print ("Latest Build")
         unpack_from_jenkins(manifestlatest.latest_tar_source_files, location)
@@ -1129,9 +1152,9 @@ if __name__ == '__main__':
     make_installers_dir()
     if not rebuild_installers_only :
         if (signfiles):
-            signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
-            signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
             if not all_drivers_signed:
+                signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
+                signdrivers(location, signname, 'x64', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
                 signcatfiles(location, signname, 'x86', additionalcert, signstr=crosssignstr)
                 signcatfiles(location, signname, 'x64', additionalcert, signstr=crosssignstr)
         build_installer_apps(location,outbuilds,checked)

@@ -100,7 +100,7 @@ namespace PVDevice
                 return false;
             }
 
-            if (!PVDevice.IsServiceRunning(("xenbus")))
+            if (!Helpers.IsServiceRunning(("xenbus")))
             {
                 return false;
             }
