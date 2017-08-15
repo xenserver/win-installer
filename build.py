@@ -49,15 +49,21 @@ import os.path
 import urllib.parse
 import posixpath
 
+BRAND_BUILD_SUBPROJECTS=["xenguestagent","xenvss"]
+
 (brandingFile, brandingPath, brandingDesc) = imp.find_module("branding",["src\\branding"])
 branding = imp.load_module("branding",brandingFile,brandingPath,brandingDesc)
 
-def unpack_from_jenkins(filelist, packdir, checked=False):
+def unpack_from_jenkins(filelist, packdir, checked=False, skip_branded_subproject=False):
     if ('GIT_COMMIT' in os.environ):
         print ("Installer Build ",os.environ["GIT_COMMIT"])
     for urlkey in filelist:
+        # Skip download the rebranded project to avoid overwrite
+        if skip_branded_subproject and urlkey in BRAND_BUILD_SUBPROJECTS:
+            continue
         fallback = ""
         url = filelist[urlkey]
+        print("preparing for %s component from %s"%(urlkey,url))
         if checked:
             oldurl=url
             o = urllib.parse.urlparse(url)
@@ -709,7 +715,10 @@ def make_mgmtagent_msi(pack,signname):
     if len(branding.cultures['others']) != 0 :
         for culture in branding.cultures['others']:
             cbranding = get_cultural_branding(culture)
-            os.makedirs(cwd+'installer\\'+culture)
+            culture_path = os.sep.join([cwd,"installer",culture])
+            if os.path.exists(culture_path):
+                shutil.remove(culture_path) 
+            os.makedirs(culture_path)
             for arch in ["x86", "x64"]:
                 callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-ext", "WixUtilExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
                 callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+culture+"\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext", "WixUtilExtension.dll", "-cultures:"+culture, "-dWixUILicenseRtf="+cbranding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
@@ -1062,6 +1071,7 @@ if __name__ == '__main__':
     signstr = None
     crosssignstr = None
     signname = None
+    brandbuild = False
 
     securebuild=False
     if ('AUTOCOMMIT' in os.environ):
@@ -1109,6 +1119,11 @@ if __name__ == '__main__':
              archiveSrc = False
              argptr +=1
              continue
+
+        if (sys.argv[argptr] == '--brandbuild'):
+             brandbuild = True
+             argptr +=1
+             continue
         
         if (sys.argv[argptr] == '--checked'):
              checked = True
@@ -1135,11 +1150,11 @@ if __name__ == '__main__':
         all_drivers_signed = False
     elif (command == '--specific'):
         print( "Specific Build")
-        unpack_from_jenkins(build_tar_source_files(securebuild, signeddrivers), location, checked)
+        unpack_from_jenkins(build_tar_source_files(securebuild, signeddrivers), location, checked,brandbuild)
         all_drivers_signed = signeddrivers
     elif (command == '--latest'):
         print ("Latest Build")
-        unpack_from_jenkins(manifestlatest.latest_tar_source_files, location)
+        unpack_from_jenkins(manifestlatest.latest_tar_source_files, location,brandbuild)
         all_drivers_signed = manifestlatest.all_drivers_signed
     elif (command == "--rebuild-msi"):
         rebuild_installers_only = True
