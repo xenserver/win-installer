@@ -410,6 +410,8 @@ namespace InstallAgent
                       installed = Installer.States.XenVbdInstalled },
                 new { name = "xeniface",
                       installed = Installer.States.XenIfaceInstalled },
+                new { name = "xencons",
+                      installed = Installer.States.XenConsInstalled },
                 new { name = "xenbus",
                       installed = Installer.States.XenBusInstalled }
             };
