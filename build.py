@@ -114,34 +114,11 @@ def sign(filename, signname, additionalcert=None, signstr=None):
             continue
         break;
 
-agenttosign = [
-    'BrandSupport\\brandsat.dll',
-    'BrandSupport\\BrandSupport.dll',
-    'installwizard\\netsettings\\Win32\\netsettings.exe',
-    'installwizard\\netsettings\\x64\\netsettings.exe',
-    'installwizard\\qnetsettings\\Win32\\qnetsettings.exe',
-    'installwizard\\qnetsettings\\x64\\qnetsettings.exe',
-    "xenguestagent\\xendpriv\\XenDPriv.exe",
-    "xenguestagent\\xenupdater\\ManagementAgentUpdater.exe",
-    "xenguestagent\\xenguestagent\\XenGuestLib.Dll" ,
-    'xenvss\\x64\\xenvss.dll',
-    'xenvss\\x86\\xenvss.dll',
-    'xenvss\\x64\\vssclient.dll', 
-    'xenvss\\x86\\vssclient.dll', 
-    "xenguestagent\\xenguestagent\\xenguestagent.exe",
-    "InstallAgent\\InstallAgent.exe",
-    "Libraries\\PInvokeWrap.dll",
-    "Libraries\\HelperFunctions.dll",
-    "Libraries\\HardwareDevice.dll",
-    "Libraries\\PVDriversRemoval.dll",
-    "Uninstall\\Uninstall.exe",
-]
-
 def sign_builds(outbuilds):
     cwd = os.getcwd()
     os.chdir(outbuilds)
     if signfiles:
-        for afile in agenttosign:
+        for afile in branding.agenttosign:
             sign(afile, signname, signstr=signstr)
     os.chdir(cwd)
 
@@ -515,9 +492,89 @@ def driverarchfiles_wxs(pack, driver, arch):
 signinstallers = [
     'managementx64',
     'managementx86',
+]
+dualsigninstallers = [
     'setup'
 ]
 
+def get_branded_file_list(filelist):
+    '''
+    Given a list of filenames, this funciton return the branded filenames
+    Argument:
+        filelist:Array, an array of files whoose branded name need to be searched
+    Return:
+        an array of branded file name, original name is return if the branded filename is not found
+    '''
+    branded_list = []
+    for file in filelist:
+        branded_name = file
+        # one change to get the branded name
+        if file in branding.filenames:
+            branded_name = branding.filenames[file]
+        branded_name =os.path.basename(branded_name)
+        branded_list.append(branded_name)
+    return branded_list   
+
+
+def generate_signing_script():
+    '''
+    Generate sign script for the branding build.
+    The generate idea is to copy the branding script from source (installer.git) to buidl result (installer)
+        and then fill in the binaries that are need to be signed.
+        We do not hard code binaries in sign script since it may change
+    '''
+    FILES_LIST_IN_MSI_PLACE_HOLDER =  '">>>INSERT-FILE-LIST-IN-MSI-HERE<<<"'
+    FILES_LIST_OUT_MSI_PLACE_HOLDER =  '">>>INSERT-FILE-LIST-OUT-MSI-HERE<<<"'
+    FILES_LIST_MSI = '">>>INSERT-MSI-LIST-HERE<<<"'
+    MSI_CULTURE_FOLDER_NAME = '>>>INSERT-MSI-CULTURE-FOLDER-HERE<<<'
+    QUOTE = '"'
+
+    VBS_ARRAY_DELIM = '","'
+    DASH = "-"
+
+    #Generate a sign script for every culture
+    print(branding.cultures)
+    for culture in branding.cultures["others"]:
+        print("generate sign script for culture: " + culture)
+        VBS_FILE_NAME = "sign.vbs"
+        other_culture_branding = get_cultural_branding(culture)
+        source_vbs_path = "." + os.sep + VBS_FILE_NAME 
+      
+        target_vbs_path = "installer" + os.sep + culture + DASH + VBS_FILE_NAME
+        shutil.copyfile(source_vbs_path,target_vbs_path)
+
+        # Generate file list packaged into the MSI
+        file_in_msi_array = get_branded_file_list(other_culture_branding.agenttosign)
+        file_in_msi_str = VBS_ARRAY_DELIM.join(file_in_msi_array)
+        file_in_msi_str = QUOTE + file_in_msi_str+ QUOTE
+
+
+        #Generate files out the msi files
+        file_out_msi_array = get_branded_file_list(dualsigninstallers)
+        file_out_msi_str = VBS_ARRAY_DELIM.join(file_out_msi_array)
+        file_out_msi_str = QUOTE + file_out_msi_str + QUOTE
+       
+        msi_file_array = get_branded_file_list(signinstallers)
+        cultured_msi_list = msi_file_array[:]
+        for msi in msi_file_array:
+            cultured_msi = culture + os.sep + msi
+            cultured_msi_list.append(cultured_msi)
+       
+        msi_file_str =  VBS_ARRAY_DELIM.join(cultured_msi_list)
+        msi_file_str = QUOTE + msi_file_str + QUOTE
+       
+    
+        with open(source_vbs_path, "rt") as fin:
+            with open(target_vbs_path, "wt") as fout:
+                for line in fin:
+                    line = line.replace(FILES_LIST_IN_MSI_PLACE_HOLDER, file_in_msi_str)
+                    line = line.replace(FILES_LIST_OUT_MSI_PLACE_HOLDER, file_out_msi_str)
+                    line = line.replace(FILES_LIST_MSI, msi_file_str)
+                    fout.write(line)
+
+        return True
+
+'''
 def generate_signing_script():
     with open('installer\\sign.bat','w') as signfile:
         signfile.write("@if \"%~1\"==\"\" goto usage\n")
@@ -559,7 +616,7 @@ def generate_intermediate_signing_script():
         signfile.write("echo On a system where a certificate for \"My Company Inc.\" has been installed as a personal certificate\n")
         signfile.write("echo. \n")
         signfile.write("echo sign.bat \"signtool sign /a /s my /n \"\"My Company Inc.\"\" /t http://timestamp.verisign.com/scripts/timestamp.dll\"\n")
-
+'''
 def build_diagnostics(source, output):
     cwd = os.getcwd()
     print("source " + source+ " output "+output);
@@ -1157,6 +1214,7 @@ if __name__ == '__main__':
 
     
     make_installers_dir()
+    
     if not rebuild_installers_only :
         if (signfiles):
             signdrivers(location, signname, 'x86', additionalcert, signstr=signstr, crosssignstr=crosssignstr)
@@ -1177,10 +1235,11 @@ if __name__ == '__main__':
         make_builds(location,outbuilds)
         build_diagnostics(".", outbuilds)
         make_installer_builds(location,outbuilds)
-        generate_signing_script()
-    else:
-        generate_intermediate_signing_script()
+       # generate_signing_script()
+  #  else:
+      #  generate_intermediate_signing_script()
     
+    generate_signing_script()
     generate_driver_wxs(outbuilds)
     make_driver_msm(outbuilds) 
     
