@@ -669,6 +669,14 @@
                   <File Id="pvdriversremoval" Name="PVDriversRemoval.dll" Source="Libraries\PVDriversRemoval.dll" />
               </Component>
 
+              <Component Id="XenConsoleCommDLL" Guid="*">
+                  <File Id="xenconsolecomm" Name="XenConsoleComm.dll" Source="xenguestagent\XenConsoleComm\XenConsoleComm.dll" />
+              </Component>
+
+              <Component Id="IXenConsoleCommDLL" Guid="*">
+                  <File Id="ixenconsolecomm" Name="IXenConsoleComm.dll" Source="xenguestagent\IXenConsoleComm\IXenConsoleComm.dll" />
+              </Component>
+
           </Directory>
         </Directory>
       </Directory>
@@ -707,6 +715,11 @@
           <RegistryKey Root="HKLM" Key='Software\Citrix\XenTools\AutoUpdate'>
               <RegistryValue Type="string" Name="InstallDrivers" Value='[ALLOWDRIVERUPDATE]' />
               <RegistryValue Type="string" Name="Identify" Value='[IDENTIFYAUTOUPDATE]' />
+          </RegistryKey>
+      </Component>
+      <Component Id="XenConsoleCommReg" Guid="*">
+          <RegistryKey Root="HKLM" Key='Software\Citrix\XenTools\XenConsoleComm'>
+              <RegistryValue Type="string" Name="DllPath" Value='[INSTALLDIR]XenConsoleComm.dll' />
           </RegistryKey>
       </Component>
       <Component Id="InstallAgentReg" Guid="15382399-a381-4ff1-8f8d-10ab8a31512e">
@@ -771,6 +784,8 @@
         <ComponentRef Id='XenService'/>
         <ComponentRef Id="DifXAPIDLL64"/>
         <ComponentRef Id="DifXAPIDLL32"/>
+        <ComponentRef Id="XenConsoleCommDLL"/>
+        <ComponentRef Id="IXenConsoleCommDLL"/>
         <?if $(sys.BUILDARCH)=x64 ?>
             <ComponentRef Id='RegEntry32'/>
             <ComponentRef Id="InstallAgentReg32" />
@@ -778,6 +793,7 @@
         <ComponentRef Id='InstallAgentReg'/>
         <ComponentRef Id='InstallService' />
         <ComponentRef Id='AutoUpdateReg' />
+        <ComponentRef Id='XenConsoleCommReg' />
     </Feature>
     <?if $(sys.BUILDARCH)=x86 ?>
         <Feature Id="NotUsed" Level='0'>
