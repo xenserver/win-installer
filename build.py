@@ -120,7 +120,7 @@ def sign_builds(outbuilds):
     cwd = os.getcwd()
     os.chdir(outbuilds)
     if signfiles:
-        for afile in branding.agenttosign:
+        for afile in agenttosign:
             sign(afile, signname, signstr=signstr)
     os.chdir(cwd)
 
@@ -489,7 +489,30 @@ def driverarchfiles_wxs(pack, driver, arch):
         wxsfile +="          <File Id=\""+leafshort+arch+"\" Name=\""+leaf+"\" DiskId='1' Source=\""+dfile+"\" />\n"
     return wxsfile
 
-
+agenttosign = [
+    'BrandSupport\\brandsat.dll',
+    'BrandSupport\\BrandSupport.dll',
+    'installwizard\\netsettings\\Win32\\netsettings.exe',
+    'installwizard\\netsettings\\x64\\netsettings.exe',
+    'installwizard\\qnetsettings\\Win32\\qnetsettings.exe',
+    'installwizard\\qnetsettings\\x64\\qnetsettings.exe',
+    "xenguestagent\\xendpriv\\XenDPriv.exe",
+    "xenguestagent\\xenupdater\\ManagementAgentUpdater.exe",
+    "xenguestagent\\xenguestagent\\XenGuestLib.Dll" ,
+    "xenguestagent\\xenguestagent\\Interop.NetFwTypeLib.dll", 
+    "xenguestagent\\xenupdater\\Interop.TaskScheduler.dll",
+    'xenvss\\x64\\xenvss.dll',
+    'xenvss\\x86\\xenvss.dll',
+    'xenvss\\x64\\vssclient.dll', 
+    'xenvss\\x86\\vssclient.dll', 
+    "xenguestagent\\xenguestagent\\xenguestagent.exe",
+    "InstallAgent\\InstallAgent.exe",
+    "Libraries\\PInvokeWrap.dll",
+    "Libraries\\HelperFunctions.dll",
+    "Libraries\\HardwareDevice.dll",
+    "Libraries\\PVDriversRemoval.dll",
+    "Uninstall\\Uninstall.exe",
+]
 
 signinstallers = [
     'managementx64',
@@ -535,47 +558,40 @@ def generate_signing_script():
     VBS_ARRAY_DELIM = '","'
     DASH = "-"
 
-    #Generate a sign script for every culture
-    print(branding.cultures)
-    for culture in branding.cultures["others"]:
-        print("generate sign script for culture: " + culture)
-        VBS_FILE_NAME = "sign.vbs"
-        other_culture_branding = get_cultural_branding(culture)
-        source_vbs_path = "." + os.sep + VBS_FILE_NAME 
-      
-        target_vbs_path = "installer" + os.sep + culture + DASH + VBS_FILE_NAME
-        shutil.copyfile(source_vbs_path,target_vbs_path)
-
-        # Generate file list packaged into the MSI
-        file_in_msi_array = get_branded_file_list(other_culture_branding.agenttosign)
-        file_in_msi_str = VBS_ARRAY_DELIM.join(file_in_msi_array)
-        file_in_msi_str = QUOTE + file_in_msi_str+ QUOTE
-
-
-        #Generate files out the msi files
-        file_out_msi_array = get_branded_file_list(dualsigninstallers)
-        file_out_msi_str = VBS_ARRAY_DELIM.join(file_out_msi_array)
-        file_out_msi_str = QUOTE + file_out_msi_str + QUOTE
-       
-        msi_file_array = get_branded_file_list(signinstallers)
-        cultured_msi_list = msi_file_array[:]
+    #Generate a sign script
+    
+    VBS_FILE_NAME = "sign.vbs"
+    source_vbs_path = "." + os.sep + VBS_FILE_NAME 
+    
+    target_vbs_path = "installer" + os.sep + VBS_FILE_NAME
+    shutil.copyfile(source_vbs_path,target_vbs_path)
+    # Generate file list packaged into the MSI
+    file_in_msi_array = get_branded_file_list(branding.filenames_in_msi_to_sign)
+    file_in_msi_str = VBS_ARRAY_DELIM.join(file_in_msi_array)
+    file_in_msi_str = QUOTE + file_in_msi_str+ QUOTE
+    #Generate files out the msi files
+    file_out_msi_array = get_branded_file_list(dualsigninstallers)
+    file_out_msi_str = VBS_ARRAY_DELIM.join(file_out_msi_array)
+    file_out_msi_str = QUOTE + file_out_msi_str + QUOTE
+    
+    msi_file_array = get_branded_file_list(signinstallers)
+    cultured_msi_list = msi_file_array[:]
+    for culture in branding.cultures['others']: 
         for msi in msi_file_array:
             cultured_msi = culture + os.sep + msi
             cultured_msi_list.append(cultured_msi)
-       
-        msi_file_str =  VBS_ARRAY_DELIM.join(cultured_msi_list)
-        msi_file_str = QUOTE + msi_file_str + QUOTE
-       
     
-        with open(source_vbs_path, "rt") as fin:
-            with open(target_vbs_path, "wt") as fout:
-                for line in fin:
-                    line = line.replace(FILES_LIST_IN_MSI_PLACE_HOLDER, file_in_msi_str)
-                    line = line.replace(FILES_LIST_OUT_MSI_PLACE_HOLDER, file_out_msi_str)
-                    line = line.replace(FILES_LIST_MSI, msi_file_str)
-                    fout.write(line)
-
-        return True
+    msi_file_str =  VBS_ARRAY_DELIM.join(cultured_msi_list)
+    msi_file_str = QUOTE + msi_file_str + QUOTE
+    
+    with open(source_vbs_path, "rt") as fin:
+        with open(target_vbs_path, "wt") as fout:
+            for line in fin:
+                line = line.replace(FILES_LIST_IN_MSI_PLACE_HOLDER, file_in_msi_str)
+                line = line.replace(FILES_LIST_OUT_MSI_PLACE_HOLDER, file_out_msi_str)
+                line = line.replace(FILES_LIST_MSI, msi_file_str)
+                fout.write(line)
+    return True
 
 '''
 def generate_signing_script():

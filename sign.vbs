@@ -85,7 +85,7 @@ helpStr = "zh-cn-sign.vbs "& Quote &"signing command"& Quote &_
 	vbNewLine & "Example:" &_
 	vbNewLine & "On a system where a certificate For "& Quote &"My Company Inc."& Quote & " has been installed as a personal certificate" &_
 	vbNewLine &_
-	vbNewLine & "zh-cn-sign.vbs "& Quote&"signtool sign /a /s my /n "&FakeQuote&"My Company Inc."&FakeQuote&" /t http://timestamp.verisign.com/scripts/timestamp.dll"&Quote
+	vbNewLine & "sign.vbs "& Quote&"signtool sign /a /s my /n "&FakeQuote&"My Company Inc."&FakeQuote&" /t http://timestamp.verisign.com/scripts/timestamp.dll"&Quote
 
 	WScript.Echo(helpStr)
 End Function
