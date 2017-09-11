@@ -25,6 +25,7 @@ namespace State
             States.XenVifInstalled |
             States.XenNetInstalled |
             States.XenVbdInstalled |
+            States.XenConsInstalled |
             States.CertificatesInstalled
         );
 
@@ -63,6 +64,7 @@ namespace State
             new StateInfo("XenVifInstalled", 0),
             new StateInfo("XenNetInstalled", 0),
             new StateInfo("XenVbdInstalled", 0),
+            new StateInfo("XenConsInstalled", 0),
             new StateInfo("CertificatesInstalled", 0),
             new StateInfo("ProceedWithSystemClean", 0),
             new StateInfo("DriversRequired", 0),
@@ -90,11 +92,12 @@ namespace State
             XenVifInstalled = 1 << 9,
             XenNetInstalled = 1 << 10,
             XenVbdInstalled = 1 << 11,
-            DriversRequired = 1 << 12,
+            XenConsInstalled = 1 << 12,
+            DriversRequired = 1 << 13,
             // ---------------- End ---------------
 
-            CertificatesInstalled = 1 << 13,
-            ProceedWithSystemClean = 1 << 14,
+            CertificatesInstalled = 1 << 14,
+            ProceedWithSystemClean = 1 << 15,
         }
 
         // Static constructor: queries the Registry for the

@@ -113,7 +113,8 @@ namespace PVDevice
                 XenBus.IsFunctioning,
                 XenIface.IsFunctioning,
                 XenVif.IsFunctioning, // <= Restores Net Settings internally
-                XenVbd.IsFunctioning
+                XenVbd.IsFunctioning,
+                XenCons.IsFunctioning
             };
 
             bool busEnumerated = false;
