@@ -893,14 +893,25 @@ def shell(command):
 
     return pipe.close()
 
-def build_tar_source_files(securebuild, signed):
-    server = manifestspecific.artifactory
+def load_specific_manifest(brand_build):
+    manifest_name = "manifestspecific"
+    if(brand_build):
+        manifest_name = "manifestspecific" + "-" + os.environ['BRANDED_NAME']
+    print("loading manifest: %s"%(manifest_name))
+    (manifestFile, manifestPath, manifestDesc) = imp.find_module(manifest_name,["."])
+    manifest = imp.load_module(manifest_name,manifestFile,manifestPath,manifestDesc)
+    return manifest 
+
+def build_tar_source_files(securebuild, signed,brand_build):
+   
+    manifest = load_specific_manifest(brand_build)
+    server = manifest.artifactory
     outdict = {}
-    for k,v in manifestspecific.build_tar_source_files.items():
+    for k,v in manifest.build_tar_source_files.items():
         print("Check "+k)
-        if k in manifestspecific.signed_drivers and signed:
+        if k in manifest.signed_drivers and signed:
             print(k + "in signed drivers")
-            outdict[k]=server+manifestspecific.signed_drivers[k]
+            outdict[k]=server+manifest.signed_drivers[k]
         else :
             outdict[k]= server+v
     return outdict
@@ -1218,7 +1229,7 @@ if __name__ == '__main__':
         all_drivers_signed = False
     elif (command == '--specific'):
         print( "Specific Build")
-        unpack_from_jenkins(build_tar_source_files(securebuild, signeddrivers), location, checked,brandbuild)
+        unpack_from_jenkins(build_tar_source_files(securebuild, signeddrivers,brandbuild), location, checked,brandbuild)
         all_drivers_signed = signeddrivers
     elif (command == '--latest'):
         print ("Latest Build")
