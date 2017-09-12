@@ -62,10 +62,10 @@ def unpack_from_jenkins(filelist, packdir, checked=False):
             oldurl=url
             o = urllib.parse.urlparse(url)
             (head,filename) = posixpath.split(o.path)
+            (filebase, fileext) = os.path.splitext(filename)
             (head,build) = posixpath.split(head)
             (head,branch) = posixpath.split(head)
-            branch=branch+"-checked"
-            newpath=posixpath.join(head,branch,build,filename)
+            newpath=posixpath.join(head,branch,build,filebase+"-checked"+fileext)
             url=urllib.parse.urlunparse((o.scheme, o.netloc, newpath, o.params, o.query, o.fragment))
             try:
                 request = urllib.request.urlopen(url)
