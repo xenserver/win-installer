@@ -79,7 +79,7 @@ Call MainEntryPoint
 
 Function Usage()
 Dim helpStr
-helpStr = "zh-cn-sign.vbs "& Quote &"signing command"& Quote &_ 
+helpStr = "sign.vbs "& Quote &"signing command"& Quote &_ 
 	vbNewLine &_
 	vbNewLine & "Please replace "& Quote & " with "&FakeQuote& " in your sign command" &_
 	vbNewLine & "Example:" &_
