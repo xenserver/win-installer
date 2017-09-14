@@ -32,20 +32,15 @@ artifactory='https://repo.citrite.net:443/xs-local-build/'
 
 build_tar_source_files = {
         "xenguestagent" : r'win-xenguestagent/master/win-xenguestagent-219/xenguestagent.tar',
-        "xenbus": r"win-xenbus/patchq/win-xenbus-85/xenbus.inspur.signed.tar",
-        "xenvif": r"win-xenvif/patchq/win-xenvif-103/xenvif.inspur.signed.tar",
+        "xenbus": r"win-xenbus/patchq-8.2/win-xenbus-113/xenbus.inspur.signed.tar",
+        "xenvif": r"win-xenvif/patchq/win-xenvif-152/xenvif.signed.tar",
         "xennet": r"win-xennet/patchq/win-xennet-64/xennet.inspur.signed.tar",
-        "xeniface": r"win-xeniface/patchq/win-xeniface-61/xeniface.inspur.signed.tar",
-        "xenvbd": r"win-xenvbd/patchq/win-xenvbd-156/xenvbd.inspur.signed.tar", 
+        "xeniface": r"win-xeniface/patchq/win-xeniface-102/xeniface.signed.tar",
+        "xenvbd": r"win-xenvbd/patchq/win-xenvbd-158/xenvbd.signed.tar", 
         "xenvss" : r'win-xenvss/master/win-xenvss-18/xenvss.tar',
 }
 
 signed_drivers = {
-        "xenbus": r"win-xenbus/patchq-8.2/win-xenbus-113/xenbus.inspur.signed.tar",
-        "xenvif": r"win-xenvif/patchq/win-xenvif-103/xenvif.inspur.signed.tar",
-        "xennet": r"win-xennet/patchq/win-xennet-64/xennet.inspur.signed.tar",
-        "xeniface": r"win-xeniface/patchq/win-xeniface-61/xeniface.inspur.signed.tar",
-        "xenvbd": r"win-xenvbd/patchq/win-xenvbd-156/xenvbd.inspur.signed.tar", 
 }
 
 
