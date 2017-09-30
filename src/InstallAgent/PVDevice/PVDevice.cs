@@ -5,12 +5,24 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.ServiceProcess;
+using State;
 
 namespace PVDevice
 {
     static class PVDevice
     {
-        
+        public struct DriverFunctioning
+        {
+            public string name;
+            public Installer.States installState;
+            public Func<bool> pvDevIsFunctioning;
+            public DriverFunctioning(string name, Installer.States installState, Func<bool> pvDevIsFunctioning)
+            {
+                this.name = name;
+                this.installState = installState;
+                this.pvDevIsFunctioning = pvDevIsFunctioning;
+            }
+        }       
 
         public static bool IsServiceNeeded(string device)
         {
@@ -109,22 +121,35 @@ namespace PVDevice
         {
             const uint TIMEOUT = 300; // 5 minutes
 
-            Func<bool>[] pvDevIsFunctioning = {
-                XenBus.IsFunctioning,
-                XenIface.IsFunctioning,
-                XenVif.IsFunctioning, // <= Restores Net Settings internally
-                XenVbd.IsFunctioning
+            DriverFunctioning[] drivers = new DriverFunctioning[] {
+                 new  DriverFunctioning( "xenbus",
+                      Installer.States.XenBusInstalled,
+                      XenBus.IsFunctioning
+                    ),
+                new DriverFunctioning( "xeniface",
+                      Installer.States.XenIfaceInstalled,
+                      XenIface.IsFunctioning
+                    ),
+                new DriverFunctioning("xenvif",
+                      Installer.States.XenVifInstalled,
+                       XenVif.IsFunctioning
+                    ),
+                new DriverFunctioning("xenvbd",
+                       Installer.States.XenVbdInstalled,
+                      XenVbd.IsFunctioning
+                    )
             };
 
             bool busEnumerated = false;
+            bool result = true;
 
             Trace.WriteLine(
                 "Checking if all PV Devices are functioning properly"
             );
 
-            for (int i = 0; i < pvDevIsFunctioning.Length; ++i)
+            for (int i = 0; i < drivers.Length; ++i)
             {
-                if (!pvDevIsFunctioning[i]())
+                if (!drivers[i].pvDevIsFunctioning())
                 {
                     if (!busEnumerated)
                     {
@@ -140,11 +165,13 @@ namespace PVDevice
                     }
                     else
                     {
-                        return false;
+                        result = false;
+                        Installer.UnsetFlag(drivers[i].installState);
+                        Trace.WriteLine("driver: " + drivers[i].name + " does not work after enumerte, will try reinstall");
                     }
                 }
             }
-            return true;
+            return result;
         }
     }
 }
