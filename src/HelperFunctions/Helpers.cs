@@ -548,7 +548,8 @@ namespace HelperFunctions
             int size = 0;
 
             bool success = SetupApi.SetupCopyOEMInf(infPath, "", SetupApi.SPOST.NONE, SetupApi.SP_COPY.NOOVERWRITE, IntPtr.Zero, 0, ref size, IntPtr.Zero);
-
+            bool bcontinue = true;
+            reboot = false;
             if (!success)
             {
                 
@@ -556,15 +557,18 @@ namespace HelperFunctions
                 Trace.WriteLine("Unable to update driver - code " + error.ToString());
                 if ((error == 0) || (error == 0x50))
                 {
-                    Trace.WriteLine("Driver already installed");
-                    if (Helpers.IsServiceRunning(name))
-                    {
-                        reboot = false;
-                        return;
-                    }
+                    // We still try to install the driver even the OEMInf file has already been copied,
+                    // For the case of install driver not finished, but system shutdown
+                    Trace.WriteLine("OEMInf file already copied");
+                }
+                else {
+                    bcontinue = false; // Other error, does not continue
                 }
             }
-            
+
+            if (!bcontinue) {
+                return;
+            }
             Trace.WriteLine(
                 "Installing driver: \'" + Path.GetFileName(infPath) + "\'"
             );
