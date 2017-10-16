@@ -89,8 +89,9 @@ namespace PVDevice
             Trace.WriteLine("<=== PVDevice.XenBus cctor");
         }
 
-        public static bool IsFunctioning()
+        public static bool IsFunctioning(out bool bNeedReinstall)
         {
+            bNeedReinstall = false;
             if (!IsPresent(
                     Devs.DEV_0001 |
                     Devs.DEV_0002 |
@@ -102,6 +103,7 @@ namespace PVDevice
 
             if (!Helpers.IsServiceRunning(("xenbus")))
             {
+                bNeedReinstall = true;
                 return false;
             }
 
