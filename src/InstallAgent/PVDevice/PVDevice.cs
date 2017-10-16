@@ -9,14 +9,15 @@ using State;
 
 namespace PVDevice
 {
+    delegate bool functionPrototype(out bool bNeedReinstall);
     static class PVDevice
     {
         public struct DriverFunctioning
         {
             public string name;
             public Installer.States installState;
-            public Func<bool> pvDevIsFunctioning;
-            public DriverFunctioning(string name, Installer.States installState, Func<bool> pvDevIsFunctioning)
+            public functionPrototype pvDevIsFunctioning;
+            public DriverFunctioning(string name, Installer.States installState, functionPrototype pvDevIsFunctioning)
             {
                 this.name = name;
                 this.installState = installState;
@@ -147,9 +148,11 @@ namespace PVDevice
                 "Checking if all PV Devices are functioning properly"
             );
 
+            bool bNeedReInstall = false; 
+
             for (int i = 0; i < drivers.Length; ++i)
             {
-                if (!drivers[i].pvDevIsFunctioning())
+                if (!drivers[i].pvDevIsFunctioning(out bNeedReInstall))
                 {
                     if (!busEnumerated)
                     {
@@ -166,8 +169,11 @@ namespace PVDevice
                     else
                     {
                         result = false;
-                        Installer.UnsetFlag(drivers[i].installState);
-                        Trace.WriteLine("driver: " + drivers[i].name + " does not work after enumerte, will try reinstall");
+                        if (bNeedReInstall) 
+                        {
+                            Installer.UnsetFlag(drivers[i].installState);
+                            Trace.WriteLine("driver: " + drivers[i].name + " does not work after enumerte, will try reinstall");
+                        }
                     }
                 }
             }

@@ -13,14 +13,16 @@ namespace PVDevice
 {
     class XenVif
     {
-        public static bool IsFunctioning()
+        public static bool IsFunctioning(out bool bNeedReinstall)
         {
             // If there are no vifs for the VM, xenbus
             // does not enumerate a device for xenvif
+            bNeedReinstall = false;
             if (PVDevice.IsServiceNeeded("VIF"))
             {
                 if (!Helpers.IsServiceRunning("xenvif"))
                 {
+                    bNeedReinstall = true;
                     return false;
                 }
 
