@@ -117,6 +117,30 @@ filenames = {
         "uninstallVSS" : "uninstall-XenProvider.cmd",
 }
 
+filenames_in_msi_to_sign = [
+    'BrandSupport\\brandsat.dll',
+    'BrandSupport\\BrandSupport.dll',
+    'installwizard\\netsettings\\Win32\\netsettings.exe',
+    'installwizard\\netsettings\\x64\\netsettings.exe',
+    'installwizard\\qnetsettings\\Win32\\qnetsettings.exe',
+    'installwizard\\qnetsettings\\x64\\qnetsettings.exe',
+    "xenguestagent\\xendpriv\\XenDPriv.exe",
+    "xenguestagent\\xenupdater\\ManagementAgentUpdater.exe",
+    "xenguestagent\\xenguestagent\\XenGuestLib.Dll" ,
+    "xenguestagent\\xenguestagent\\Interop.NetFwTypeLib.dll", 
+    "xenguestagent\\xenupdater\\Interop.TaskScheduler.dll",
+    'xenvss\\x64\\xenvss.dll',
+    'xenvss\\x86\\xenvss.dll',
+    'xenvss\\x64\\vssclient.dll', 
+    'xenvss\\x86\\vssclient.dll', 
+    "xenguestagent\\xenguestagent\\xenguestagent.exe",
+    "InstallAgent\\InstallAgent.exe",
+    "Libraries\\PInvokeWrap.dll",
+    "Libraries\\HelperFunctions.dll",
+    "Libraries\\HardwareDevice.dll",
+    "Libraries\\PVDriversRemoval.dll",
+    "Uninstall\\Uninstall.exe",
+]
 
 resources = {
         "icon" : "xen.ico",

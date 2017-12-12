@@ -16,10 +16,12 @@ namespace PVDevice
             _session = null;
         }
 
-        public static bool IsFunctioning()
+        public static bool IsFunctioning(out bool bReinstall)
         {
+            bReinstall = false;
             if (!Helpers.IsServiceRunning("xeniface"))
             {
+                bReinstall = true;
                 return false;
             }
 
