@@ -33,7 +33,7 @@ artifactory='https://repo.citrite.net:443/xs-local-build/'
 build_tar_source_files = {
        "xenguestagent" : r'win-xenguestagent/master/win-xenguestagent-261/xenguestagent.tar',
        "xenbus" : r'win-xenbus/patchq-8.2/win-xenbus-117/xenbus.tar',
-       "xenvif" : r'win-xenvif/patchq/win-xenvif-152/xenvif.tar',
+       "xenvif" : r'win-xenvif/patchq-rx-batch/win-xenvif-153/xenvif.tar',
        "xennet" : r'win-xennet/patchq/win-xennet-102/xennet.tar',
        "xeniface" : r'win-xeniface/8.2/win-xeniface-103/xeniface.tar',
        "xenvbd" : r'win-xenvbd/patchq/win-xenvbd-203/xenvbd.tar',
