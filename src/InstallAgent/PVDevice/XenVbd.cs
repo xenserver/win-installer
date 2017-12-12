@@ -4,10 +4,12 @@ namespace PVDevice
 {
     class XenVbd
     {
-        public static bool IsFunctioning()
+        public static bool IsFunctioning(out bool bNeedReinstall)
         {
+            bNeedReinstall = false;
             if (!Helpers.IsServiceRunning("xenvbd"))
             {
+                bNeedReinstall = true;
                 return false;
             }
 
