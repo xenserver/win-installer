@@ -163,6 +163,62 @@ namespace InstallAgent
             }
         }
 
+        /// <summary>
+        /// Check whether installer needs the guest os to reboot
+        /// </summary>
+        /// <returns>return true if reboot is required for further installation, false otherwise</returns>
+        private bool checkRebootRequired() 
+        {
+            const int TRY_TIMES = 10;
+            const int RETRY_DURATION = 1000; // Wait for 1 seconds.
+            int tryCount = 0;
+            for (tryCount = 0; tryCount < TRY_TIMES; tryCount++) 
+            {
+                try
+                {
+                    if (PVDevice.PVDevice.AllFunctioning())
+                    {
+                        if (!Helpers.BlockUntilNoDriversInstalling(0))
+                        {
+                            Trace.WriteLine("A driver is still installing");
+                            while (!(Helpers.BlockUntilNoDriversInstalling(5) || VM.GetOtherDriverInstallingOnFirstRun()))
+                            {
+                                Trace.WriteLine("Waiting to see if drivers request reboot");
+                                if (!PVDevice.PVDevice.AllFunctioning())
+                                {
+                                    Trace.WriteLine("Reboot needed");
+                                    return true;
+                                }
+                            }
+                            Trace.WriteLine("No reboot needed");
+                        }
+                        return false;
+                    }
+                    else
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (TRY_TIMES == tryCount)
+                    {
+                        throw e;
+                    }
+                    else
+                    {
+                        string message = string.Format("sleep {0} milliseconds for reason {1}", RETRY_DURATION, e);
+                        Trace.WriteLine(message);
+                        Thread.Sleep(RETRY_DURATION);
+                    }
+
+                }
+            }
+            string errMessage = string.Format("Unreachable code, tryCount: {0}", tryCount);
+            throw new Exception(errMessage);
+          
+        }
+
         private void __InstallThreadHandler()
         {
             if (WinVersion.IsWOW64())
@@ -243,27 +299,13 @@ namespace InstallAgent
                 }
             }
 
-            if (PVDevice.PVDevice.AllFunctioning())
-            {
-                if (!Helpers.BlockUntilNoDriversInstalling(0))
-                {
-                    Trace.WriteLine("A driver is still installing");
-                    while (!(Helpers.BlockUntilNoDriversInstalling(5) || VM.GetOtherDriverInstallingOnFirstRun()))
-                    {
-                        Trace.WriteLine("Waiting to see if drivers request reboot");
-                        if (!PVDevice.PVDevice.AllFunctioning())
-                        {
-                            Trace.WriteLine("Reboot needed");
-                            goto ExitReboot;
-                        }
-                    }
-                    Trace.WriteLine("No reboot needed");
-                }
-                goto ExitDone;
-            }
-            else
+            if (checkRebootRequired())
             {
                 goto ExitReboot;
+            }
+            else 
+            {
+                goto ExitDone;
             }
 
         ExitReboot:
