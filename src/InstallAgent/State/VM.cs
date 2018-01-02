@@ -18,7 +18,7 @@ namespace State
         private static /* readonly */ bool othDrvInstalling;
 
         private static int rebootsSoFar;
-        public const int REBOOTS_MAX = 5;
+        public const int REBOOTS_MAX = 6;
 
         public enum PVToolsVersion : int
         {
