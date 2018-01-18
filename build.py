@@ -380,6 +380,7 @@ def make_builds(pack, outbuilds):
         shutil.copytree(pack+"\\xeniface", outbuilds+"\\xeniface")
         shutil.copytree(pack+"\\xenguestagent", outbuilds+"\\xenguestagent")
         shutil.copytree(pack+"\\xenvss", outbuilds+"\\xenvss")
+        shutil.copytree(pack+"\\vmcleaner", outbuilds+"\\vmcleaner")
 
 def make_installer_builds(pack, outbuilds):
         shutil.copytree(pack+"\\installwizard", outbuilds+"\\installwizard")
