@@ -95,7 +95,7 @@ include ="include"
 
 signtool=os.environ['KIT']+"\\bin\\x86\\signtool.exe"
 timestamp="http://timestamp.verisign.com/scripts/timestamp.dll"
-
+BRANDSAT_DLL_NAME = "brandsat"
 #remembersignname = "Citrix Systems, Inc"
 
 def sign(filename, signname, additionalcert=None, signstr=None):
@@ -310,26 +310,38 @@ def make_header(outbuilds):
         file.write("#define RESOURCE_"+key+" \""+value+"\"\n")
     file.close()
 
-    file = open("proj\\textstrings.txt",'w')
-    for key, value in branding.branding.items():
+    #build brandsat for every culture
+    make_brand_dll(branding.cultures['default'])
+    for culture in branding.cultures['others']:
+        make_brand_dll(culture)
+
+def make_brand_dll(culture):
+    # Build zh-cn for Inspur, us-en for Citrixpython shu
+    cbranding = get_cultural_branding(culture)
+    file = open("proj\\textstrings.txt",'w',encoding='utf-8')
+    for key, value in cbranding.branding.items():
         file.write("BRANDING_"+key+"="+value.replace("\\","\\\\")+"\n")
-    for key, value in branding.filenames.items():
+    for key, value in cbranding.filenames.items():
         file.write("FILENAME_"+key+"="+value.replace("\\","\\\\")+"\n")
-    for key, value in branding.resources.items():
+    for key, value in cbranding.resources.items():
         file.write("RESOURCE_"+key+"="+value.replace("\\","\\\\")+"\n")
     file.close();
 
-    file = open("proj\\buildsat.bat",'w')
+    buildsat_script = "proj\\buildsat.bat"
+    if os.path.exists(buildsat_script):
+        os.remove(buildsat_script)
+    file = open(buildsat_script,'w')
     file.write("echo Building satellite dll\n")
     file.write("call \"%VS%\\VC\\vcvarsall.bat\" x86\n")
     file.write("set FrameworkVersion=v3.5\n")
     file.write("mkdir BrandSupport\n")
     file.write("resgen.exe proj\\textstrings.txt proj\\textstrings.resources\n")
     #file.write("al.exe proj\\branding.mod /embed:proj\\textstrings.resources /embed:"+branding.bitmaps+"\\DlgBmp.bmp /t:lib /out:proj\\brandsat.dll\n")
-    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:BrandSupport\\brandsat.dll /target:library /res:proj\\textstrings.resources /res:"+outbuilds+"\\"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
-    file.write("echo Built satellite dll at BrandSupport\\brandsat.dll\n")
+    file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:BrandSupport\\"+BRANDSAT_DLL_NAME+"."+culture+".dll /target:library /res:proj\\textstrings.resources /res:"+outbuilds+"\\"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
+    file.write("echo Built satellite dll at BrandSupport\\"+BRANDSAT_DLL_NAME+"\n")
     file.close();
     print (callfnout("proj\\buildsat.bat"))
+
 
 def callfnout(cmd):
     print(cmd)
@@ -763,12 +775,18 @@ def make_oldmsi_installers(pack, signname):
     os.remove("installer\\"+branding.filenames['legacy'])    
     os.remove("installer\\"+branding.filenames['legacyuninstallerfix'])    
 
+def setup_brandsat_dll(path,culture):
+    DLL_SUFIX = ".dll"
+    source_name = path+os.sep+BRANDSAT_DLL_NAME+"."+culture+DLL_SUFIX
+    target_name = path+os.sep+BRANDSAT_DLL_NAME+DLL_SUFIX
+    shutil.copy(source_name,target_name)
 
 def make_mgmtagent_msi(pack,signname):
 
 
     wix=lambda f: os.environ['WIX']+"bin\\"+f
     bitmaps = ".\\src\\bitmaps"
+    support_dll_path = "BrandSupport"
 
     if (all_drivers_signed) :
         use_certs='no'
@@ -781,12 +799,15 @@ def make_mgmtagent_msi(pack,signname):
     for arch in ["x86", "x64"]:
         src = cwd+"\\.\\src\\agent"
         culture = branding.cultures['default']
-        
+        #setup brandsat.dll
+        setup_brandsat_dll(support_dll_path,culture)
+
         callfn([wix("candle.exe"), src+"\\managementagent.wxs", "-dculture="+culture, "-arch",arch, "-darch="+arch, "-o", cwd+"\\installer\\managementagent"+arch+".wixobj", "-ext", "WixNetFxExtension.dll", "-I"+cwd+"\\"+include, "-dBitmaps="+cwd+"\\"+bitmaps, "-dusecerts="+use_certs])
         callfn([wix("light.exe"), cwd+"\\installer\\managementagent"+arch+".wixobj", "-dculture="+culture, "-darch="+arch, "-o", cwd+"\\installer\\"+branding.filenames['management'+arch], "-b", ".", "-ext", "WixNetFxExtension.dll", "-ext", "WixUiExtension", "-ext", "WixUtilExtension.dll", "-cultures:"+branding.cultures['default'], "-dWixUILicenseRtf="+branding.bitmaps+"\\EULA_DRIVERS.rtf", "-sw1076"])
 
     if len(branding.cultures['others']) != 0 :
         for culture in branding.cultures['others']:
+            setup_brandsat_dll(support_dll_path,culture)
             cbranding = get_cultural_branding(culture)
             culture_path = os.sep.join([cwd,"installer",culture])
             if os.path.exists(culture_path):

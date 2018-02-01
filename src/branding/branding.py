@@ -94,6 +94,10 @@ branding = {
         "whqlWarn" : "Customers using Windows Update for I/O driver updates should not select this option",
         "userAgent" : "Citrix XenServer AutoUpdate",
         "anonymousUsage" : "Send anonymous usage information to Citrix",
+        "setupString":"Setup",
+        "installSuccess":"installed successfully",
+        "installFailed":"failed to install",
+        "notSupport":"not supported",
 }
 
 filenames = {

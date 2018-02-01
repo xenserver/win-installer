@@ -575,16 +575,16 @@ namespace InstallAgent
 
             if (installStatus == InstallStatus.Installed)
             {
-                text += " installed successfully";
+                text = text + " " + Branding.GetString("BRANDING_installSuccess");
             }
             else if (installStatus == InstallStatus.Failed)
             {
-                text += " failed to install";
+                text = text + " " + Branding.GetString("BRANDING_installFailed");
             }
             else
             {
                 throw new Exception(
-                    "InstallStatus: \'" + installStatus + "\' not supported"
+                    "InstallStatus: \'" + installStatus + "\' " + Branding.GetString("BRANDING_notSupport")
                 );
             }
 
@@ -592,7 +592,7 @@ namespace InstallAgent
                 Branding.GetString("BRANDING_manufacturer") + " " +
                 Branding.GetString("BRANDING_hypervisorProduct") + " " +
                 Branding.GetString("BRANDING_managementName") + " " +
-                "Setup";
+                Branding.GetString("BRANDING_setupString");
 
             string sid = GetInstallerInitiatorSid();
 
