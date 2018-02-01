@@ -327,7 +327,7 @@ def make_brand_dll(culture):
         file.write("RESOURCE_"+key+"="+value.replace("\\","\\\\")+"\n")
     file.close();
 
-    buildsat_script = "proj\\buildsat.bat"
+    buildsat_script = "proj" + os.sep + "buildsat." + culture+ ".bat"
     if os.path.exists(buildsat_script):
         os.remove(buildsat_script)
     file = open(buildsat_script,'w')
@@ -340,7 +340,7 @@ def make_brand_dll(culture):
     file.write("\"c:\windows\Microsoft.NET\Framework\\v3.5\csc.exe\" /out:BrandSupport\\"+BRANDSAT_DLL_NAME+"."+culture+".dll /target:library /res:proj\\textstrings.resources /res:"+outbuilds+"\\"+branding.bitmaps+"\\DlgBmp.bmp src\\branding\\branding.cs \n");
     file.write("echo Built satellite dll at BrandSupport\\"+BRANDSAT_DLL_NAME+"\n")
     file.close();
-    print (callfnout("proj\\buildsat.bat"))
+    print (callfnout(buildsat_script))
 
 
 def callfnout(cmd):
